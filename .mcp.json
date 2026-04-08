@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "nodebench-qa": {
+    "benchpress": {
       "command": "cargo",
-      "args": ["run", "-p", "nodebench-qa-cli", "--", "serve", "--mcp"],
+      "args": ["run", "-p", "benchpress-cli", "--", "serve", "--mcp"],
       "env": {}
     }
   }

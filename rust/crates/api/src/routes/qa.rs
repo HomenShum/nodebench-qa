@@ -144,7 +144,7 @@ async fn qa_check(
 ) -> Result<Json<FullQaResponse>, impl IntoResponse> {
     state.increment_requests();
 
-    let result = nodebench_qa_engine::qa::run_qa_check(&req.url, req.timeout_ms).await;
+    let result = benchpress_engine::qa::run_qa_check(&req.url, req.timeout_ms).await;
 
     match result {
         Ok(r) => {
@@ -185,7 +185,7 @@ async fn sitemap(
 ) -> Result<Json<FullSitemapResponse>, impl IntoResponse> {
     state.increment_requests();
 
-    let result = nodebench_qa_engine::crawl::crawl_sitemap(&req.url, req.max_depth, req.max_pages).await;
+    let result = benchpress_engine::crawl::crawl_sitemap(&req.url, req.max_depth, req.max_pages).await;
 
     match result {
         Ok(r) => {
@@ -218,7 +218,7 @@ async fn ux_audit(
 ) -> Result<Json<FullAuditResponse>, impl IntoResponse> {
     state.increment_requests();
 
-    let result = nodebench_qa_engine::audit::run_ux_audit(&req.url).await;
+    let result = benchpress_engine::audit::run_ux_audit(&req.url).await;
 
     match result {
         Ok(r) => {
@@ -256,18 +256,18 @@ async fn diff_crawl(
 ) -> Result<Json<FullDiffResponse>, impl IntoResponse> {
     state.increment_requests();
 
-    let result = nodebench_qa_engine::diff::run_diff_crawl(&req.url, req.baseline_id.as_deref()).await;
+    let result = benchpress_engine::diff::run_diff_crawl(&req.url, req.baseline_id.as_deref()).await;
 
     match result {
         Ok(r) => {
             let added: Vec<String> = r.diffs.iter()
-                .filter(|d| matches!(d.diff_type, nodebench_qa_core::types::DiffType::Added))
+                .filter(|d| matches!(d.diff_type, benchpress_core::types::DiffType::Added))
                 .map(|d| d.url.clone()).collect();
             let removed: Vec<String> = r.diffs.iter()
-                .filter(|d| matches!(d.diff_type, nodebench_qa_core::types::DiffType::Removed))
+                .filter(|d| matches!(d.diff_type, benchpress_core::types::DiffType::Removed))
                 .map(|d| d.url.clone()).collect();
             let changed: Vec<DiffChangeResponse> = r.diffs.iter()
-                .filter(|d| matches!(d.diff_type, nodebench_qa_core::types::DiffType::StatusChanged | nodebench_qa_core::types::DiffType::ContentChanged))
+                .filter(|d| matches!(d.diff_type, benchpress_core::types::DiffType::StatusChanged | benchpress_core::types::DiffType::ContentChanged))
                 .map(|d| DiffChangeResponse {
                     url: d.url.clone(),
                     field: format!("{:?}", d.diff_type),

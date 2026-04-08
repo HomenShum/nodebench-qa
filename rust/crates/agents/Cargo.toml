@@ -1,5 +1,5 @@
 [package]
-name = "nodebench-qa-agents"
+name = "benchpress-agents"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,8 +7,8 @@ license.workspace = true
 description = "Multi-agent orchestration: coordinator, QA pipeline, device testing"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
-nodebench-qa-engine = { path = "../qa-engine" }
+benchpress-core = { path = "../core" }
+benchpress-engine = { path = "../qa-engine" }
 tokio.workspace = true
 reqwest.workspace = true
 serde.workspace = true

@@ -1,10 +1,10 @@
 [package]
-name = "nodebench-qa-core"
+name = "benchpress-core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Core types, config, and error handling for nodebench-qa"
+description = "Core types, config, and error handling for benchpress"
 
 [dependencies]
 serde.workspace = true

@@ -299,10 +299,10 @@ function Spinner() {
         border: "3px solid var(--border)",
         borderTopColor: "var(--accent)",
         borderRadius: "50%",
-        animation: "nbqa-spin 0.6s linear infinite",
+        animation: "bp-spin 0.6s linear infinite",
       }}
     >
-      <style>{`@keyframes nbqa-spin { to { transform: rotate(360deg) } }`}</style>
+      <style>{`@keyframes bp-spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   );
 }

@@ -2,19 +2,19 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 const BANNER: &str = r#"
-    _   _ ____   ___    _
-   | \ | | __ ) / _ \  / \
-   |  \| |  _ \| | | |/ _ \
-   | |\  | |_) | |_| / ___ \
-   |_| \_|____/ \__\_\_/   \_\
-   nodebench-qa — QA for AI agents
+    ____                  _     ____
+   | __ )  ___ _ __   ___| |__ |  _ \ _ __ ___  ___ ___
+   |  _ \ / _ \ '_ \ / __| '_ \| |_) | '__/ _ \/ __/ __|
+   | |_) |  __/ | | | (__| | | |  __/| | |  __/\__ \__ \
+   |____/ \___|_| |_|\___|_| |_|_|   |_|  \___||___/___/
+   benchpress — workflow memory + distillation engine
 "#;
 
 #[derive(Parser)]
-#[command(name = "nbqa")]
+#[command(name = "bp")]
 #[command(version = env!("CARGO_PKG_VERSION"))]
-#[command(about = "Full-stack QA platform for AI coding agents")]
-#[command(long_about = "nodebench-qa: Run QA checks, site audits, diff crawls, and workflow replays.\nRust rewrite of retention.sh with MCP protocol support.")]
+#[command(about = "Workflow memory + distillation engine")]
+#[command(long_about = "benchpress: Capture frontier model workflows, distill for cheaper replay.\nRust rewrite with MCP protocol support.")]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -30,7 +30,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Start the nodebench-qa server (API + MCP)
+    /// Start the benchpress server (API + MCP)
     Serve {
         /// Host to bind to
         #[arg(long, default_value = "0.0.0.0")]
@@ -111,7 +111,7 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
 
     // Init telemetry — verbose flag controls filter level without unsafe set_var
-    nodebench_qa_telemetry::init_with_level(if cli.verbose { "debug" } else { "info" });
+    benchpress_telemetry::init_with_level(if cli.verbose { "debug" } else { "info" });
 
     match cli.command {
         Commands::Serve { host, port, mcp, mcp_port } => {
@@ -122,13 +122,13 @@ async fn main() -> Result<()> {
             }
             println!();
 
-            let config = nodebench_qa_core::AppConfig {
-                server: nodebench_qa_core::config::ServerConfig {
+            let config = benchpress_core::AppConfig {
+                server: benchpress_core::config::ServerConfig {
                     host: host.clone(),
                     port,
                     ..Default::default()
                 },
-                mcp: nodebench_qa_core::config::McpConfig {
+                mcp: benchpress_core::config::McpConfig {
                     enabled: mcp,
                     port: mcp_port,
                     auth_token: None,
@@ -136,11 +136,11 @@ async fn main() -> Result<()> {
                 ..Default::default()
             };
 
-            let app = nodebench_qa_api::build_router(&config);
+            let app = benchpress_api::build_router(&config);
 
             // Mount MCP server on separate port if enabled
             if mcp {
-                let mcp_router = nodebench_qa_mcp::build_mcp_router();
+                let mcp_router = benchpress_mcp::build_mcp_router();
                 let mcp_listener = tokio::net::TcpListener::bind(format!("{}:{}", host, mcp_port)).await?;
                 tracing::info!("MCP server listening on {}:{}", host, mcp_port);
                 tokio::spawn(async move {
@@ -151,12 +151,12 @@ async fn main() -> Result<()> {
             }
 
             let listener = tokio::net::TcpListener::bind(format!("{}:{}", host, port)).await?;
-            tracing::info!("nodebench-qa API server listening on {}:{}", host, port);
+            tracing::info!("benchpress API server listening on {}:{}", host, port);
             axum::serve(listener, app).await?;
         }
 
         Commands::Check { url, timeout } => {
-            let result = nodebench_qa_engine::qa::run_qa_check(&url, timeout).await?;
+            let result = benchpress_engine::qa::run_qa_check(&url, timeout).await?;
             if cli.json {
                 println!("{}", serde_json::to_string_pretty(&result)?);
             } else {
@@ -171,7 +171,7 @@ async fn main() -> Result<()> {
         }
 
         Commands::Sitemap { url, depth, max_pages } => {
-            let result = nodebench_qa_engine::crawl::crawl_sitemap(&url, depth, max_pages).await?;
+            let result = benchpress_engine::crawl::crawl_sitemap(&url, depth, max_pages).await?;
             if cli.json {
                 println!("{}", serde_json::to_string_pretty(&result)?);
             } else {
@@ -185,7 +185,7 @@ async fn main() -> Result<()> {
         }
 
         Commands::Audit { url } => {
-            let result = nodebench_qa_engine::audit::run_ux_audit(&url).await?;
+            let result = benchpress_engine::audit::run_ux_audit(&url).await?;
             if cli.json {
                 println!("{}", serde_json::to_string_pretty(&result)?);
             } else {
@@ -204,7 +204,7 @@ async fn main() -> Result<()> {
         }
 
         Commands::Diff { url, baseline } => {
-            let result = nodebench_qa_engine::diff::run_diff_crawl(&url, baseline.as_deref()).await?;
+            let result = benchpress_engine::diff::run_diff_crawl(&url, baseline.as_deref()).await?;
             if cli.json {
                 println!("{}", serde_json::to_string_pretty(&result)?);
             } else {
@@ -217,7 +217,7 @@ async fn main() -> Result<()> {
         }
 
         Commands::Pipeline { url } => {
-            let result = nodebench_qa_agents::pipeline::run_pipeline(&url).await?;
+            let result = benchpress_agents::pipeline::run_pipeline(&url).await?;
             if cli.json {
                 println!("{}", serde_json::to_string_pretty(&result)?);
             } else {
@@ -230,7 +230,7 @@ async fn main() -> Result<()> {
         }
 
         Commands::Health { url } => {
-            let client = nodebench_qa_sdk::NbqaClient::new(&url);
+            let client = benchpress_sdk::BpClient::new(&url);
             match client.health().await {
                 Ok(health) => {
                     println!("Server: {} (v{})", health.status, health.version);
@@ -247,8 +247,8 @@ async fn main() -> Result<()> {
             println!("{}", BANNER);
             println!("  Version: {}", env!("CARGO_PKG_VERSION"));
             println!("  Platform: {} / {}", std::env::consts::OS, std::env::consts::ARCH);
-            println!("  Config dir: {}", nodebench_qa_core::AppConfig::config_dir().display());
-            println!("  Data dir: {}", nodebench_qa_core::AppConfig::data_dir().display());
+            println!("  Config dir: {}", benchpress_core::AppConfig::config_dir().display());
+            println!("  Data dir: {}", benchpress_core::AppConfig::data_dir().display());
         }
     }
 

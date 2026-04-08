@@ -1,16 +1,16 @@
 [package]
-name = "nodebench-qa-api"
+name = "benchpress-api"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Axum HTTP API server for nodebench-qa"
+description = "Axum HTTP API server for benchpress"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
-nodebench-qa-engine = { path = "../qa-engine" }
-nodebench-qa-agents = { path = "../agents" }
-nodebench-qa-telemetry = { path = "../telemetry" }
+benchpress-core = { path = "../core" }
+benchpress-engine = { path = "../qa-engine" }
+benchpress-agents = { path = "../agents" }
+benchpress-telemetry = { path = "../telemetry" }
 axum.workspace = true
 tokio.workspace = true
 tower.workspace = true

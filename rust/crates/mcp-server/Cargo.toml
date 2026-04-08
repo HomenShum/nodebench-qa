@@ -1,15 +1,15 @@
 [package]
-name = "nodebench-qa-mcp"
+name = "benchpress-mcp"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "MCP (Model Context Protocol) server for nodebench-qa"
+description = "MCP (Model Context Protocol) server for benchpress"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
-nodebench-qa-engine = { path = "../qa-engine" }
-nodebench-qa-agents = { path = "../agents" }
+benchpress-core = { path = "../core" }
+benchpress-engine = { path = "../qa-engine" }
+benchpress-agents = { path = "../agents" }
 axum.workspace = true
 tokio.workspace = true
 serde.workspace = true

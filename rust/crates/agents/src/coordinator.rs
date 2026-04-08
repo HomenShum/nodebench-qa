@@ -1,4 +1,4 @@
-use nodebench_qa_core::Result;
+use benchpress_core::Result;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -59,7 +59,7 @@ impl Coordinator {
         let id = task.id;
 
         if self.active_tasks.len() >= self.max_concurrent {
-            return Err(nodebench_qa_core::Error::Agent(format!(
+            return Err(benchpress_core::Error::Agent(format!(
                 "Max concurrent tasks ({}) reached",
                 self.max_concurrent
             )));

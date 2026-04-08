@@ -1,13 +1,13 @@
 [package]
-name = "nodebench-qa-telemetry"
+name = "benchpress-telemetry"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Telemetry, tracing, and observability for nodebench-qa"
+description = "Telemetry, tracing, and observability for benchpress"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
+benchpress-core = { path = "../core" }
 tracing.workspace = true
 tracing-subscriber.workspace = true
 serde.workspace = true

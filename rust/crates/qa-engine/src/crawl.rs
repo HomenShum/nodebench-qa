@@ -1,5 +1,5 @@
-use nodebench_qa_core::types::{SitemapPage, SitemapResult};
-use nodebench_qa_core::Result;
+use benchpress_core::types::{SitemapPage, SitemapResult};
+use benchpress_core::Result;
 use std::collections::{HashSet, VecDeque};
 
 /// Crawl a website and produce a sitemap
@@ -9,7 +9,7 @@ pub async fn crawl_sitemap(root_url: &str, max_depth: u8, max_pages: usize) -> R
         .timeout(std::time::Duration::from_secs(10))
         .redirect(reqwest::redirect::Policy::limited(5))
         .build()
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let mut visited: HashSet<String> = HashSet::new();
     let mut queue: VecDeque<(String, u8)> = VecDeque::new();

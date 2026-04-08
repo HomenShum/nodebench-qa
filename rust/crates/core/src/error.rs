@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-/// Unified error type for nodebench-qa
+/// Unified error type for benchpress
 #[derive(Error, Debug)]
 pub enum Error {
     #[error("Configuration error: {0}")]

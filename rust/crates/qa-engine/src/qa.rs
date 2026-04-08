@@ -1,8 +1,8 @@
-use nodebench_qa_core::types::{
+use benchpress_core::types::{
     Evidence, IssueCategory, QaIssue, QaMetadata, QaResult, QaScore, ScoreDimensions, Severity,
     Viewport,
 };
-use nodebench_qa_core::Result;
+use benchpress_core::Result;
 use uuid::Uuid;
 
 /// Run a full QA check on the given URL.
@@ -16,19 +16,19 @@ pub async fn run_qa_check(url: &str, timeout_ms: u64) -> Result<QaResult> {
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_millis(timeout_ms))
         .build()
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let response = client
         .get(url)
         .send()
         .await
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let status = response.status().as_u16();
     let body = response
         .text()
         .await
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let mut issues = Vec::new();
 

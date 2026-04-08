@@ -1,21 +1,21 @@
-//! nodebench-qa-sdk: Rust SDK for consuming nodebench-qa services
+//! benchpress-sdk: Rust SDK for consuming benchpress services
 //!
 //! Provides a typed client for external applications to interact with
-//! the nodebench-qa API and MCP server.
+//! the benchpress API and MCP server.
 
-use nodebench_qa_core::types::{QaResult, SitemapResult, UxAuditResult};
-use nodebench_qa_core::Result;
+use benchpress_core::types::{QaResult, SitemapResult, UxAuditResult};
+use benchpress_core::Result;
 use serde::Deserialize;
 
-/// Client for the nodebench-qa API
-pub struct NbqaClient {
+/// Client for the benchpress API
+pub struct BpClient {
     base_url: String,
     client: reqwest::Client,
     auth_token: Option<String>,
 }
 
-impl NbqaClient {
-    /// Create a new client pointing at a nodebench-qa server
+impl BpClient {
+    /// Create a new client pointing at a benchpress server
     pub fn new(base_url: &str) -> Self {
         Self {
             base_url: base_url.trim_end_matches('/').to_string(),
@@ -56,7 +56,7 @@ impl NbqaClient {
             .await?;
 
         let result: QaResult = resp.json().await.map_err(|e| {
-            nodebench_qa_core::Error::Internal(format!("Failed to parse QA result: {}", e))
+            benchpress_core::Error::Internal(format!("Failed to parse QA result: {}", e))
         })?;
         Ok(result)
     }
@@ -74,7 +74,7 @@ impl NbqaClient {
             .await?;
 
         let result: SitemapResult = resp.json().await.map_err(|e| {
-            nodebench_qa_core::Error::Internal(format!("Failed to parse sitemap: {}", e))
+            benchpress_core::Error::Internal(format!("Failed to parse sitemap: {}", e))
         })?;
         Ok(result)
     }
@@ -88,7 +88,7 @@ impl NbqaClient {
             .await?;
 
         let result: UxAuditResult = resp.json().await.map_err(|e| {
-            nodebench_qa_core::Error::Internal(format!("Failed to parse UX audit: {}", e))
+            benchpress_core::Error::Internal(format!("Failed to parse UX audit: {}", e))
         })?;
         Ok(result)
     }
@@ -101,7 +101,7 @@ impl NbqaClient {
             .await?;
 
         let result: HealthResponse = resp.json().await.map_err(|e| {
-            nodebench_qa_core::Error::Internal(format!("Failed to parse health: {}", e))
+            benchpress_core::Error::Internal(format!("Failed to parse health: {}", e))
         })?;
         Ok(result)
     }

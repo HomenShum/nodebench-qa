@@ -1,5 +1,5 @@
-use nodebench_qa_core::types::{Severity, UxAuditResult, UxFinding};
-use nodebench_qa_core::Result;
+use benchpress_core::types::{Severity, UxAuditResult, UxFinding};
+use benchpress_core::Result;
 
 /// 21-rule UX audit checklist
 const UX_RULES: &[UxRule] = &[
@@ -39,18 +39,18 @@ pub async fn run_ux_audit(url: &str) -> Result<UxAuditResult> {
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(15))
         .build()
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let response = client
         .get(url)
         .send()
         .await
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let body = response
         .text()
         .await
-        .map_err(|e| nodebench_qa_core::Error::QaEngine(e.to_string()))?;
+        .map_err(|e| benchpress_core::Error::QaEngine(e.to_string()))?;
 
     let mut findings = Vec::new();
 

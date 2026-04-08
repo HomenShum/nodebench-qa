@@ -1,7 +1,7 @@
-//! nodebench-qa-telemetry: Observability, tracing, and metrics
+//! benchpress-telemetry: Observability, tracing, and metrics
 //!
 //! Provides structured logging, distributed tracing, and metrics collection
-//! for all nodebench-qa operations.
+//! for all benchpress operations.
 
 use tracing_subscriber::{fmt, EnvFilter};
 
@@ -13,7 +13,7 @@ pub fn init() {
 /// Initialize with an explicit minimum log level (avoids unsafe set_var)
 pub fn init_with_level(level: &str) {
     let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new(format!("{},nodebench_qa=debug", level)));
+        .unwrap_or_else(|_| EnvFilter::new(format!("{},benchpress=debug", level)));
 
     fmt()
         .with_env_filter(filter)

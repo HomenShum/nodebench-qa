@@ -1,13 +1,13 @@
 [package]
-name = "nodebench-qa-sdk"
+name = "benchpress-sdk"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "Rust SDK for consuming nodebench-qa services"
+description = "Rust SDK for consuming benchpress services"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
+benchpress-core = { path = "../core" }
 reqwest.workspace = true
 tokio.workspace = true
 serde.workspace = true

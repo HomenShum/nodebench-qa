@@ -1,5 +1,5 @@
 [package]
-name = "nodebench-qa-engine"
+name = "benchpress-engine"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,7 +7,7 @@ license.workspace = true
 description = "QA engine: browser automation, crawling, accessibility audits"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
+benchpress-core = { path = "../core" }
 tokio.workspace = true
 reqwest.workspace = true
 serde.workspace = true

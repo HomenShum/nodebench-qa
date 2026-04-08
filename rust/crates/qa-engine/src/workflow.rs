@@ -1,5 +1,5 @@
-use nodebench_qa_core::types::{TokenCost, Workflow, WorkflowAction, WorkflowStep};
-use nodebench_qa_core::Result;
+use benchpress_core::types::{TokenCost, Workflow, WorkflowAction, WorkflowStep};
+use benchpress_core::Result;
 use uuid::Uuid;
 
 /// Record a new workflow by capturing user actions

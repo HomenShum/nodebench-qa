@@ -1,4 +1,4 @@
-//! nodebench-qa-api: Axum HTTP API server
+//! benchpress-api: Axum HTTP API server
 //!
 //! Provides the REST API for QA operations, agent orchestration,
 //! and frontend communication.
@@ -7,7 +7,7 @@ pub mod routes;
 pub mod state;
 
 use axum::Router;
-use nodebench_qa_core::AppConfig;
+use benchpress_core::AppConfig;
 use state::AppState;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};

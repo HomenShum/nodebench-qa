@@ -9,6 +9,10 @@ members = [
     "rust/crates/cli",
     "rust/crates/telemetry",
     "rust/crates/sdk",
+    "rust/crates/workflow",
+    "rust/crates/distiller",
+    "rust/crates/judge",
+    "rust/crates/llm-client",
 ]
 
 [workspace.package]
@@ -16,8 +20,8 @@ version = "0.1.0"
 edition = "2024"
 authors = ["NodeBench <hello@nodebenchai.com>"]
 license = "MIT"
-repository = "https://github.com/Homen-ta/nodebench-qa"
-description = "Full-stack QA platform for AI coding agents — Rust + React rewrite"
+repository = "https://github.com/Homen-ta/benchpress"
+description = "Workflow memory + distillation engine — capture frontier model workflows, distill for cheaper replay"
 
 [workspace.dependencies]
 # Async runtime
@@ -56,6 +60,10 @@ tokio-tungstenite = "0.26"
 futures-util = "0.3"
 # MCP protocol
 jsonrpc-core = "18.0"
+# SQLite
+rusqlite = { version = "0.33", features = ["bundled"] }
+# Encoding
+base64 = "0.22"
 
 [profile.release]
 opt-level = 3

@@ -6,17 +6,17 @@ import { saveFromResult } from "../lib/storage";
 
 const FEATURE_CARDS: { title: string; desc: string; accent?: boolean }[] = [
   {
-    title: "QA Check",
-    desc: "JS errors, accessibility, rendering, performance, SEO, security -- in one call.",
+    title: "Workflow Capture",
+    desc: "Record frontier model workflows end-to-end. Every tool call, every decision, every output.",
     accent: true,
   },
   {
-    title: "Trajectory Replay",
-    desc: "Run once, replay forever. 60-70% token savings on reruns via screen fingerprints.",
+    title: "Distillation",
+    desc: "Distill expensive workflows into cheaper replays. 60-70% token savings on reruns.",
   },
   {
-    title: "MCP Native",
-    desc: "Works inside Claude Code, Cursor, Windsurf. Install via npx or cargo.",
+    title: "Judge Replay",
+    desc: "Replay and judge distilled workflows. MCP-native, works inside Claude Code, Cursor, Windsurf.",
   },
 ];
 
@@ -69,8 +69,8 @@ export function Landing() {
               marginBottom: "1rem",
             }}
           >
-            nodebench-
-            <span style={{ color: "var(--accent)" }}>qa</span>
+            bench
+            <span style={{ color: "var(--accent)" }}>press</span>
           </h1>
 
           <p
@@ -81,9 +81,9 @@ export function Landing() {
               marginBottom: "2.5rem",
             }}
           >
-            AI agents forget. nodebench-qa remembers.
+            Frontier models are expensive. benchpress distills them.
             <br />
-            QA your app in 60 seconds. 60-70% fewer tokens on reruns.
+            Capture workflows once, replay for 60-70% fewer tokens.
           </p>
 
           {/* URL input + QA Check button */}
@@ -259,7 +259,7 @@ export function Landing() {
             </div>
             <div>
               <span style={{ color: "var(--accent)" }}>$</span> cargo install
-              nodebench-qa-cli
+              benchpress-cli
             </div>
             <div
               style={{ marginTop: "0.625rem", color: "var(--text-muted)" }}
@@ -267,7 +267,7 @@ export function Landing() {
               # Or use from Claude Code / Cursor / Windsurf
             </div>
             <div>
-              <span style={{ color: "var(--accent)" }}>$</span> nbqa check
+              <span style={{ color: "var(--accent)" }}>$</span> bp check
               http://localhost:3000
             </div>
           </div>

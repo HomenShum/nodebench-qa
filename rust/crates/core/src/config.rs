@@ -99,11 +99,11 @@ impl AppConfig {
         }
     }
 
-    /// Platform-specific config directory: ~/.nodebench-qa/
+    /// Platform-specific config directory: ~/.benchpress/
     pub fn config_dir() -> PathBuf {
         directories::BaseDirs::new()
-            .map(|d| d.home_dir().join(".nodebench-qa"))
-            .unwrap_or_else(|| PathBuf::from(".nodebench-qa"))
+            .map(|d| d.home_dir().join(".benchpress"))
+            .unwrap_or_else(|| PathBuf::from(".benchpress"))
     }
 
     /// Data directory for SQLite, caches, etc.

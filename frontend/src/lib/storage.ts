@@ -4,7 +4,7 @@
 
 import type { QaCheckResult } from "./api";
 
-const STORAGE_KEY = "nbqa_runs";
+const STORAGE_KEY = "bp_runs";
 const MAX_RUNS = 100;
 
 export interface QaRun {

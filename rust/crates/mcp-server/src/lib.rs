@@ -1,7 +1,7 @@
-//! nodebench-qa-mcp: MCP (Model Context Protocol) server
+//! benchpress-mcp: MCP (Model Context Protocol) server
 //!
-//! Exposes QA tools via JSON-RPC over HTTP for AI coding agents
-//! (Claude Code, Cursor, Windsurf, Devin, etc.)
+//! Exposes workflow capture and distillation tools via JSON-RPC over HTTP
+//! for AI coding agents (Claude Code, Cursor, Windsurf, Devin, etc.)
 
 pub mod protocol;
 pub mod tools;

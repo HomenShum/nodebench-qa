@@ -68,7 +68,7 @@ fn handle_initialize(_state: &McpState) -> std::result::Result<serde_json::Value
             "tools": {}
         },
         "serverInfo": {
-            "name": "nodebench-qa",
+            "name": "benchpress",
             "version": env!("CARGO_PKG_VERSION")
         }
     }))

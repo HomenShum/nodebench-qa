@@ -1,4 +1,4 @@
-//! nodebench-qa-engine: QA engine for browser automation, crawling, and auditing
+//! benchpress-engine: QA engine for browser automation, crawling, and auditing
 //!
 //! This crate provides the core QA functionality:
 //! - `qa` — Full QA check (JS errors, a11y, rendering, performance)

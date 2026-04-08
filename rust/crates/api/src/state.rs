@@ -1,4 +1,4 @@
-use nodebench_qa_core::AppConfig;
+use benchpress_core::AppConfig;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 /// Shared application state across all request handlers

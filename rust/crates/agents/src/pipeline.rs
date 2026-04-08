@@ -1,4 +1,4 @@
-use nodebench_qa_core::Result;
+use benchpress_core::Result;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -63,7 +63,7 @@ pub async fn run_pipeline(url: &str) -> Result<PipelineRun> {
     };
 
     // Stage 1: Crawl
-    let crawl_result = nodebench_qa_engine::crawl::crawl_sitemap(url, 2, 20).await?;
+    let crawl_result = benchpress_engine::crawl::crawl_sitemap(url, 2, 20).await?;
     let mut stages = vec![StageResult {
         stage: PipelineStage::Crawl,
         status: StageStatus::Completed,
@@ -72,7 +72,7 @@ pub async fn run_pipeline(url: &str) -> Result<PipelineRun> {
     }];
 
     // Stage 2: Analyze each page
-    let qa_result = nodebench_qa_engine::qa::run_qa_check(url, 30_000).await?;
+    let qa_result = benchpress_engine::qa::run_qa_check(url, 30_000).await?;
     stages.push(StageResult {
         stage: PipelineStage::Analyze,
         status: StageStatus::Completed,
@@ -84,7 +84,7 @@ pub async fn run_pipeline(url: &str) -> Result<PipelineRun> {
     });
 
     // Stage 3: UX Audit
-    let audit_result = nodebench_qa_engine::audit::run_ux_audit(url).await?;
+    let audit_result = benchpress_engine::audit::run_ux_audit(url).await?;
     stages.push(StageResult {
         stage: PipelineStage::Verify,
         status: StageStatus::Completed,

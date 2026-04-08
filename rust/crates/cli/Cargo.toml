@@ -1,22 +1,22 @@
 [package]
-name = "nodebench-qa-cli"
+name = "benchpress-cli"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
-description = "CLI binary for nodebench-qa"
+description = "CLI binary for benchpress"
 
 [[bin]]
-name = "nbqa"
+name = "bp"
 path = "src/main.rs"
 
 [dependencies]
-nodebench-qa-core = { path = "../core" }
-nodebench-qa-api = { path = "../api" }
-nodebench-qa-mcp = { path = "../mcp-server" }
-nodebench-qa-engine = { path = "../qa-engine" }
-nodebench-qa-agents = { path = "../agents" }
-nodebench-qa-telemetry = { path = "../telemetry" }
+benchpress-core = { path = "../core" }
+benchpress-api = { path = "../api" }
+benchpress-mcp = { path = "../mcp-server" }
+benchpress-engine = { path = "../qa-engine" }
+benchpress-agents = { path = "../agents" }
+benchpress-telemetry = { path = "../telemetry" }
 clap.workspace = true
 tokio.workspace = true
 tracing.workspace = true
@@ -24,5 +24,5 @@ tracing-subscriber.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true
-nodebench-qa-sdk = { path = "../sdk" }
+benchpress-sdk = { path = "../sdk" }
 axum.workspace = true

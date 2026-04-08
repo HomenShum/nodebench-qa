@@ -1,4 +1,4 @@
-//! nodebench-qa-agents: Multi-agent orchestration
+//! benchpress-agents: Multi-agent orchestration
 //!
 //! Hierarchical agent system:
 //! - Coordinator: Routes tasks to specialist agents
