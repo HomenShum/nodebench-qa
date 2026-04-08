@@ -1,7 +1,13 @@
 [package]
 name = "attrition-llm-client"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Multi-provider LLM client for attrition (Anthropic, OpenAI, OpenAI-compatible)"
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 attrition-core = { path = "../core" }

@@ -90,6 +90,59 @@ pub struct ApiErrorDetail {
     pub message: String,
 }
 
+// ── OpenAI Chat Completion Types ──────────────────────────────────────────
+
+/// LLM provider discriminator for multi-provider dispatch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum LlmProvider {
+    Anthropic,
+    OpenAI,
+    OpenAICompatible,
+}
+
+/// OpenAI Chat Completion request body.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatCompletionRequest {
+    pub model: String,
+    pub messages: Vec<ChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_tokens: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f64>,
+}
+
+/// A single message in an OpenAI chat conversation.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatMessage {
+    pub role: String,
+    pub content: String,
+}
+
+/// OpenAI Chat Completion response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatCompletionResponse {
+    pub id: String,
+    pub model: String,
+    pub choices: Vec<ChatChoice>,
+    pub usage: Option<ChatUsage>,
+}
+
+/// A single choice in an OpenAI Chat Completion response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatChoice {
+    pub index: u32,
+    pub message: ChatMessage,
+    pub finish_reason: Option<String>,
+}
+
+/// Token usage from an OpenAI Chat Completion response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatUsage {
+    pub prompt_tokens: u64,
+    pub completion_tokens: u64,
+    pub total_tokens: u64,
+}
+
 // ── Model Configuration ────────────────────────────────────────────────────
 
 /// Named model tiers for the attrition pipeline.

@@ -1,4 +1,6 @@
-//! Anthropic Messages API client with retry, token tracking, and vision support.
+//! Multi-provider LLM client with retry, token tracking, and vision support.
+//!
+//! Supports Anthropic (Claude), OpenAI, and OpenAI-compatible endpoints.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
@@ -8,7 +10,8 @@ use reqwest::header::{HeaderMap, HeaderValue, CONTENT_TYPE};
 use tracing::{debug, warn};
 
 use crate::types::{
-    ApiErrorResponse, ContentBlock, ImageSource, Message, MessageRequest, MessageResponse,
+    ApiErrorResponse, ChatCompletionRequest, ChatCompletionResponse, ChatMessage, ContentBlock,
+    ImageSource, LlmProvider, Message, MessageRequest, MessageResponse,
 };
 
 /// Maximum number of retries for retryable errors (429/529).
@@ -23,11 +26,15 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(120);
 /// Anthropic API version header value.
 const API_VERSION: &str = "2023-06-01";
 
-/// HTTP client for the Anthropic Messages API.
+/// Backward-compatibility alias. Existing code using `ClaudeClient` still compiles.
+pub type ClaudeClient = LlmClient;
+
+/// Multi-provider HTTP client for LLM APIs.
 ///
 /// Tracks cumulative token usage across all calls for cost accounting.
 /// Retries on 429 (rate limited) and 529 (overloaded) with exponential backoff.
-pub struct ClaudeClient {
+pub struct LlmClient {
+    provider: LlmProvider,
     api_key: String,
     api_endpoint: String,
     model: String,
@@ -36,17 +43,59 @@ pub struct ClaudeClient {
     total_output_tokens: AtomicU64,
 }
 
-impl ClaudeClient {
-    /// Create a new client targeting the Anthropic API.
+impl LlmClient {
+    /// Create a new Anthropic client. Backward-compatible alias for [`LlmClient::anthropic`].
     pub fn new(api_key: &str, model: &str) -> Self {
+        Self::anthropic(api_key, model)
+    }
+
+    /// Create a client targeting the Anthropic Messages API.
+    pub fn anthropic(api_key: &str, model: &str) -> Self {
         let client = reqwest::Client::builder()
             .timeout(REQUEST_TIMEOUT)
             .build()
             .expect("Failed to build HTTP client");
 
         Self {
+            provider: LlmProvider::Anthropic,
             api_key: api_key.to_string(),
             api_endpoint: "https://api.anthropic.com".to_string(),
+            model: model.to_string(),
+            client,
+            total_input_tokens: AtomicU64::new(0),
+            total_output_tokens: AtomicU64::new(0),
+        }
+    }
+
+    /// Create a client targeting the OpenAI Chat Completions API.
+    pub fn openai(api_key: &str, model: &str) -> Self {
+        let client = reqwest::Client::builder()
+            .timeout(REQUEST_TIMEOUT)
+            .build()
+            .expect("Failed to build HTTP client");
+
+        Self {
+            provider: LlmProvider::OpenAI,
+            api_key: api_key.to_string(),
+            api_endpoint: "https://api.openai.com".to_string(),
+            model: model.to_string(),
+            client,
+            total_input_tokens: AtomicU64::new(0),
+            total_output_tokens: AtomicU64::new(0),
+        }
+    }
+
+    /// Create a client targeting an OpenAI-compatible endpoint (vLLM, Ollama, Together, etc.).
+    pub fn openai_compatible(api_key: &str, endpoint: &str, model: &str) -> Self {
+        let client = reqwest::Client::builder()
+            .timeout(REQUEST_TIMEOUT)
+            .build()
+            .expect("Failed to build HTTP client");
+
+        Self {
+            provider: LlmProvider::OpenAICompatible,
+            api_key: api_key.to_string(),
+            api_endpoint: endpoint.trim_end_matches('/').to_string(),
             model: model.to_string(),
             client,
             total_input_tokens: AtomicU64::new(0),
@@ -69,43 +118,45 @@ impl ClaudeClient {
         Self { client, ..self }
     }
 
-    /// Generate a text completion.
+    /// Which provider this client targets.
+    pub fn provider(&self) -> LlmProvider {
+        self.provider
+    }
+
+    /// Generate a text completion, dispatching to the correct provider.
     ///
-    /// Sends a single user message to the Messages API and returns the
-    /// assistant's text response. Tracks token usage atomically.
+    /// Sends a single user message and returns the assistant's text response.
+    /// Tracks token usage atomically.
     pub async fn generate(
         &self,
         prompt: &str,
         system: Option<&str>,
         max_tokens: u32,
     ) -> Result<String> {
-        let request = MessageRequest {
-            model: self.model.clone(),
-            max_tokens,
-            messages: vec![Message {
-                role: "user".into(),
-                content: vec![ContentBlock::Text {
-                    text: prompt.to_string(),
-                }],
-            }],
-            system: system.map(|s| s.to_string()),
-            temperature: None,
-        };
-
-        let response = self.send_request(&request).await?;
-        self.track_usage(&response);
-        extract_text(&response)
+        match self.provider {
+            LlmProvider::Anthropic => self.anthropic_generate(prompt, system, max_tokens).await,
+            LlmProvider::OpenAI | LlmProvider::OpenAICompatible => {
+                self.openai_generate(prompt, system, max_tokens).await
+            }
+        }
     }
 
     /// Generate with vision — analyze a PNG screenshot alongside a text prompt.
     ///
     /// The image bytes are base64-encoded and sent as an Image content block.
+    /// Currently only supported for Anthropic. Returns an error for other providers.
     pub async fn vision(
         &self,
         prompt: &str,
         image_png: &[u8],
         max_tokens: u32,
     ) -> Result<String> {
+        if self.provider != LlmProvider::Anthropic {
+            return Err(Error::Internal(
+                "Vision is currently only supported for the Anthropic provider".into(),
+            ));
+        }
+
         use base64::Engine as _;
         let encoded = base64::engine::general_purpose::STANDARD.encode(image_png);
 
@@ -131,8 +182,8 @@ impl ClaudeClient {
             temperature: None,
         };
 
-        let response = self.send_request(&request).await?;
-        self.track_usage(&response);
+        let response = self.send_anthropic_request(&request).await?;
+        self.track_anthropic_usage(&response);
         extract_text(&response)
     }
 
@@ -155,12 +206,37 @@ impl ClaudeClient {
         &self.model
     }
 
-    // ── Internal ───────────────────────────────────────────────────────────
+    // ── Anthropic internals ────────────────────────────────────────────────
 
-    /// Send a MessageRequest with retry on 429/529.
-    async fn send_request(&self, request: &MessageRequest) -> Result<MessageResponse> {
+    /// Anthropic-specific text generation via the Messages API.
+    async fn anthropic_generate(
+        &self,
+        prompt: &str,
+        system: Option<&str>,
+        max_tokens: u32,
+    ) -> Result<String> {
+        let request = MessageRequest {
+            model: self.model.clone(),
+            max_tokens,
+            messages: vec![Message {
+                role: "user".into(),
+                content: vec![ContentBlock::Text {
+                    text: prompt.to_string(),
+                }],
+            }],
+            system: system.map(|s| s.to_string()),
+            temperature: None,
+        };
+
+        let response = self.send_anthropic_request(&request).await?;
+        self.track_anthropic_usage(&response);
+        extract_text(&response)
+    }
+
+    /// Send a MessageRequest to the Anthropic API with retry on 429/529.
+    async fn send_anthropic_request(&self, request: &MessageRequest) -> Result<MessageResponse> {
         let url = format!("{}/v1/messages", self.api_endpoint);
-        let headers = self.build_headers()?;
+        let headers = self.build_anthropic_headers()?;
         let body = serde_json::to_string(request)?;
 
         let mut last_error: Option<Error> = None;
@@ -271,7 +347,7 @@ impl ClaudeClient {
     }
 
     /// Build the required headers for the Anthropic API.
-    fn build_headers(&self) -> Result<HeaderMap> {
+    fn build_anthropic_headers(&self) -> Result<HeaderMap> {
         let mut headers = HeaderMap::new();
 
         headers.insert(
@@ -294,12 +370,176 @@ impl ClaudeClient {
         Ok(headers)
     }
 
-    /// Atomically accumulate token usage.
-    fn track_usage(&self, response: &MessageResponse) {
+    /// Atomically accumulate token usage from an Anthropic response.
+    fn track_anthropic_usage(&self, response: &MessageResponse) {
         self.total_input_tokens
             .fetch_add(response.usage.input_tokens, Ordering::Relaxed);
         self.total_output_tokens
             .fetch_add(response.usage.output_tokens, Ordering::Relaxed);
+    }
+
+    // ── OpenAI internals ───────────────────────────────────────────────────
+
+    /// OpenAI / OpenAI-compatible text generation via Chat Completions API.
+    async fn openai_generate(
+        &self,
+        prompt: &str,
+        system: Option<&str>,
+        max_tokens: u32,
+    ) -> Result<String> {
+        let mut messages = Vec::new();
+        if let Some(sys) = system {
+            messages.push(ChatMessage {
+                role: "system".into(),
+                content: sys.into(),
+            });
+        }
+        messages.push(ChatMessage {
+            role: "user".into(),
+            content: prompt.into(),
+        });
+
+        let request = ChatCompletionRequest {
+            model: self.model.clone(),
+            messages,
+            max_tokens: Some(max_tokens),
+            temperature: None,
+        };
+
+        let response = self.send_openai_request(&request).await?;
+
+        // Track token usage if present.
+        if let Some(ref usage) = response.usage {
+            self.total_input_tokens
+                .fetch_add(usage.prompt_tokens, Ordering::Relaxed);
+            self.total_output_tokens
+                .fetch_add(usage.completion_tokens, Ordering::Relaxed);
+        }
+
+        // Extract text from the first choice.
+        response
+            .choices
+            .first()
+            .map(|c| c.message.content.clone())
+            .ok_or_else(|| {
+                Error::Internal("OpenAI response contained no choices".into())
+            })
+    }
+
+    /// Send a ChatCompletionRequest to the OpenAI-compatible API with retry on 429/529.
+    async fn send_openai_request(
+        &self,
+        request: &ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse> {
+        let url = format!("{}/v1/chat/completions", self.api_endpoint);
+        let body = serde_json::to_string(request)?;
+
+        let mut last_error: Option<Error> = None;
+
+        for attempt in 0..=MAX_RETRIES {
+            if attempt > 0 {
+                let backoff_ms = BASE_BACKOFF_MS * (1 << (attempt - 1));
+                debug!(attempt, backoff_ms, "Retrying after backoff");
+                tokio::time::sleep(Duration::from_millis(backoff_ms)).await;
+            }
+
+            let result = self
+                .client
+                .post(&url)
+                .header("Authorization", format!("Bearer {}", self.api_key))
+                .header("Content-Type", "application/json")
+                .body(body.clone())
+                .send()
+                .await;
+
+            match result {
+                Ok(resp) => {
+                    let status = resp.status();
+
+                    if status.is_success() {
+                        let response_body = resp.text().await.map_err(|e| {
+                            Error::Internal(format!("Failed to read response body: {}", e))
+                        })?;
+
+                        let chat_response: ChatCompletionResponse =
+                            serde_json::from_str(&response_body).map_err(|e| {
+                                Error::Internal(format!(
+                                    "Failed to parse OpenAI response: {}. Body: {}",
+                                    e,
+                                    truncate(&response_body, 200),
+                                ))
+                            })?;
+
+                        return Ok(chat_response);
+                    }
+
+                    // Read error body for diagnostics.
+                    let error_body = resp.text().await.unwrap_or_default();
+
+                    // Retryable: 429 (rate limited), 529 (overloaded).
+                    if status.as_u16() == 429 || status.as_u16() == 529 {
+                        warn!(
+                            status = status.as_u16(),
+                            attempt,
+                            "Retryable API error"
+                        );
+                        last_error = Some(Error::RateLimited {
+                            retry_after_ms: BASE_BACKOFF_MS * (1 << attempt),
+                        });
+                        continue;
+                    }
+
+                    // 401 — bad API key.
+                    if status.as_u16() == 401 {
+                        return Err(Error::Auth(
+                            "Invalid API key. Check your OPENAI_API_KEY.".into(),
+                        ));
+                    }
+
+                    // 400 — bad request (non-retryable).
+                    if status.as_u16() == 400 {
+                        let detail = parse_error_message(&error_body);
+                        return Err(Error::Internal(format!(
+                            "Bad request (400): {}",
+                            detail,
+                        )));
+                    }
+
+                    // Other errors — don't retry.
+                    let detail = parse_error_message(&error_body);
+                    return Err(Error::Internal(format!(
+                        "API error {}: {}",
+                        status.as_u16(),
+                        detail,
+                    )));
+                }
+                Err(e) => {
+                    // Network errors — retryable.
+                    if e.is_timeout() {
+                        warn!(attempt, "Request timed out");
+                        last_error =
+                            Some(Error::Timeout(REQUEST_TIMEOUT.as_millis() as u64));
+                        continue;
+                    }
+                    if e.is_connect() {
+                        warn!(attempt, "Connection failed");
+                        last_error = Some(Error::Internal(format!(
+                            "Connection to {} failed: {}",
+                            self.api_endpoint, e,
+                        )));
+                        continue;
+                    }
+
+                    // Non-retryable network error.
+                    return Err(Error::Http(e));
+                }
+            }
+        }
+
+        // All retries exhausted.
+        Err(last_error.unwrap_or_else(|| {
+            Error::Internal("All retries exhausted with no error captured".into())
+        }))
     }
 }
 
@@ -347,7 +587,7 @@ fn truncate(s: &str, max: usize) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{ContentBlock, MessageResponse, Usage};
+    use crate::types::{ContentBlock, LlmProvider, MessageResponse, Usage};
 
     #[test]
     fn extract_text_from_response() {
@@ -405,10 +645,10 @@ mod tests {
                 output_tokens: 50,
             },
         };
-        client.track_usage(&response);
+        client.track_anthropic_usage(&response);
         assert_eq!(client.tokens_used(), (100, 50));
 
-        client.track_usage(&response);
+        client.track_anthropic_usage(&response);
         assert_eq!(client.tokens_used(), (200, 100));
 
         client.reset_token_counters();
@@ -444,7 +684,7 @@ mod tests {
     #[test]
     fn headers_built_correctly() {
         let client = ClaudeClient::new("sk-ant-test-key", "claude-sonnet-4-6");
-        let headers = client.build_headers().unwrap();
+        let headers = client.build_anthropic_headers().unwrap();
         assert_eq!(
             headers.get("content-type").unwrap(),
             "application/json"
@@ -457,5 +697,40 @@ mod tests {
             headers.get("anthropic-version").unwrap(),
             "2023-06-01"
         );
+    }
+
+    // ── New multi-provider tests ───────────────────────────────────────────
+
+    #[test]
+    fn test_openai_client_creation() {
+        let client = LlmClient::openai("sk-test-openai-key", "gpt-4o");
+        assert_eq!(client.provider(), LlmProvider::OpenAI);
+        assert_eq!(client.model(), "gpt-4o");
+        assert_eq!(client.tokens_used(), (0, 0));
+    }
+
+    #[test]
+    fn test_anthropic_backward_compat() {
+        // ClaudeClient::new must still work as before.
+        let client = ClaudeClient::new("sk-ant-test", "claude-sonnet-4-6");
+        assert_eq!(client.provider(), LlmProvider::Anthropic);
+        assert_eq!(client.model(), "claude-sonnet-4-6");
+
+        // LlmClient::new is the same thing.
+        let client2 = LlmClient::new("sk-ant-test", "claude-sonnet-4-6");
+        assert_eq!(client2.provider(), LlmProvider::Anthropic);
+    }
+
+    #[test]
+    fn test_openai_compatible_custom_endpoint() {
+        let client = LlmClient::openai_compatible(
+            "token-123",
+            "https://my-vllm.example.com/",
+            "meta-llama/Llama-3-70b",
+        );
+        assert_eq!(client.provider(), LlmProvider::OpenAICompatible);
+        assert_eq!(client.model(), "meta-llama/Llama-3-70b");
+        // Trailing slash should be trimmed.
+        assert_eq!(client.api_endpoint, "https://my-vllm.example.com");
     }
 }

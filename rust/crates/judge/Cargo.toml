@@ -1,7 +1,13 @@
 [package]
 name = "attrition-judge"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "LLM judge and evaluation engine for attrition"
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 attrition-core = { path = "../core" }
@@ -12,3 +18,4 @@ uuid.workspace = true
 chrono.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
+regex.workspace = true

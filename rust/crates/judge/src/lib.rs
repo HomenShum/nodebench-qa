@@ -7,6 +7,7 @@
 pub mod attention;
 pub mod diff;
 pub mod engine;
+pub mod learner;
 pub mod types;
 
 pub use types::*;

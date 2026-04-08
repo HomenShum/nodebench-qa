@@ -1,7 +1,13 @@
 [package]
 name = "attrition-distiller"
-version = "0.1.0"
-edition = "2024"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+description = "Model distillation engine for attrition"
+homepage.workspace = true
+keywords.workspace = true
+categories.workspace = true
 
 [dependencies]
 attrition-core = { path = "../core" }
