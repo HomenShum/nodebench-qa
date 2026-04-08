@@ -46,6 +46,8 @@ export function Layout({ children }: { children: ReactNode }) {
     <div
       style={{
         minHeight: "100vh",
+        maxWidth: "100vw",
+        overflowX: "hidden",
         display: "flex",
         flexDirection: "column",
         background: "var(--bg-primary)",
