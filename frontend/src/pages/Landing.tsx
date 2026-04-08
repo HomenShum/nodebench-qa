@@ -112,6 +112,8 @@ export function Landing() {
           flexDirection: "column",
           alignItems: "center",
           padding: "4rem 1.5rem 2rem",
+          overflowX: "hidden",
+          maxWidth: "100vw",
         }}
       >
         <div style={{ textAlign: "center", maxWidth: 820, width: "100%" }}>
