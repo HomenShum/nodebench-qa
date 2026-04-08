@@ -100,7 +100,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
       {/* Footer */}
       <footer style={footerStyle}>
-        attrition &middot; workflow memory + distillation engine
+        attrition &middot; enforcement hooks for AI agents
       </footer>
     </div>
   );
