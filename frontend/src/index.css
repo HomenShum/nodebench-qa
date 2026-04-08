@@ -19,6 +19,11 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
 body {
   font-family: "Inter", "Manrope", system-ui, -apple-system, sans-serif;
   background: var(--bg-primary);
