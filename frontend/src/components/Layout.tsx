@@ -3,11 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
+  { to: "/proof", label: "Proof" },
   { to: "/workflows", label: "Workflows" },
   { to: "/judge", label: "Judge" },
   { to: "/anatomy", label: "Anatomy" },
   { to: "/benchmark", label: "Benchmark" },
-  { to: "/compare", label: "Compare" },
 ] as const;
 
 const navStyle: React.CSSProperties = {

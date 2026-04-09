@@ -154,7 +154,7 @@ export function Landing() {
 
           <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", flexWrap: "wrap" }}>
             <button
-              onClick={() => document.getElementById("product-screen")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => navigate("/proof")}
               style={{
                 padding: "0.875rem 2rem",
                 borderRadius: "0.75rem",
@@ -166,7 +166,7 @@ export function Landing() {
                 cursor: "pointer",
               }}
             >
-              Watch a real run
+              See the proof
             </button>
             <button
               onClick={() => navigate("/anatomy")}
