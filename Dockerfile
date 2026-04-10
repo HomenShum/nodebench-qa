@@ -6,7 +6,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1: Build Rust backend
 # ---------------------------------------------------------------------------
-FROM rust:1.85-bookworm AS rust-builder
+FROM rust:1.86-bookworm AS rust-builder
 WORKDIR /app
 
 # Cache dependency build — copy manifests first
