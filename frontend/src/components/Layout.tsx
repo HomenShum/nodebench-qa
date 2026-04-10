@@ -1,5 +1,7 @@
 import { type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useChat } from "../contexts/ChatContext";
+import { ChatPanel } from "./ChatPanel";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
@@ -44,6 +46,7 @@ const footerStyle: React.CSSProperties = {
 
 export function Layout({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
+  const { togglePanel } = useChat();
 
   return (
     <div
@@ -84,18 +87,37 @@ export function Layout({ children }: { children: ReactNode }) {
           })}
         </div>
 
-        <a
-          href="https://github.com/HomenShum/attrition"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            fontSize: "0.8125rem",
-            color: "var(--text-muted)",
-            textDecoration: "none",
-          }}
-        >
-          GitHub
-        </a>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          <button
+            onClick={togglePanel}
+            style={{
+              padding: "0.375rem 0.875rem",
+              borderRadius: "0.5rem",
+              border: "1px solid rgba(217,119,87,0.3)",
+              background: "rgba(217,119,87,0.06)",
+              color: "#d97757",
+              fontSize: "0.8125rem",
+              fontWeight: 600,
+              cursor: "pointer",
+              transition: "background 0.15s, border-color 0.15s",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Ask attrition
+          </button>
+          <a
+            href="https://github.com/HomenShum/attrition"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: "0.8125rem",
+              color: "var(--text-muted)",
+              textDecoration: "none",
+            }}
+          >
+            GitHub
+          </a>
+        </div>
       </nav>
 
       {/* Main content */}
@@ -105,6 +127,9 @@ export function Layout({ children }: { children: ReactNode }) {
       <footer style={footerStyle}>
         attrition &middot; enforcement hooks for AI agents
       </footer>
+
+      {/* Chat panel (slide-over) */}
+      <ChatPanel />
     </div>
   );
 }

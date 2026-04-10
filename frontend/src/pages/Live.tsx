@@ -100,6 +100,88 @@ function verdictBg(verdict: string): string {
   }
 }
 
+/* ── Demo data generator ──────────────────────────────────────── */
+
+const DEMO_TOOLS = [
+  { tool: "Grep", scrubbed: 'pattern="async.*fetch" src/**/*.ts' },
+  { tool: "Read", scrubbed: "src/api/client.ts (1-120)" },
+  { tool: "Edit", scrubbed: "src/api/client.ts: convert fetch to async/await" },
+  { tool: "Bash", scrubbed: "npm test -- --run" },
+  { tool: "Read", scrubbed: "src/types/api.d.ts (1-45)" },
+  { tool: "Grep", scrubbed: 'pattern="import.*client" src/' },
+  { tool: "Edit", scrubbed: "src/services/auth.ts: update import paths" },
+  { tool: "Bash", scrubbed: "npx tsc --noEmit" },
+  { tool: "WebSearch", scrubbed: "breaking changes async-retry v4" },
+  { tool: "Edit", scrubbed: "src/api/retry.ts: add AbortController timeout" },
+  { tool: "Read", scrubbed: "package.json (dependencies)" },
+  { tool: "Bash", scrubbed: "npm run build" },
+  { tool: "Grep", scrubbed: 'pattern="\.then\\(" src/' },
+  { tool: "Edit", scrubbed: "src/utils/fetch.ts: remove .then() chains" },
+  { tool: "Bash", scrubbed: "npm run test:integration" },
+];
+
+const DEMO_WORKFLOW_STEPS: WorkflowStep[] = [
+  { name: "Grep for sync patterns", has_evidence: true, evidence_tools: ["Grep"] },
+  { name: "Read affected source files", has_evidence: true, evidence_tools: ["Read"] },
+  { name: "Edit files to async/await", has_evidence: true, evidence_tools: ["Edit"] },
+  { name: "Search for breaking changes", has_evidence: false, evidence_tools: [] },
+  { name: "Update generated types", has_evidence: true, evidence_tools: ["Edit"] },
+  { name: "Run unit tests", has_evidence: true, evidence_tools: ["Bash(test)"] },
+  { name: "Run integration tests", has_evidence: false, evidence_tools: [] },
+  { name: "Build and verify", has_evidence: false, evidence_tools: [] },
+];
+
+function makeDemoTimestamp(offsetSec: number): string {
+  const d = new Date(Date.now() - offsetSec * 1000);
+  return d.toISOString().slice(0, 19);
+}
+
+function generateDemoActivity(count: number): ActivityEvent[] {
+  const events: ActivityEvent[] = [];
+  for (let i = 0; i < count; i++) {
+    const entry = DEMO_TOOLS[i % DEMO_TOOLS.length];
+    const isBlocked = i === 7; // One blocked entry
+    events.push({
+      ts: makeDemoTimestamp((count - i) * 12),
+      tool: isBlocked ? "Grep" : entry.tool,
+      keys: [],
+      scrubbed: isBlocked ? 'pattern="async.*fetch" (DUPLICATE)' : entry.scrubbed,
+      was_blocked: isBlocked,
+    });
+  }
+  return events;
+}
+
+function buildDemoStatus(tickCount: number): LiveStatus {
+  // Steps complete progressively: start at 5/8, advance toward 8/8
+  const stepsComplete = Math.min(5 + Math.floor(tickCount / 4), 8);
+  const steps = DEMO_WORKFLOW_STEPS.map((s, i) => ({
+    ...s,
+    has_evidence: i < stepsComplete,
+    evidence_tools: i < stepsComplete ? (s.evidence_tools.length > 0 ? s.evidence_tools : ["Bash"]) : [],
+  }));
+  const pct = Math.round((stepsComplete / 8) * 100);
+
+  // Verdict evolves: ESCALATE -> ALLOW as steps complete
+  let verdict = "ESCALATE";
+  if (stepsComplete >= 7) verdict = "ALLOW";
+
+  return {
+    hooks_installed: 10,
+    hooks: ALL_HOOK_NAMES.map((name) => ({ name, detail: "active" })),
+    active_workflow: {
+      name: "API Client Refactor",
+      steps,
+      completion_pct: pct,
+    },
+    recent_activity: [],
+    blocked_searches: 1,
+    total_events: 8 + tickCount,
+    session_duration_sec: 142 + tickCount * 5,
+    verdict_if_stopped_now: verdict,
+  };
+}
+
 /* ── StatusCard ──────────────────────────────────────────────── */
 
 function StatusCard({
@@ -167,13 +249,54 @@ function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
+/* ── Demo Banner ──────────────────────────────────────────────── */
+
+function DemoBanner() {
+  return (
+    <div
+      style={{
+        ...glass,
+        padding: "0.75rem 1.25rem",
+        marginBottom: "1.5rem",
+        border: "1px solid rgba(234,179,8,0.35)",
+        background: "rgba(234,179,8,0.04)",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+      }}
+    >
+      <div
+        style={{
+          ...mono,
+          fontSize: "0.6875rem",
+          fontWeight: 700,
+          letterSpacing: "0.08em",
+          color: "#eab308",
+          padding: "0.15rem 0.5rem",
+          borderRadius: "0.25rem",
+          background: "rgba(234,179,8,0.15)",
+          flexShrink: 0,
+        }}
+      >
+        DEMO MODE
+      </div>
+      <span style={{ fontSize: "0.8125rem", color: "#9a9590", lineHeight: 1.4 }}>
+        Showing simulated data. Run{" "}
+        <code style={{ ...mono, fontSize: "0.75rem", color: "#d97757" }}>bp serve</code>{" "}
+        for live data.
+      </span>
+    </div>
+  );
+}
+
 /* ── Main Component ──────────────────────────────────────────── */
 
 export function Live() {
   const [status, setStatus] = useState<LiveStatus | null>(null);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [connected, setConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
+  const [demoTick, setDemoTick] = useState(0);
   const feedRef = useRef<HTMLDivElement>(null);
 
   const fetchStatus = useCallback(async () => {
@@ -183,10 +306,11 @@ export function Live() {
       const data: LiveStatus = await res.json();
       setStatus(data);
       setConnected(true);
-      setError(null);
+      setIsDemo(false);
     } catch {
       setConnected(false);
-      setError("Cannot reach server");
+      // Fall back to demo mode
+      setIsDemo(true);
     }
   }, []);
 
@@ -197,19 +321,82 @@ export function Live() {
       const data: ActivityEvent[] = await res.json();
       setActivity(data);
     } catch {
-      // silent — status fetch handles connection state
+      // silent -- demo mode handles activity
     }
   }, []);
 
+  // Initial connection attempt
   useEffect(() => {
     fetchStatus();
     fetchActivity();
-    const interval = setInterval(() => {
-      fetchStatus();
-      fetchActivity();
-    }, 5000);
-    return () => clearInterval(interval);
   }, [fetchStatus, fetchActivity]);
+
+  // Live polling when connected
+  useEffect(() => {
+    if (!connected && !isDemo) return;
+
+    if (connected) {
+      const interval = setInterval(() => {
+        fetchStatus();
+        fetchActivity();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [connected, isDemo, fetchStatus, fetchActivity]);
+
+  // Demo mode tick: update data every 5 seconds
+  useEffect(() => {
+    if (!isDemo) return;
+
+    // Set initial demo data
+    const demoStatus = buildDemoStatus(0);
+    setStatus(demoStatus);
+    setActivity(generateDemoActivity(8));
+
+    const interval = setInterval(() => {
+      setDemoTick((prev) => {
+        const next = prev + 1;
+        const newStatus = buildDemoStatus(next);
+        setStatus(newStatus);
+        // Add 1 new activity entry each tick
+        setActivity((prevActivity) => {
+          const newEntry: ActivityEvent = {
+            ts: makeDemoTimestamp(0),
+            tool: DEMO_TOOLS[next % DEMO_TOOLS.length].tool,
+            keys: [],
+            scrubbed: DEMO_TOOLS[next % DEMO_TOOLS.length].scrubbed,
+            was_blocked: false,
+          };
+          return [...prevActivity, newEntry].slice(-50);
+        });
+        return next;
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isDemo]);
+
+  // Periodically retry connection even in demo mode
+  useEffect(() => {
+    if (!isDemo) return;
+
+    const retryInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/live/status`);
+        if (res.ok) {
+          const data: LiveStatus = await res.json();
+          setStatus(data);
+          setConnected(true);
+          setIsDemo(false);
+          setDemoTick(0);
+        }
+      } catch {
+        // still offline, stay in demo
+      }
+    }, 15000);
+
+    return () => clearInterval(retryInterval);
+  }, [isDemo]);
 
   // Auto-scroll activity feed
   useEffect(() => {
@@ -217,6 +404,9 @@ export function Live() {
       feedRef.current.scrollTop = feedRef.current.scrollHeight;
     }
   }, [activity]);
+
+  // Suppress unused variable warning
+  void demoTick;
 
   const workflow = status?.active_workflow ?? null;
   const verdict = status?.verdict_if_stopped_now ?? "UNKNOWN";
@@ -259,11 +449,15 @@ export function Live() {
               borderRadius: "1rem",
               background: connected
                 ? "rgba(34,197,94,0.1)"
-                : "rgba(239,68,68,0.1)",
+                : isDemo
+                  ? "rgba(234,179,8,0.1)"
+                  : "rgba(239,68,68,0.1)",
               border: `1px solid ${
                 connected
                   ? "rgba(34,197,94,0.2)"
-                  : "rgba(239,68,68,0.2)"
+                  : isDemo
+                    ? "rgba(234,179,8,0.2)"
+                    : "rgba(239,68,68,0.2)"
               }`,
             }}
           >
@@ -272,101 +466,23 @@ export function Live() {
                 width: 8,
                 height: 8,
                 borderRadius: "50%",
-                background: connected ? "#22c55e" : "#ef4444",
+                background: connected ? "#22c55e" : isDemo ? "#eab308" : "#ef4444",
               }}
             />
             <span
               style={{
                 ...mono,
                 fontSize: "0.6875rem",
-                color: connected ? "#22c55e" : "#ef4444",
+                color: connected ? "#22c55e" : isDemo ? "#eab308" : "#ef4444",
               }}
             >
-              {connected ? "Connected" : "Disconnected"}
+              {connected ? "Connected" : isDemo ? "Demo" : "Disconnected"}
             </span>
           </div>
         </div>
 
-        {/* ── Not connected state ─────────────────────────────── */}
-        {!connected && (
-          <div
-            style={{
-              ...glass,
-              padding: "2rem",
-              textAlign: "center",
-              marginBottom: "1.5rem",
-              border: "1px solid rgba(239,68,68,0.15)",
-              background: "rgba(239,68,68,0.02)",
-            }}
-          >
-            <div
-              style={{
-                fontSize: "1rem",
-                color: "#ef4444",
-                marginBottom: "0.75rem",
-                fontWeight: 600,
-              }}
-            >
-              {error || "Not connected"}
-            </div>
-            <p
-              style={{
-                fontSize: "0.875rem",
-                color: "#9a9590",
-                marginBottom: "1rem",
-                lineHeight: 1.6,
-              }}
-            >
-              Start the attrition server to see live status:
-            </p>
-            <div
-              style={{
-                ...glass,
-                ...mono,
-                padding: "0.75rem 1.25rem",
-                fontSize: "0.8125rem",
-                maxWidth: 400,
-                margin: "0 auto 1rem",
-                border: "1px solid rgba(217,119,87,0.25)",
-                background: "rgba(217,119,87,0.03)",
-                textAlign: "center",
-              }}
-            >
-              <span style={{ color: "#d97757" }}>$</span>{" "}
-              <span style={{ color: "#e8e6e3" }}>
-                bp serve --port 8100
-              </span>
-            </div>
-            <p
-              style={{
-                fontSize: "0.8125rem",
-                color: "#6b6560",
-                lineHeight: 1.5,
-              }}
-            >
-              Install hooks:{" "}
-              <code
-                style={{
-                  ...mono,
-                  fontSize: "0.75rem",
-                  color: "#d97757",
-                }}
-              >
-                bp install
-              </code>{" "}
-              or{" "}
-              <code
-                style={{
-                  ...mono,
-                  fontSize: "0.75rem",
-                  color: "#d97757",
-                }}
-              >
-                curl -sL attrition.sh/install | bash
-              </code>
-            </p>
-          </div>
-        )}
+        {/* ── Demo banner ─────────────────────────────────────── */}
+        {isDemo && <DemoBanner />}
 
         {/* ── Row 1: Status Cards ─────────────────────────────── */}
         {status && (
@@ -875,7 +991,6 @@ function toolBadgeColor(tool: string): string {
 
 function toolBadgeBg(tool: string): string {
   const color = toolBadgeColor(tool);
-  // Extract hex to rgba
   const r = parseInt(color.slice(1, 3), 16);
   const g = parseInt(color.slice(3, 5), 16);
   const b = parseInt(color.slice(5, 7), 16);

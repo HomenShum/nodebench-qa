@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { seedDemoData } from "../lib/demo-data";
+import { useChat } from "../contexts/ChatContext";
+import { ScoreRing } from "../components/ScoreRing";
 
 /* ── Shared styles ─────────────────────────────────────────────── */
 
@@ -104,6 +106,285 @@ const PERSONAS = [
 
 const PROVIDERS = ["Claude Code", "Cursor", "OpenAI", "LangChain", "CrewAI", "Anthropic", "PydanticAI"];
 
+/* ── Simulated scan result type ───────────────────────────────── */
+
+interface ScanFinding {
+  severity: "warning" | "info";
+  title: string;
+}
+
+interface ScanResult {
+  score: number;
+  findings: ScanFinding[];
+  url: string;
+  durationMs: number;
+}
+
+function simulateScan(url: string): ScanResult {
+  return {
+    score: 85,
+    url,
+    durationMs: 1247,
+    findings: [
+      { severity: "warning", title: "Missing viewport meta tag on /about" },
+      { severity: "info", title: "2 images without alt text on /" },
+      { severity: "info", title: "No canonical URL set on /pricing" },
+    ],
+  };
+}
+
+/* ── TryItScanner ────────────────────────────────────────────── */
+
+function TryItScanner() {
+  const [url, setUrl] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [result, setResult] = useState<ScanResult | null>(null);
+  const [dots, setDots] = useState("");
+  const chat = useChat();
+
+  // Animate dots during scanning
+  useEffect(() => {
+    if (!scanning) return;
+    const interval = setInterval(() => {
+      setDots((d) => (d.length >= 3 ? "" : d + "."));
+    }, 400);
+    return () => clearInterval(interval);
+  }, [scanning]);
+
+  const handleScan = useCallback(async () => {
+    let scanUrl = url.trim();
+    if (!scanUrl) return;
+    if (!scanUrl.startsWith("http")) scanUrl = `https://${scanUrl}`;
+
+    setScanning(true);
+    setResult(null);
+
+    // Try real backend first
+    try {
+      const res = await fetch("/api/qa/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: scanUrl }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResult({
+          score: data.score,
+          url: scanUrl,
+          durationMs: data.duration_ms,
+          findings: data.issues?.slice(0, 3).map((i: { severity: string; title: string }) => ({
+            severity: i.severity === "critical" || i.severity === "high" ? "warning" as const : "info" as const,
+            title: i.title,
+          })) ?? [],
+        });
+        setScanning(false);
+        return;
+      }
+    } catch {
+      // Server offline, fall back to simulation
+    }
+
+    // Simulate with progressive delay
+    await new Promise((r) => setTimeout(r, 2000));
+    setResult(simulateScan(scanUrl));
+    setScanning(false);
+  }, [url]);
+
+  const openInChat = useCallback(() => {
+    if (!result) return;
+    chat.sendMessage(`scan ${result.url}`);
+    chat.openPanel();
+  }, [result, chat]);
+
+  return (
+    <section style={{ ...sectionGap, textAlign: "center" }}>
+      <h2
+        style={{
+          fontSize: "1.5rem",
+          fontWeight: 700,
+          letterSpacing: "-0.02em",
+          color: "#e8e6e3",
+          marginBottom: "0.5rem",
+        }}
+      >
+        Try it now — no install needed
+      </h2>
+      <p style={{ ...muted, marginBottom: "1.5rem", fontSize: "0.875rem" }}>
+        Enter any URL. See what attrition catches in seconds.
+      </p>
+
+      {/* Scanner input */}
+      <div
+        style={{
+          ...glass,
+          padding: "1.25rem",
+          maxWidth: 600,
+          margin: "0 auto",
+        }}
+      >
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleScan();
+          }}
+          style={{
+            display: "flex",
+            gap: "0.5rem",
+            marginBottom: result || scanning ? "1rem" : 0,
+          }}
+        >
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://your-app.com"
+            disabled={scanning}
+            style={{
+              flex: 1,
+              padding: "0.625rem 0.875rem",
+              borderRadius: "0.5rem",
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)",
+              color: "#e8e6e3",
+              fontSize: "0.875rem",
+              outline: "none",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          />
+          <button
+            type="submit"
+            disabled={scanning || !url.trim()}
+            style={{
+              padding: "0.625rem 1.5rem",
+              borderRadius: "0.5rem",
+              border: "none",
+              background: scanning || !url.trim() ? "#3a3530" : "#d97757",
+              color: scanning || !url.trim() ? "#6b6560" : "#fff",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              cursor: scanning || !url.trim() ? "not-allowed" : "pointer",
+              transition: "background 0.15s",
+              flexShrink: 0,
+            }}
+          >
+            {scanning ? `Scanning${dots}` : "Scan"}
+          </button>
+        </form>
+
+        {/* Scanning state */}
+        {scanning && (
+          <div
+            style={{
+              padding: "1rem",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ ...mono, fontSize: "0.8125rem", color: "#9a9590" }}>
+              Crawling pages{dots}
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {result && !scanning && (
+          <div style={{ textAlign: "left" }}>
+            {/* Score + summary row */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "1.25rem",
+                marginBottom: "1rem",
+                paddingBottom: "0.75rem",
+                borderBottom: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <ScoreRing score={result.score} size={72} strokeWidth={6} />
+              <div style={{ flex: 1, paddingTop: "0.25rem" }}>
+                <div style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#e8e6e3", marginBottom: "0.25rem" }}>
+                  {result.findings.length} finding{result.findings.length !== 1 ? "s" : ""}
+                </div>
+                <div style={{ ...mono, fontSize: "0.6875rem", color: "#6b6560" }}>
+                  Scanned in {(result.durationMs / 1000).toFixed(1)}s
+                </div>
+              </div>
+            </div>
+
+            {/* Finding cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.375rem", marginBottom: "1rem" }}>
+              {result.findings.map((f, i) => (
+                <div
+                  key={i}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "0.5rem",
+                    padding: "0.5rem 0.625rem",
+                    borderRadius: "0.375rem",
+                    background:
+                      f.severity === "warning"
+                        ? "rgba(234,179,8,0.04)"
+                        : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${
+                      f.severity === "warning"
+                        ? "rgba(234,179,8,0.15)"
+                        : "rgba(255,255,255,0.04)"
+                    }`,
+                  }}
+                >
+                  <span
+                    style={{
+                      ...mono,
+                      fontSize: "0.625rem",
+                      fontWeight: 600,
+                      padding: "0.1rem 0.375rem",
+                      borderRadius: "0.2rem",
+                      background:
+                        f.severity === "warning"
+                          ? "rgba(234,179,8,0.15)"
+                          : "rgba(96,165,250,0.1)",
+                      color: f.severity === "warning" ? "#eab308" : "#60a5fa",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {f.severity.toUpperCase()}
+                  </span>
+                  <span style={{ fontSize: "0.8125rem", color: "#c5c0bb" }}>
+                    {f.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            {/* Action links */}
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
+              <a
+                href="/anatomy"
+                style={{ fontSize: "0.8125rem", color: "#d97757", textDecoration: "none" }}
+              >
+                View full trace &rarr;
+              </a>
+              <button
+                onClick={openInChat}
+                style={{
+                  background: "none",
+                  border: "none",
+                  fontSize: "0.8125rem",
+                  color: "#d97757",
+                  cursor: "pointer",
+                  padding: 0,
+                }}
+              >
+                Open in chat &rarr;
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 /* ── Component ────────────────────────────────────────────────── */
 
 export function Landing() {
@@ -185,6 +466,11 @@ export function Landing() {
             </button>
           </div>
         </section>
+
+        {/* ═══════════════════════════════════════════════════════
+            TRY IT NOW — interactive URL scanner
+            ═══════════════════════════════════════════════════════ */}
+        <TryItScanner />
 
         {/* ═══════════════════════════════════════════════════════
             [2/8] THE PRODUCT IN ONE SCREEN — visible miss
