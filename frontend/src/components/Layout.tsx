@@ -5,13 +5,8 @@ import { ChatPanel } from "./ChatPanel";
 
 const NAV_LINKS = [
   { to: "/", label: "Home" },
-  { to: "/live", label: "Live" },
   { to: "/proof", label: "Proof" },
-  { to: "/improvements", label: "Improvements" },
-  { to: "/workflows", label: "Workflows" },
-  { to: "/judge", label: "Judge" },
-  { to: "/anatomy", label: "Anatomy" },
-  { to: "/benchmark", label: "Benchmark" },
+  { to: "/improvements", label: "How It Works" },
   { to: "/get-started", label: "Get Started" },
 ] as const;
 
