@@ -445,6 +445,89 @@ export function Landing() {
           </div>
         </section>
 
+        {/* ══════════════════════════════════════════════════════════
+            INTEGRATE: for products that want attrition as their cost layer
+            ══════════════════════════════════════════════════════════ */}
+        <section style={{ marginBottom: "4rem" }}>
+          <h2 style={{
+            fontSize: "1.5rem",
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            color: TEXT,
+            marginBottom: "0.5rem",
+            textAlign: "center",
+          }}>
+            Build it into your product
+          </h2>
+          <p style={{
+            fontSize: "0.875rem",
+            color: MUTED,
+            textAlign: "center",
+            marginBottom: "2rem",
+            maxWidth: 520,
+            marginLeft: "auto",
+            marginRight: "auto",
+            lineHeight: 1.6,
+          }}>
+            Any app that runs agent workflows can use attrition to measure cost,
+            capture runs, and replay them cheaper. NodeBench already does.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", maxWidth: 700, margin: "0 auto 1.5rem" }}>
+            {/* Retention Bridge */}
+            <div style={{ ...glass, padding: "1.25rem" }}>
+              <div style={{ ...mono, fontSize: "0.6875rem", color: ACCENT, marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Retention Bridge API
+              </div>
+              <div style={{ fontSize: "0.8125rem", color: TEXT, lineHeight: 1.5, marginBottom: "0.75rem" }}>
+                Push pipeline results to attrition. Get cost tracking, workflow capture, and replay for free.
+              </div>
+              <pre style={{ ...mono, fontSize: "0.6875rem", color: MUTED, padding: "0.625rem 0.75rem", borderRadius: "0.375rem", background: BG, border: `1px solid ${BORDER}`, margin: 0, overflowX: "auto", lineHeight: 1.7 }}>
+{`POST /api/retention/push-packet
+{
+  "type": "delta.pipeline_run",
+  "subject": "Company analysis",
+  "summary": "Conf: 95, Sources: 6,
+              Duration: 12s"
+}`}
+              </pre>
+            </div>
+
+            {/* Python SDK */}
+            <div style={{ ...glass, padding: "1.25rem" }}>
+              <div style={{ ...mono, fontSize: "0.6875rem", color: ACCENT, marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                Python SDK (one line)
+              </div>
+              <div style={{ fontSize: "0.8125rem", color: TEXT, lineHeight: 1.5, marginBottom: "0.75rem" }}>
+                Auto-patches OpenAI, Anthropic, LangChain, CrewAI. Every API call tracked and costed.
+              </div>
+              <pre style={{ ...mono, fontSize: "0.6875rem", color: MUTED, padding: "0.625rem 0.75rem", borderRadius: "0.375rem", background: BG, border: `1px solid ${BORDER}`, margin: 0, overflowX: "auto", lineHeight: 1.7 }}>
+{`from attrition import track
+track()
+
+# That's it. Every LLM call
+# is now captured + costed.`}
+              </pre>
+            </div>
+          </div>
+
+          {/* How NodeBench uses it */}
+          <div style={{ ...glass, padding: "1.25rem", maxWidth: 700, margin: "0 auto" }}>
+            <div style={{ ...mono, fontSize: "0.6875rem", color: GREEN, marginBottom: "0.5rem", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+              Live example: NodeBench AI
+            </div>
+            <div style={{ fontSize: "0.8125rem", color: TEXT, lineHeight: 1.6, marginBottom: "0.75rem" }}>
+              NodeBench runs research pipelines for startup analysis. Every search pushes results to attrition via the retention bridge. Cost, latency, and source count are tracked per run. Replay savings compound over time.
+            </div>
+            <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap", ...mono, fontSize: "0.75rem" }}>
+              <span style={{ color: MUTED }}>5 queries captured</span>
+              <span style={{ color: MUTED }}>avg 88% confidence</span>
+              <span style={{ color: MUTED }}>avg 19.9s latency</span>
+              <span style={{ color: GREEN }}>80% replay savings</span>
+            </div>
+          </div>
+        </section>
+
       </div>
     </Layout>
   );
