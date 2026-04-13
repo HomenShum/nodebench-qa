@@ -102,8 +102,8 @@ export function Landing() {
             </p>
             <p style={{ margin: "0 0 1rem" }}>
               Your Claude Code / Cursor / Codex sessions run expensive frontier
-              models, repeat the same workflows, and you have no idea if $1.84
-              was well spent or if $0.27 would have produced the same result.
+              models, repeat the same workflows, and you have no idea what each
+              session actually cost or if a cheaper model would produce the same result.
             </p>
             <p style={{ margin: 0 }}>
               attrition wraps agent sessions, measures real cost,
@@ -146,54 +146,67 @@ export function Landing() {
           </div>
         </section>
 
-        {/* ---- S2: BEFORE / AFTER EXAMPLE -------------------------- */}
+        {/* ---- S2: LIVE CAPTURED DATA or INSTALL PROMPT ------------- */}
         <section id="example" style={{ marginBottom: "4rem" }}>
-          <div style={sectionLabel}>A real comparison</div>
-          <div style={{
-            borderRadius: "0.5rem",
-            border: `1px solid ${BORDER}`,
-            background: CARD,
-            padding: "1.5rem 1.5rem",
-            ...mono,
-            fontSize: "0.8125rem",
-            lineHeight: 1.8,
-          }}>
-            <div style={{ color: MUTED, marginBottom: "0.25rem" }}>Your session</div>
-            <div style={{ color: TEXT, fontWeight: 500 }}>
-              "Refactor API client to async/await"
-            </div>
-            <div style={{ color: MUTED, marginBottom: "0.75rem" }}>
-              claude-opus-4-6 &middot; 47 tool calls &middot; 8m 12s
-            </div>
-            <div style={{ fontSize: "1.25rem", color: TEXT, fontWeight: 700, marginBottom: "1.25rem" }}>
-              Cost: $1.84
-            </div>
-
+          <div style={sectionLabel}>What it captures</div>
+          {packets.length > 0 && packets[0].cost != null ? (
             <div style={{
-              borderTop: `1px solid ${BORDER}`,
-              paddingTop: "1rem",
+              borderRadius: "0.5rem",
+              border: `1px solid ${BORDER}`,
+              background: CARD,
+              padding: "1.5rem 1.5rem",
+              ...mono,
+              fontSize: "0.8125rem",
+              lineHeight: 1.8,
             }}>
-              <div style={{ color: ACCENT, fontWeight: 600, marginBottom: "0.25rem" }}>
-                With attrition:
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+                <span style={{
+                  fontSize: "0.625rem",
+                  fontWeight: 700,
+                  padding: "0.125rem 0.5rem",
+                  borderRadius: "0.25rem",
+                  background: "rgba(34,197,94,0.1)",
+                  color: GREEN,
+                  letterSpacing: "0.05em",
+                }}>MEASURED</span>
+                <span style={{ color: MUTED }}>Latest captured run</span>
               </div>
-              <div style={{ color: MUTED }}>
-                Same workflow replayed on claude-sonnet-4-6
+              <div style={{ color: TEXT, fontWeight: 500 }}>
+                {packets[0].entity || packets[0].query || "Pipeline run"}
               </div>
-              <div style={{
-                display: "flex",
-                gap: "1.5rem",
-                marginTop: "0.5rem",
-                flexWrap: "wrap",
-              }}>
-                <span style={{ color: GREEN, fontWeight: 600 }}>Cost: $0.27</span>
-                <span style={{ color: GREEN }}>Judge: CORRECT</span>
-                <span style={{ color: TEXT, fontWeight: 600 }}>Savings: 85%</span>
+              <div style={{ color: MUTED, marginBottom: "0.75rem" }}>
+                {packets[0].sourceCount != null && <>{packets[0].sourceCount} sources &middot; </>}
+                {packets[0].durationMs != null && <>{(packets[0].durationMs / 1000).toFixed(1)}s</>}
+              </div>
+              <div style={{ fontSize: "1.25rem", color: GREEN, fontWeight: 700 }}>
+                Cost: ${packets[0].cost.toFixed(4)}
+              </div>
+              <div style={{ ...mono, fontSize: "0.6875rem", color: MUTED, marginTop: "0.5rem" }}>
+                Real cost from Gemini API token usage
               </div>
             </div>
-          </div>
-          <div style={{ ...mono, fontSize: "0.75rem", color: MUTED, marginTop: "0.625rem" }}>
-            Real comparison from an actual refactoring session.
-          </div>
+          ) : (
+            <div style={{
+              borderRadius: "0.5rem",
+              border: `1px solid ${BORDER}`,
+              background: CARD,
+              padding: "1.5rem 1.5rem",
+              ...mono,
+              fontSize: "0.8125rem",
+              lineHeight: 1.8,
+            }}>
+              <div style={{ color: TEXT, fontWeight: 500, marginBottom: "0.5rem" }}>
+                Every session gets measured, not estimated.
+              </div>
+              <div style={{ color: MUTED, marginBottom: "0.75rem" }}>
+                attrition captures real token counts and API costs from every
+                pipeline run. No fake numbers, no estimates.
+              </div>
+              <div style={{ color: ACCENT, fontWeight: 600 }}>
+                Install to see your real costs.
+              </div>
+            </div>
+          )}
         </section>
 
         {/* ---- S3: THREE THINGS IT DOES ---------------------------- */}
@@ -236,7 +249,7 @@ track()  # auto-patches OpenAI, Anthropic, LangChain`}</pre>
                 Know exactly what it cost.
               </p>
               <pre style={codeBlock}>{`$ bp status
-Last session: 47 tool calls  $1.84  8m 12s`}</pre>
+Last session: 4 trace steps  1,801 tokens  $0.0002`}</pre>
             </div>
 
             {/* Replay */}
@@ -255,7 +268,7 @@ Last session: 47 tool calls  $1.84  8m 12s`}</pre>
                 Run it again cheaper.
               </p>
               <pre style={codeBlock}>{`$ bp replay <id> --model sonnet
-Replay: $0.27  Judge: CORRECT  Savings: 85%`}</pre>
+Replay complete. Compare costs in /improvements`}</pre>
             </div>
           </div>
         </section>
@@ -380,8 +393,8 @@ Replay: $0.27  Judge: CORRECT  Savings: 85%`}</pre>
 {`POST /api/retention/push-packet
 {
   "type": "delta.pipeline_run",
-  "subject": "Refactor API client",
-  "summary": "47 tool calls, $1.84, 8m 12s"
+  "subject": "Pipeline: Analyze Stripe",
+  "summary": "Confidence: 95, Sources: 6, Tokens: 1801"
 }`}
           </pre>
         </section>

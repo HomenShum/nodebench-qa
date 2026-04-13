@@ -11,12 +11,28 @@ const sectionLabel: React.CSSProperties = { ...mono, fontSize: "0.625rem", textT
 interface TraceStep { step: string; tool: string; status: string; durationMs: number; detail: string }
 interface SourceRef { title: string; url: string }
 interface NextAction { action: string }
+interface RealCost {
+  model: string;
+  inputTokens: number;
+  outputTokens: number;
+  inputCostUsd: number;
+  outputCostUsd: number;
+  totalCostUsd: number;
+}
+interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  totalTokens: number;
+  model: string;
+}
 interface PacketData {
   query: string; answer: string; confidence: number; sourceCount: number;
   entityName: string; durationMs: number; traceSteps: number;
   trace: TraceStep[]; sourceRefs: SourceRef[]; classification: string;
   model: string; tools: string[]; nextActions: NextAction[];
   answerBlockCount: number;
+  realCost?: RealCost | null;
+  tokenUsage?: TokenUsage | null;
 }
 interface RetentionPacket { type: string; subject: string; summary: string; timestamp: string; data?: PacketData | string }
 
@@ -26,6 +42,8 @@ interface EnrichedRun {
   trace: TraceStep[]; sourceRefs: SourceRef[];
   model: string; tools: string[]; classification: string;
   enriched: true;
+  realCost?: RealCost | null;
+  tokenUsage?: TokenUsage | null;
 }
 interface BasicRun {
   query: string; entity: string; confidence: number; sources: number;
@@ -43,7 +61,7 @@ function parseSummary(s: string) {
 function stripPrefix(s: string) { return s.replace(/^Pipeline:\s*/i, "").trim(); }
 function confColor(c: number) { return c >= 90 ? "#22c55e" : c >= 70 ? "#eab308" : "#ef4444"; }
 function fmt(ms: number) { return ms < 1000 ? ms + "ms" : (ms / 1000).toFixed(1) + "s"; }
-function fmtCost(usd: number) { return "$" + usd.toFixed(2); }
+
 function fmtTs(ts: string) {
   try { return new Date(ts).toLocaleString(undefined, { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
   catch { return ts; }
@@ -88,11 +106,6 @@ function StatusBadge({ status }: { status: string }) {
 function EnrichedCard({ run }: { run: EnrichedRun }) {
   const color = confColor(run.confidence);
   const maxStepMs = Math.max(...run.trace.map(s => s.durationMs), 1);
-  const dSec = run.durationMs / 1000;
-  const frontier = dSec * 0.015;
-  const replay = dSec * 0.003;
-  const savingsPct = frontier > 0 ? Math.round(((frontier - replay) / frontier) * 100) : 0;
-  const maxCost = Math.max(frontier, 0.01);
 
   return (
     <div style={{ ...glass, padding: "1.25rem 1.5rem", marginBottom: "1rem", borderLeft: `3px solid ${color}` }}>
@@ -149,36 +162,54 @@ function EnrichedCard({ run }: { run: EnrichedRun }) {
             {run.sourceRefs.map((ref, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
                 <span style={{ ...mono, fontSize: "0.625rem", color: "#6b6560" }}>{"\u2022"}</span>
-                <a href={ref.url} target="_blank" rel="noopener noreferrer"
-                  style={{ ...mono, fontSize: "0.6875rem", color: "#a78bfa", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                  {ref.title}
-                </a>
-                <span style={{ ...mono, fontSize: "0.625rem", color: "#6b6560" }}>{"\u2192"}</span>
+                {ref.url ? (
+                  <a href={ref.url} target="_blank" rel="noopener noreferrer"
+                    style={{ ...mono, fontSize: "0.6875rem", color: "#a78bfa", textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                    {ref.title || ref.url}
+                  </a>
+                ) : (
+                  <span style={{ ...mono, fontSize: "0.6875rem", color: "#9a9590", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                    {ref.title || "Untitled source"}
+                  </span>
+                )}
+                {ref.url && <span style={{ ...mono, fontSize: "0.625rem", color: "#6b6560" }}>{"\u2192"}</span>}
               </div>
             ))}
           </div>
         </>
       )}
 
-      {/* 5. Cost comparison */}
-      <div style={sectionLabel}>COST ESTIMATE</div>
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.5rem", marginBottom: "1rem" }}>
-        {[
-          { label: "Frontier (opus)", cost: frontier, color: "#9a9590" },
-          { label: "Replay (sonnet)", cost: replay, color: "#22c55e" },
-        ].map(row => (
-          <div key={row.label} style={{ display: "grid", gridTemplateColumns: "130px 52px 1fr", alignItems: "center", gap: "0.5rem", marginBottom: "0.375rem" }}>
-            <span style={{ ...mono, fontSize: "0.6875rem", color: "#9a9590" }}>{row.label}</span>
-            <span style={{ ...mono, fontSize: "0.6875rem", color: row.color, fontWeight: 600, textAlign: "right" }}>{fmtCost(row.cost)}</span>
-            <Bar pct={(row.cost / maxCost) * 100} color={row.color} />
+      {/* 5. Cost — REAL if available, honest "not measured" otherwise */}
+      {run.realCost ? (
+        <>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.25rem" }}>
+            <span style={sectionLabel}>COST</span>
+            <span style={{ ...mono, fontSize: "0.5625rem", fontWeight: 700, padding: "0.1rem 0.4rem", borderRadius: "0.25rem", background: "rgba(34,197,94,0.12)", color: "#22c55e", letterSpacing: "0.06em" }}>MEASURED</span>
           </div>
-        ))}
-        <div style={{ display: "grid", gridTemplateColumns: "130px 52px 1fr", alignItems: "center", gap: "0.5rem" }}>
-          <span style={{ ...mono, fontSize: "0.6875rem", color: "#9a9590" }}>Savings</span>
-          <span style={{ ...mono, fontSize: "0.6875rem", color: "#22c55e", fontWeight: 700, textAlign: "right" }}>{savingsPct}%</span>
-          <Bar pct={savingsPct} color="#22c55e" />
-        </div>
-      </div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.5rem", marginBottom: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "1rem", marginBottom: "0.375rem", flexWrap: "wrap" }}>
+              <span style={{ ...mono, fontSize: "1rem", fontWeight: 700, color: "#22c55e" }}>
+                ${run.realCost.totalCostUsd < 0.01 ? run.realCost.totalCostUsd.toFixed(6) : run.realCost.totalCostUsd.toFixed(4)}
+              </span>
+              <span style={{ ...mono, fontSize: "0.6875rem", color: "#9a9590" }}>
+                {run.realCost.inputTokens.toLocaleString()} input + {run.realCost.outputTokens.toLocaleString()} output tokens
+              </span>
+            </div>
+            <div style={{ ...mono, fontSize: "0.625rem", color: "#6b6560" }}>
+              {run.realCost.model} &middot; $0.075/M input, $0.30/M output
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={sectionLabel}>COST</div>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "0.5rem", marginBottom: "1rem" }}>
+            <span style={{ ...mono, fontSize: "0.6875rem", color: "#6b6560", fontStyle: "italic" }}>
+              Not measured — re-run with latest pipeline to capture real token costs
+            </span>
+          </div>
+        </>
+      )}
 
       {/* 6. Footer: model + tools + timestamp */}
       <div style={{ ...mono, fontSize: "0.5625rem", color: "#6b6560", display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
@@ -192,16 +223,15 @@ function EnrichedCard({ run }: { run: EnrichedRun }) {
 
 function BasicCard({ run }: { run: BasicRun }) {
   const color = confColor(run.confidence);
-  const savingsPct = 80; // fixed estimate for legacy packets
   return (
     <div style={{ ...glass, padding: "1rem 1.25rem", marginBottom: "1rem", borderLeft: `3px solid ${color}`, opacity: 0.7 }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: "0.75rem", flexWrap: "wrap" }}>
         <span style={{ ...mono, fontSize: "1rem", fontWeight: 700, color: "#e8e6e3", flex: 1 }}>{run.entity}</span>
         <span style={{ ...mono, fontSize: "0.8125rem", fontWeight: 600, color: "#d97757" }}>{fmt(run.durationMs)}</span>
         <span style={{ ...mono, fontSize: "0.6875rem", color, fontWeight: 700 }}>{run.confidence}%</span>
-        <span style={{ ...mono, fontSize: "0.6875rem", color: "#22c55e" }}>-{savingsPct}%</span>
+        <span style={{ ...mono, fontSize: "0.6875rem", color: "#6b6560", fontStyle: "italic" }}>cost: not measured</span>
       </div>
-      <div style={{ ...mono, fontSize: "0.5625rem", color: "#6b6560", fontStyle: "italic", marginTop: "0.375rem" }}>Legacy packet -- re-run to capture full trace</div>
+      <div style={{ ...mono, fontSize: "0.5625rem", color: "#6b6560", fontStyle: "italic", marginTop: "0.375rem" }}>Legacy packet -- re-run to capture full trace and real cost</div>
     </div>
   );
 }
@@ -235,6 +265,8 @@ export function Improvements() {
             trace: data.trace || [], sourceRefs: data.sourceRefs || [],
             model: data.model || "unknown", tools: data.tools || [],
             classification: data.classification || "unknown", enriched: true,
+            realCost: data.realCost ?? null,
+            tokenUsage: data.tokenUsage ?? null,
           });
         } else {
           const { confidence, sources, durationMs } = parseSummary(p.summary);
@@ -260,9 +292,8 @@ export function Improvements() {
   const totalRuns = runs.length;
   const enrichedCount = runs.filter(r => r.enriched).length;
   const avgConf = totalRuns > 0 ? Math.round(runs.reduce((s, r) => s + r.confidence, 0) / totalRuns) : 0;
-  const totalCostFrontier = runs.reduce((s, r) => s + (r.durationMs / 1000) * 0.015, 0);
-  const totalCostReplay = runs.reduce((s, r) => s + (r.durationMs / 1000) * 0.003, 0);
-  const totalSavings = totalCostFrontier - totalCostReplay;
+  const measuredRuns = runs.filter((r): r is EnrichedRun => r.enriched && !!(r as EnrichedRun).realCost);
+  const totalMeasuredCost = measuredRuns.reduce((s, r) => s + (r.realCost?.totalCostUsd ?? 0), 0);
 
   return (
     <Layout>
@@ -308,7 +339,7 @@ export function Improvements() {
                 {[
                   { val: String(totalRuns), lab: "runs captured", color: "#d97757" },
                   { val: String(enrichedCount), lab: "enriched", color: "#a78bfa" },
-                  { val: fmtCost(totalSavings), lab: "replay savings", color: "#22c55e" },
+                  { val: measuredRuns.length > 0 ? `$${totalMeasuredCost < 0.01 ? totalMeasuredCost.toFixed(6) : totalMeasuredCost.toFixed(4)}` : "N/A", lab: measuredRuns.length > 0 ? "measured cost" : "no cost data", color: "#22c55e" },
                   { val: `${avgConf}%`, lab: "avg confidence", color: confColor(avgConf) },
                 ].map(s => (
                   <div key={s.lab} style={{ textAlign: "center", flex: 1, minWidth: 80 }}>
