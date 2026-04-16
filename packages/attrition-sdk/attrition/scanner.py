@@ -156,7 +156,7 @@ class ModelReference:
 @dataclass
 class ScanReport:
     project_path: str
-    files_scanned: int
+    files_scanned: int = 0
     providers_detected: dict[str, list[LLMCallSite]] = field(default_factory=dict)
     models_referenced: list[ModelReference] = field(default_factory=list)
     architecture_signals: dict[str, list[str]] = field(default_factory=dict)
@@ -333,10 +333,13 @@ def _recommend_integration(report: ScanReport) -> list[dict]:
         })
         return points
 
-    # Group by file to find the main LLM integration files
+    # Group by file to find the main LLM integration files (only code files)
+    code_exts = {".py", ".ts", ".tsx", ".js", ".jsx", ".rs", ".go", ".java", ".kt", ".rb"}
     file_counts: dict[str, int] = {}
     for site in all_sites:
-        file_counts[site.file] = file_counts.get(site.file, 0) + 1
+        ext = Path(site.file).suffix.lower()
+        if ext in code_exts:
+            file_counts[site.file] = file_counts.get(site.file, 0) + 1
 
     top_files = sorted(file_counts.items(), key=lambda x: -x[1])[:5]
 
