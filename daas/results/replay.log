@@ -1,0 +1,28 @@
+
+[replay] floorai_milk_delivery: loading workflow_floorai_milk_delivery.py...
+  executing scaffold workflow...
+  result: 5554 tok, $0.000774
+  workers: ['IssueAnalyzer', 'PolicySpecialist', 'ActionPlanner']
+  judgment: similarity=0.225, cost_delta=-88.8%, verdict=fail
+
+[replay] floorai_staffing: loading workflow_floorai_staffing.py...
+  executing scaffold workflow...
+  result: 6873 tok, $0.000942
+  workers: ['Policy_Issue_Retriever', 'Staffing_Impact_Calculator', 'Regional_Analyzer', 'Action_Planner']
+  judgment: similarity=0.292, cost_delta=-86.8%, verdict=fail
+
+[replay] floorai_cooler_emergency: loading workflow_floorai_cooler_emergency.py...
+  executing scaffold workflow...
+  result: 5509 tok, $0.000796
+  workers: ['Information_Retriever', 'Action_Planner', 'Impact_Analyzer']
+  judgment: similarity=0.292, cost_delta=-87.8%, verdict=fail
+
+======================================================================
+AGGREGATE
+======================================================================
+  Runs: 3
+  Avg output similarity: 0.270
+  Avg cost delta: -87.8%
+  Verdicts: pass=0 partial=0 fail=3
+
+Wrote replays.json + judgments.json to D:\VSCode Projects\cafecorner_nodebench\nodebench-qa\daas\results

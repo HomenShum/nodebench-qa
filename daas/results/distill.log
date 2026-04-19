@@ -1,0 +1,11 @@
+[distill] floorai_milk_delivery: calling Pro to extract WorkflowSpec...
+  -> 3 workers, 5 tools, 6 handoffs
+  distill_cost=$0.010605 (2874 tokens)
+[distill] floorai_staffing: calling Pro to extract WorkflowSpec...
+  -> 4 workers, 5 tools, 5 handoffs
+  distill_cost=$0.009928 (2782 tokens)
+[distill] floorai_cooler_emergency: calling Pro to extract WorkflowSpec...
+  -> 3 workers, 4 tools, 4 handoffs
+  distill_cost=$0.008533 (2410 tokens)
+
+Wrote 3 WorkflowSpecs to D:\VSCode Projects\cafecorner_nodebench\nodebench-qa\daas\results\workflow_specs.json

@@ -1,0 +1,485 @@
+[
+  {
+    "source_trace_id": "floorai_milk_delivery",
+    "executor_model": "gemini-3.1-flash-lite-preview",
+    "advisor_model": null,
+    "orchestrator_system_prompt": "You are the lead retail operations orchestrator. Your objective is to investigate operational queries by coordinating specialist agents to gather issue details, assess cross-store impact, retrieve relevant policies, and formulate actionable plans. You must synthesize the final output into three strict sections: 'Cross-Store Pattern & Revenue Impact', 'Immediate Actions (Right Now)', and 'Follow-Up Actions (Today / This Week)'. Ensure all claims cite specific Issue IDs and Policy IDs.",
+    "orchestrator_plan_prompt": "Analyze the user's query. First, dispatch the IssueAnalyzer to identify the core problem, affected SKUs, and cross-store revenue impact. Second, dispatch the PolicySpecialist to retrieve relevant inventory/vendor policies, contract penalty clauses, and key personnel. Finally, dispatch the ActionPlanner to generate a prioritized list of immediate and follow-up actions based on the gathered data.",
+    "workers": [
+      {
+        "name": "IssueAnalyzer",
+        "role": "Issue and Pattern Investigator",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You are responsible for finding specific store issues, identifying the affected SKUs/vendors, and determining if the issue is a systemic cross-store pattern. You must calculate or retrieve the estimated revenue impact across all affected locations.",
+        "tools": [
+          "search_issues",
+          "analyze_cross_store_impact"
+        ]
+      },
+      {
+        "name": "PolicySpecialist",
+        "role": "Policy and Contract Expert",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You are responsible for retrieving standard operating procedures (SOPs) related to inventory shortages and vendor management. You also look up vendor contract details, penalty clauses, backup suppliers, and relevant escalation contacts (e.g., Regional Managers).",
+        "tools": [
+          "search_policies",
+          "get_vendor_contract_details",
+          "get_personnel_directory"
+        ]
+      },
+      {
+        "name": "ActionPlanner",
+        "role": "Remediation Strategist",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You are responsible for taking issue data and policy requirements to formulate a concrete action plan. You must divide actions into 'Immediate Actions' (containment, escalation, documentation) and 'Follow-Up Actions' (metrics compilation, formal notifications, customer comms). Every action must cite the relevant Policy ID or Issue ID.",
+        "tools": []
+      }
+    ],
+    "tools": [
+      {
+        "name": "search_issues",
+        "purpose": "Search the issue tracking system for specific keywords, SKUs, or vendor names to find active incidents.",
+        "input_schema": {
+          "query": "string",
+          "store_id": "string"
+        },
+        "output_schema": {
+          "issues": "array",
+          "issue_id": "string",
+          "description": "string",
+          "sku": "string",
+          "vendor": "string",
+          "dates_affected": "array"
+        }
+      },
+      {
+        "name": "analyze_cross_store_impact",
+        "purpose": "Check if a specific issue or SKU shortage is affecting multiple stores and calculate the total regional revenue impact.",
+        "input_schema": {
+          "sku": "string",
+          "vendor": "string"
+        },
+        "output_schema": {
+          "is_systemic": "boolean",
+          "affected_stores": "array",
+          "total_revenue_impact": "number",
+          "parent_issue_id": "string"
+        }
+      },
+      {
+        "name": "search_policies",
+        "purpose": "Look up standard operating procedures for inventory management, vendor performance, and shortages.",
+        "input_schema": {
+          "topic": "string"
+        },
+        "output_schema": {
+          "policies": "array",
+          "policy_id": "string",
+          "requirements": "array"
+        }
+      },
+      {
+        "name": "get_vendor_contract_details",
+        "purpose": "Retrieve contract terms, penalty clauses, and approved backup suppliers for a given vendor.",
+        "input_schema": {
+          "vendor_name": "string"
+        },
+        "output_schema": {
+          "contract_id": "string",
+          "penalty_clause": "string",
+          "backup_suppliers": "array"
+        }
+      },
+      {
+        "name": "get_personnel_directory",
+        "purpose": "Find the contact information and names of key personnel, such as Regional Managers, for escalation.",
+        "input_schema": {
+          "role": "string",
+          "region": "string"
+        },
+        "output_schema": {
+          "name": "string",
+          "title": "string",
+          "contact_info": "string"
+        }
+      }
+    ],
+    "handoffs": [
+      {
+        "from_agent": "orchestrator",
+        "to_agent": "IssueAnalyzer",
+        "trigger": "Initial query received requiring investigation of a specific operational problem.",
+        "payload_schema": {
+          "search_terms": "string"
+        }
+      },
+      {
+        "from_agent": "IssueAnalyzer",
+        "to_agent": "orchestrator",
+        "trigger": "Issue details, affected SKUs, and cross-store revenue impact have been identified.",
+        "payload_schema": {
+          "issue_data": "object",
+          "cross_store_data": "object"
+        }
+      },
+      {
+        "from_agent": "orchestrator",
+        "to_agent": "PolicySpecialist",
+        "trigger": "Issue context is known; need rules, contract details, and escalation contacts to handle the specific vendor/shortage.",
+        "payload_schema": {
+          "vendor_name": "string",
+          "issue_type": "string"
+        }
+      },
+      {
+        "from_agent": "PolicySpecialist",
+        "to_agent": "orchestrator",
+        "trigger": "Policies, contract clauses, and personnel details have been retrieved.",
+        "payload_schema": {
+          "policies": "array",
+          "contract_details": "object",
+          "escalation_contact": "object"
+        }
+      },
+      {
+        "from_agent": "orchestrator",
+        "to_agent": "ActionPlanner",
+        "trigger": "Both issue data and policy/contract data are collected; ready to draft the remediation plan.",
+        "payload_schema": {
+          "issue_context": "object",
+          "policy_context": "object"
+        }
+      },
+      {
+        "from_agent": "ActionPlanner",
+        "to_agent": "orchestrator",
+        "trigger": "Immediate and follow-up action lists have been generated.",
+        "payload_schema": {
+          "immediate_actions": "array",
+          "follow_up_actions": "array"
+        }
+      }
+    ],
+    "success_criteria": [
+      "Response includes a 'Cross-Store Pattern & Revenue Impact' section that names the vendor, SKU, missed dates, and quantifies total revenue impact.",
+      "Response includes an 'Immediate Actions' numbered list with at least 3 items.",
+      "Response includes a 'Follow-Up Actions' numbered list with at least 3 items.",
+      "Every action item explicitly cites a relevant Policy ID (e.g., POL-INV-003) or Issue ID (e.g., ISS-018) in parentheses.",
+      "Response identifies a specific escalation contact (e.g., Regional Manager) by name."
+    ],
+    "domain_rules": [
+      "Missed vendor deliveries must trigger a requirement to contact the vendor representative within 24 hours.",
+      "Systemic cross-store issues must be escalated to the Regional Manager with backup supplier options and contract penalty clauses.",
+      "Vendor performance issues require compiling 30-day reliability metrics and issuing a formal notification for a corrective action plan within 15 days.",
+      "All revenue impacts must be aggregated across all affected stores when a cross-store pattern is detected."
+    ],
+    "target_sdk": "google-genai"
+  },
+  {
+    "source_trace_id": "floorai_staffing",
+    "executor_model": "gemini-3.1-flash-lite-preview",
+    "advisor_model": null,
+    "orchestrator_system_prompt": "You are the lead store operations orchestrator. Your role is to analyze store manager queries, determine the necessary context (policies, active issues, staffing metrics, regional patterns), and dispatch specialist agents to gather this information. Once all specialists have completed their tasks, synthesize their findings into a structured, actionable response containing Issue References, Applicable Policies, Immediate Actions, Follow-up Actions, and Revenue/Regional Impacts.",
+    "orchestrator_plan_prompt": "Analyze the user's query about staffing shortages. Dispatch the Policy_Issue_Retriever to identify relevant HR policies and active store issues. Then, route the gathered data to the Staffing_Impact_Calculator to compute shortage percentages and revenue impact. Next, send the context to the Regional_Analyzer to find compounding cross-store patterns. Finally, route all data to the Action_Planner to formulate step-by-step immediate and follow-up actions before returning the final synthesis to the user.",
+    "workers": [
+      {
+        "name": "Policy_Issue_Retriever",
+        "role": "Context Gatherer",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You are responsible for finding relevant HR/operational policies and active store issues based on the user's query. Extract policy IDs, issue IDs, and key protocol details (e.g., emergency staffing thresholds).",
+        "tools": [
+          "search_policies",
+          "get_store_issues"
+        ]
+      },
+      {
+        "name": "Staffing_Impact_Calculator",
+        "role": "Data Analyst",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You calculate staffing metrics (e.g., shortage percentages based on scheduled vs. called-out staff), evaluate them against policy thresholds, and estimate the financial/revenue impact of the specific issue.",
+        "tools": [
+          "calculate_staffing_metrics",
+          "estimate_revenue_impact"
+        ]
+      },
+      {
+        "name": "Regional_Analyzer",
+        "role": "Pattern Investigator",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You analyze cross-store and regional data to identify broader trends, compounding factors (like system outages or seasonal pushes), and historical data that contextualize the local store's issue.",
+        "tools": [
+          "get_regional_patterns"
+        ]
+      },
+      {
+        "name": "Action_Planner",
+        "role": "Strategy Formulator",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You take policies, active issues, calculated impacts, and regional patterns to formulate a prioritized list of Immediate Actions (Right Now) and Follow-up Actions (Today / This Week). Ensure every action cites a specific Policy ID or Issue ID.",
+        "tools": []
+      }
+    ],
+    "tools": [
+      {
+        "name": "search_policies",
+        "purpose": "Search the corporate policy database for relevant HR or operational protocols.",
+        "input_schema": {
+          "query": "string"
+        },
+        "output_schema": {
+          "policies": "array"
+        }
+      },
+      {
+        "name": "get_store_issues",
+        "purpose": "Retrieve active, logged issues for a specific store.",
+        "input_schema": {
+          "store_id": "string"
+        },
+        "output_schema": {
+          "issues": "array"
+        }
+      },
+      {
+        "name": "calculate_staffing_metrics",
+        "purpose": "Calculate the percentage of staff missing and check if it breaches emergency policy thresholds.",
+        "input_schema": {
+          "scheduled_staff": "integer",
+          "called_out_staff": "integer"
+        },
+        "output_schema": {
+          "shortage_percentage": "number",
+          "threshold_breached": "boolean"
+        }
+      },
+      {
+        "name": "estimate_revenue_impact",
+        "purpose": "Calculate the estimated lost revenue due to a specific operational issue or staffing shortage.",
+        "input_schema": {
+          "issue_id": "string"
+        },
+        "output_schema": {
+          "estimated_impact_usd": "number"
+        }
+      },
+      {
+        "name": "get_regional_patterns",
+        "purpose": "Retrieve cross-store issues, system outages, and historical seasonal data for the region.",
+        "input_schema": {
+          "region": "string",
+          "issue_category": "string"
+        },
+        "output_schema": {
+          "regional_insights": "string",
+          "related_issue_ids": "array"
+        }
+      }
+    ],
+    "handoffs": [
+      {
+        "from_agent": "orchestrator",
+        "to_agent": "Policy_Issue_Retriever",
+        "trigger": "Initial query received requiring policy and issue context.",
+        "payload_schema": {
+          "query": "string",
+          "store_id": "string"
+        }
+      },
+      {
+        "from_agent": "Policy_Issue_Retriever",
+        "to_agent": "Staffing_Impact_Calculator",
+        "trigger": "Relevant policies and active store issues have been identified.",
+        "payload_schema": {
+          "active_issues": "array",
+          "applicable_policies": "array"
+        }
+      },
+      {
+        "from_agent": "Staffing_Impact_Calculator",
+        "to_agent": "Regional_Analyzer",
+        "trigger": "Staffing shortage percentages and revenue impacts have been calculated.",
+        "payload_schema": {
+          "active_issues": "array",
+          "applicable_policies": "array",
+          "shortage_metrics": "object",
+          "revenue_impact": "number"
+        }
+      },
+      {
+        "from_agent": "Regional_Analyzer",
+        "to_agent": "Action_Planner",
+        "trigger": "Regional patterns and compounding factors have been identified.",
+        "payload_schema": {
+          "active_issues": "array",
+          "applicable_policies": "array",
+          "shortage_metrics": "object",
+          "revenue_impact": "number",
+          "regional_insights": "object"
+        }
+      },
+      {
+        "from_agent": "Action_Planner",
+        "to_agent": "orchestrator",
+        "trigger": "Immediate and follow-up actions have been formulated.",
+        "payload_schema": {
+          "immediate_actions": "array",
+          "follow_up_actions": "array",
+          "context_summary": "object"
+        }
+      }
+    ],
+    "success_criteria": [
+      "Response explicitly lists 'Issue Reference' and 'Applicable Policy' IDs at the top.",
+      "Response contains distinct 'Immediate Actions' and 'Follow-up Actions' sections with numbered lists.",
+      "Every recommended action explicitly cites a supporting Policy ID or Issue ID in parentheses.",
+      "Response includes a calculated staffing shortage percentage and references a specific policy threshold.",
+      "Response includes a 'Revenue Impact & Cross-Store Patterns' section detailing a specific dollar amount and regional trends."
+    ],
+    "domain_rules": [
+      "Staffing shortages exceeding 30% of the scheduled shift must trigger emergency protocols (e.g., overtime approval).",
+      "Internal coverage from neighboring stores must be sought before contacting external temp agencies.",
+      "All recommended actions must be strictly grounded in retrieved policies and active store issues.",
+      "Revenue impact must be estimated and stated for any staffing shortage issue."
+    ],
+    "target_sdk": "google-genai"
+  },
+  {
+    "source_trace_id": "floorai_cooler_emergency",
+    "executor_model": "gemini-3.1-flash-lite-preview",
+    "advisor_model": null,
+    "orchestrator_system_prompt": "You are the Store Operations Orchestrator. Your objective is to coordinate the response to store operational and safety queries. You must dispatch specialized workers to retrieve relevant issue tickets, identify applicable policies, formulate safety-compliant action plans, and analyze business impact. Synthesize the workers' findings into a highly structured final report with specific sections for Issue ID, Policy ID, Immediate Actions, Follow-up Actions, and Cross-Store Patterns & Revenue Impact.",
+    "orchestrator_plan_prompt": "Analyze the user's query. Step 1: Dispatch the Information_Retriever to find matching active Issue IDs and Policy IDs for the given store. Step 2: Dispatch the Action_Planner, providing it with the retrieved policy and issue details, to generate Immediate and Follow-up actions. Step 3: Dispatch the Impact_Analyzer to determine revenue at risk and check for cross-store patterns. Step 4: Compile the final response using the exact formatting required by the success criteria.",
+    "workers": [
+      {
+        "name": "Information_Retriever",
+        "role": "Context Gatherer",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You are responsible for finding active issues and standard operating policies related to the user's query. Extract the exact Issue ID, Policy ID, and critical context (e.g., current temperature, vendor availability).",
+        "tools": [
+          "search_active_issues",
+          "search_policies"
+        ]
+      },
+      {
+        "name": "Action_Planner",
+        "role": "Safety & Operations Planner",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You are a safety and operations expert. Using the provided issue details and policy text, formulate a numbered list of 'Immediate Actions' (prioritizing containment and food safety) and 'Follow-up Actions' (vendor coordination, documentation). Adhere strictly to temperature thresholds and safety rules.",
+        "tools": []
+      },
+      {
+        "name": "Impact_Analyzer",
+        "role": "Business Analyst",
+        "model": "gemini-3.1-flash-lite-preview",
+        "system_prompt": "You analyze the business impact of store issues. Calculate the financial value of inventory at risk for the specific issue, and check historical/system-wide data to determine if this is an isolated incident or a cross-store pattern.",
+        "tools": [
+          "calculate_revenue_impact",
+          "check_cross_store_patterns"
+        ]
+      }
+    ],
+    "tools": [
+      {
+        "name": "search_active_issues",
+        "purpose": "Search for current active issues at a specific store matching keywords.",
+        "input_schema": {
+          "store_id": "string",
+          "keywords": "string"
+        },
+        "output_schema": {
+          "issue_id": "string",
+          "issue_details": "string",
+          "vendor_status": "string"
+        }
+      },
+      {
+        "name": "search_policies",
+        "purpose": "Search the standard operating procedures for policies related to the issue.",
+        "input_schema": {
+          "keywords": "string"
+        },
+        "output_schema": {
+          "policy_id": "string",
+          "policy_text": "string",
+          "thresholds": "string"
+        }
+      },
+      {
+        "name": "calculate_revenue_impact",
+        "purpose": "Calculate the estimated dollar value of inventory at risk due to an equipment failure.",
+        "input_schema": {
+          "issue_id": "string"
+        },
+        "output_schema": {
+          "revenue_at_risk_dollars": "number",
+          "affected_categories": "string"
+        }
+      },
+      {
+        "name": "check_cross_store_patterns",
+        "purpose": "Query the system to see if similar issues are occurring at other store locations.",
+        "input_schema": {
+          "issue_type": "string"
+        },
+        "output_schema": {
+          "is_isolated": "boolean",
+          "pattern_description": "string"
+        }
+      }
+    ],
+    "handoffs": [
+      {
+        "from_agent": "Orchestrator",
+        "to_agent": "Information_Retriever",
+        "trigger": "Initial query received requiring issue and policy context.",
+        "payload_schema": {
+          "query": "string",
+          "store_id": "string"
+        }
+      },
+      {
+        "from_agent": "Information_Retriever",
+        "to_agent": "Action_Planner",
+        "trigger": "Issue ID and Policy ID have been successfully retrieved.",
+        "payload_schema": {
+          "issue_id": "string",
+          "policy_id": "string",
+          "issue_details": "string",
+          "policy_text": "string"
+        }
+      },
+      {
+        "from_agent": "Action_Planner",
+        "to_agent": "Impact_Analyzer",
+        "trigger": "Immediate and follow-up actions have been formulated.",
+        "payload_schema": {
+          "issue_id": "string",
+          "issue_type": "string"
+        }
+      },
+      {
+        "from_agent": "Impact_Analyzer",
+        "to_agent": "Orchestrator",
+        "trigger": "Revenue impact and cross-store patterns have been determined.",
+        "payload_schema": {
+          "revenue_impact_dollars": "number",
+          "cross_store_patterns": "string"
+        }
+      }
+    ],
+    "success_criteria": [
+      "Response includes a specific Reference Issue ID matching the format ISS-XXX.",
+      "Response includes a specific Reference Policy ID matching the format POL-XXX.",
+      "Response contains a numbered list titled 'Immediate Actions' with at least 2 items.",
+      "Response contains a numbered list titled 'Follow-up Actions' with at least 1 item.",
+      "Response explicitly states a dollar amount for Revenue Impact.",
+      "Response explicitly states whether there are cross-store patterns or if the incident is isolated."
+    ],
+    "domain_rules": [
+      "Any cold-holding temperature exceeding 41 degrees Fahrenheit requires immediate product evaluation and discarding of unsafe perishables.",
+      "Emergency equipment failures require immediate vendor contact; if the primary vendor is unavailable, emergency vendor authorization must be requested.",
+      "All discarded inventory must be explicitly documented for shrinkage and loss reporting."
+    ],
+    "target_sdk": "google-genai"
+  }
+]

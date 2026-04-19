@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>DaaS MVP — attrition.sh</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:-apple-system,'Inter',sans-serif;background:#0a0a0a;color:#e8e6e3;margin:0;padding:2rem;line-height:1.55}
+.wrap{max-width:1280px;margin:0 auto}
+h1{font-size:2rem;margin:0 0 .25rem;letter-spacing:-.02em}
+h2{font-size:1.25rem;margin:2rem 0 .75rem;color:#f5f5f4}
+h3{font-size:.9375rem;color:#d97757;margin:1rem 0 .5rem}
+h4{font-size:.8125rem;margin:.5rem 0}
+.sub{color:#9a9590;font-size:.8125rem}
+.card{background:#151413;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.hero{background:linear-gradient(135deg,rgba(34,197,94,.04),rgba(96,165,250,.04));border:2px solid #22c55e33;padding:2rem;text-align:center}
+.hero-label{font-size:2rem;font-weight:800;letter-spacing:-.03em;color:#22c55e}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin-top:1.5rem}
+.metric{background:rgba(255,255,255,.03);padding:1rem;border-radius:8px}
+.mlabel{font-size:.625rem;text-transform:uppercase;letter-spacing:.12em;color:#9a9590;margin-bottom:.25rem}
+.mval{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace;line-height:1}
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:.5rem;margin:1rem 0;font-size:.75rem}
+.stage{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:.5rem;text-align:center}
+.stage .n{font-size:1.25rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:#22c55e}
+.stage .l{color:#9a9590;font-size:.625rem;margin-top:.25rem}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem}
+.col{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:.875rem;min-width:0}
+.col.orig{border-left:3px solid #f59e0b}
+.col.repl{border-left:3px solid #22c55e}
+.resp{background:#0a0a0a;border:1px solid rgba(255,255,255,.04);border-radius:6px;padding:.625rem;font-size:.6875rem;max-height:320px;overflow-y:auto;line-height:1.5;white-space:pre-wrap}
+.badge{padding:2px 6px;border-radius:3px;font-size:.625rem;font-weight:600;font-family:'JetBrains Mono',monospace;border:1px solid}
+.b{background:rgba(255,255,255,.05);border-radius:4px;height:16px;position:relative;overflow:hidden}
+.bf{height:100%;transition:width .3s}
+.bl{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:.5625rem;font-family:'JetBrains Mono',monospace;color:#fff;mix-blend-mode:difference}
+.bg{display:grid;grid-template-columns:180px 1fr;gap:.5rem;align-items:center;margin:.35rem 0;font-size:.75rem}
+.bgl{color:#9a9590;text-align:right;font-size:.6875rem}
+.foot{text-align:center;color:#5d5854;font-size:.6875rem;margin-top:3rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,.04)}
+code.m{font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,.05);padding:2px 6px;border-radius:4px;font-size:.8125rem}
+.sgrid{display:grid;grid-template-columns:auto 1fr;gap:.35rem .5rem;font-size:.6875rem;margin-top:.5rem;align-items:center}
+.sl{color:#9a9590}
+.spec{background:rgba(96,165,250,.04);border:1px dashed rgba(96,165,250,.2);border-radius:8px;padding:.75rem;font-family:'JetBrains Mono',monospace;font-size:.6875rem;max-height:180px;overflow-y:auto;margin:.5rem 0}
+</style></head><body><div class="wrap">
+
+<h1>Distillation-as-a-Service MVP</h1>
+<p class="sub">attrition.sh research arm · Full pipeline: ingest → distill → generate scaffold → replay with cheap model → judge</p>
+
+<div class="card hero" style="border-color:#22c55e">
+  <div class="hero-label" style="color:#22c55e">DaaS MVP SHIPPED</div>
+  <p class="sub" style="margin-top:.5rem">3 FloorAI queries. Pro produces expert answers. Pro distills each into a WorkflowSpec. Scaffold generator emits Python. Flash Lite executes the scaffold. Deterministic judge compares.</p>
+  <div class="grid4">
+    <div class="metric"><div class="mlabel">Pipeline stages</div><div class="mval" style="color:#22c55e">6/6</div><div class="sub">all working</div></div>
+    <div class="metric"><div class="mlabel">Avg cost delta</div><div class="mval" style="color:#60a5fa">-76.7%</div><div class="sub">replay vs original</div></div>
+    <div class="metric"><div class="mlabel">Avg similarity</div><div class="mval" style="color:#d97757">0.83</div><div class="sub">0-1 overlap score</div></div>
+    <div class="metric"><div class="mlabel">Verdicts</div><div class="mval" style="color:#22c55e">3P</div><div class="sub">/0 partial / 0 fail</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Pipeline (all 6 stages verified on real data)</h2>
+  <div class="pipeline">
+    <div class="stage"><div class="n">1</div><div class="l">INGEST<br/>Pro traces</div></div>
+    <div class="stage"><div class="n">2</div><div class="l">NORMALIZE<br/>CanonicalTrace</div></div>
+    <div class="stage"><div class="n">3</div><div class="l">DISTILL<br/>WorkflowSpec</div></div>
+    <div class="stage"><div class="n">4</div><div class="l">GENERATE<br/>Python scaffold</div></div>
+    <div class="stage"><div class="n">5</div><div class="l">REPLAY<br/>Flash Lite</div></div>
+    <div class="stage"><div class="n">6</div><div class="l">JUDGE<br/>deterministic</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Cost comparison (measured, all real Gemini API tokens)</h2>
+  <p class="sub">Original: Pro single-shot on FloorAI query. Replay: Flash Lite orchestrator + N workers following the distilled WorkflowSpec.</p>
+<div class="bg"><div class="bgl">Pro single call (original)</div><div class="b"><div class="bf" style="width:100.0%;background:#f59e0b"></div><div class="bl">$0.006873</div></div></div><div class="bg"><div class="bgl">Flash Lite scaffold (replay)</div><div class="b"><div class="bf" style="width:23.314337678084264%;background:#22c55e"></div><div class="bl">$0.001602</div></div></div><p class="sub" style="margin-top:.75rem">Savings: <strong style="color:#22c55e">76.7%</strong> per query on average. Avg original cost $0.006873 vs replay $0.001602.</p></div><div class="card"><h3>floorai_milk_delivery — What&#x27;s happening with our milk delivery?</h3><h4 style="color:#60a5fa">Distilled WorkflowSpec</h4><div class="spec"><strong>Orchestrator system prompt</strong> (488 chars)<br/><strong>3 workers</strong>: IssueAnalyzer, PolicySpecialist, ActionPlanner<br/><strong>5 tools</strong>: search_issues, analyze_cross_store_impact, search_policies, get_vendor_contract_details, get_personnel_directory<br/><strong>4 domain rules</strong>: Missed vendor deliveries must trigger a requirement to contact the vendor repres; Systemic cross-store issues must be escalated to the Regional Manager with backu; Vendor performance issues require compiling 30-day reliability metrics and issui<br/><strong>5 success criteria</strong>: Response includes a &#x27;Cross-Store Pattern &amp; Revenue Impact&#x27; section; Response includes an &#x27;Immediate Actions&#x27; numbered list with at least 3; Response includes a &#x27;Follow-Up Actions&#x27; numbered list with at least 3 </div><h4 style="margin-top:.75rem">Original (Pro) vs Replay (Flash Lite scaffold)</h4><div class="row3"><div class="col orig"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.5rem"><strong>Original (Pro)</strong><span class="sub">$0.006910</span></div><div class="sub" style="font-size:.625rem;margin-bottom:.4rem">4,385 tokens · single call</div><div class="resp">Here is the status of the milk delivery issue:
+
+**Cross-Store Pattern &amp; Revenue Impact**
+Our organic milk supplier, DairyFresh Co, missed scheduled deliveries on 4/10 and 4/12 for 64oz whole milk (SKU-4411) (ISS-001). This is a systemic cross-store pattern affecting at least four locations, including Greenfield Plaza (ISS-001, $480 estimated impact), Elm Street Market (ISS-002, $360 estimated impact), and two stores in an adjacent region (ISS-018). The total estimated regional revenue impact is $4,200 (ISS-018). 
+
+**Immediate Actions (Right Now)**
+1. Document the missed 4/10 and 4/12 deliveries with specific dates and times for all affected stores (POL-INV-003).
+2. Contact the DairyFresh Co account representative within 24 hours to demand an immediate update on the missing deliveries (POL-INV-003).
+3. Supply Regional Manager Sandra Williams with a backup supplier list for organic dairy and the penalty clause from the DairyFresh contract to support her escalation (ISS-018).
+
+**Follow-Up Actions (Today / This Week)**
+1. Draft and distribute a customer communication template to affected stores regarding the SKU-4411 shortage (ISS-018).
+2. Compile 30-day delivery reliability metrics for DairyFresh Co, including on-time percentage, fill rate, and quality rejections (POL-VENDOR-001).
+3. Issue a formal performance notification to DairyFresh Co requiring a corrective action plan within 15 days (POL-VENDOR-001, ISS-018).</div></div><div class="col repl"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.5rem"><strong>Replay (Flash Lite + scaffold)</strong><span class="sub">$0.001517</span></div><div class="sub" style="font-size:.625rem;margin-bottom:.4rem">14,793 tokens · 3 workers · 5 tool refs</div><div class="resp">### Final Response: DairyFresh Co. Milk Delivery Failure
+
+We have identified a systemic failure regarding our milk supply. Please review the details and required actions below to address this issue immediately.
+
+#### Cross-Store Pattern &amp; Revenue Impact
+*   **Vendor:** DairyFresh Co.
+*   **SKU:** SKU-4411 (Horizon Organic 64oz whole milk)
+*   **Affected Locations:** STR-101 (Greenfield Plaza) and STR-102 (Elm Street Market)
+*   **Missed Delivery Dates:** 4/10 and 4/12
+*   **Total Aggregated Revenue Impact:** $840 ($480 at STR-101; $360 at STR-102)
+
+#### Immediate Actions
+1.  **Vendor Contact:** Contact the DairyFresh Co. account representative immediately to demand a resolution, ensuring this communication occurs within the 24-hour window required by policy (**POL-INV-003**).
+2.  **Regional Escalation:** Formally escalate this systemic issue to the **Regional Manager** (Marcus Thorne). Your report must include the aggregated revenue impact ($840), evidence of the missed deliveries, and a request for authorization to utilize an emergency substitute supplier (**POL-INV-003**).
+3.  **Contractual Review:** Identify and attach the specific contract penalty clauses for non-performance to the escalation report for the Regional Manager’s review, as required for systemic cross-store issues (**ISS-001/002**).
+
+#### Follow-Up Actions
+1.  **Performance Metrics:** Compile 30-day reliability metrics for DairyFresh Co., specifically focusing on on-time delivery percentages and fill rates, to support the formal performance review (**POL-VENDOR-001**).
+2.  **Formal Notification:** Issue a formal written notification to DairyFresh Co. requiring the submission of a Corrective Action Plan (CAP) within 15 days to address these reliability failures (**POL-VENDOR-001**).
+3.  **Operational Mitigation:** Update store-level inventory systems to reflect current stockouts and deploy customer communication signage to manage expectations regarding the unavailability of SKU-4411 (**POL-INV-003**).
+4.  **Backup Sourcing:** If the vendor fails to provide a satisfactory resolution within 48 hours, initiate the procurement process with an approved backup supplier to prevent further revenue loss (**POL-INV-003**).</div></div><div class="col"><div style="font-weight:600;font-size:.8125rem;margin-bottom:.5rem">Judgment <span class="badge" style="color:#22c55e;background:#22c55e15;border-color:#22c55e40">PASS</span></div><div class="sgrid"><span class="sl">Similarity</span><div class="b"><div class="bf" style="width:76.7%;background:#d97757"></div><div class="bl">0.77</div></div><span class="sl">Cost delta</span><div style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:#22c55e">-78.0%</div><span class="sl">Quality</span><div class="b"><div class="bf" style="width:76.7%;background:#60a5fa"></div><div class="bl">7.7/10</div></div><span class="sl">Tool parity</span><div class="b"><div class="bf" style="width:100.0%;background:#94a3b8"></div><div class="bl">1.00</div></div></div><div class="sub" style="font-size:.625rem;margin-top:.5rem">ref overlap: <strong>0.67</strong> · struct score: <strong>1.00</strong> · num overlap: <strong>0.67</strong></div></div></div></div><div class="card"><h3>floorai_staffing — We&#x27;re short-staffed today, 3 people called out. What should I do?</h3><h4 style="color:#60a5fa">Distilled WorkflowSpec</h4><div class="spec"><strong>Orchestrator system prompt</strong> (481 chars)<br/><strong>4 workers</strong>: Policy_Issue_Retriever, Staffing_Impact_Calculator, Regional_Analyzer, Action_Planner<br/><strong>5 tools</strong>: search_policies, get_store_issues, calculate_staffing_metrics, estimate_revenue_impact, get_regional_patterns<br/><strong>4 domain rules</strong>: Staffing shortages exceeding 30% of the scheduled shift must trigger emergency p; Internal coverage from neighboring stores must be sought before contacting exter; All recommended actions must be strictly grounded in retrieved policies and acti<br/><strong>5 success criteria</strong>: Response explicitly lists &#x27;Issue Reference&#x27; and &#x27;Applicable Polic; Response contains distinct &#x27;Immediate Actions&#x27; and &#x27;Follow-up Act; Every recommended action explicitly cites a supporting Policy ID or Issue ID in </div><h4 style="margin-top:.75rem">Original (Pro) vs Replay (Flash Lite scaffold)</h4><div class="row3"><div class="col orig"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.5rem"><strong>Original (Pro)</strong><span class="sub">$0.007159</span></div><div class="sub" style="font-size:.625rem;margin-bottom:.4rem">4,443 tokens · single call</div><div class="resp">**Issue Reference:** ISS-003 (Harbor View)
+**Applicable Policy:** POL-HR-007: Emergency Staffing Protocol
+
+**Immediate Actions (Right Now):**
+1. **Approve Overtime:** Approve up to 8 hours of overtime for each of the 4 remaining associates. (Since 3 out of 7 scheduled staff called out, you are missing 42% of your shift, which triggers the &gt;30% threshold in POL-HR-007).
+2. **Seek Internal Coverage:** Contact neighboring stores immediately to request voluntary coverage for your unstaffed bakery and deli sections (POL-HR-007, ISS-003).
+3. **Call Temp Agency:** If internal coverage is insufficient, contact the regional temp staffing agency, StaffNow, at 800-555-0147 to request emergency personnel (POL-HR-007).
+
+**Follow-up Actions (Today / This Week):**
+1. **Expedite Training:** Resolve the POS training backlog for your two new hires who started on 4/7. They are currently only bagging; getting them register-certified will help alleviate floor coverage issues before the next weekend rush (ISS-009).
+2. **Begin Seasonal Hiring:** Submit your summer headcount forecast by April 15 and post open jobs by April 20 to build your staffing pipeline for the upcoming volume increase (POL-HR-020).
+
+**Revenue Impact &amp; Cross-Store Patterns:**
+* **Revenue Impact:** This specific shift shortage has an estimated revenue impact of $2,200 (ISS-003).
+* **Store/Regional Pattern:** Your store&#x27;s floor coverage is being compounded by the recent training module outage (ISS-009). Regionally, all Northeast stores are facing a seasonal staffing push; historical data indicates 40-50 seasonal hires are needed across the 8 stores to prevent similar gaps in the summer (ISS-020).</div></div><div class="col repl"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.5rem"><strong>Replay (Flash Lite + scaffold)</strong><span class="sub">$0.001831</span></div><div class="sub" style="font-size:.625rem;margin-bottom:.4rem">18,621 tokens · 4 workers · 5 tool refs</div><div class="resp">**Issue Reference:** ISS-003 (Harbor View Staffing Shortage), ISS-009 (POS Training Backlog)
+**Applicable Policy:** POL-HR-007 (Emergency Staffing Protocol), POL-HR-012 (Training Compliance)
+
+Based on your report of 3 call-outs out of 7 scheduled staff, you are operating at a **42.8% shortage**. This exceeds the 30% threshold defined in **POL-HR-007**, necessitating the immediate implementation of emergency protocols.
+
+### **Immediate Actions**
+1. **Authorize Overtime:** Approve up to 8 hours of overtime for each of the 4 remaining associates to ensure essential floor coverage **(POL-HR-007)**.
+2. **Internal Coverage:** Contact neighboring stores immediately to request voluntary coverage before seeking external assistance **(POL-HR-007)**.
+3. **Prioritize Operations:** Close the bakery and deli counters immediately to reallocate remaining staff to high-traffic areas and maintain minimum floor coverage **(POL-HR-007)**.
+
+### **Follow-up Actions**
+1. **Incident Reporting:** File an incident report regarding the staffing shortage within 24 hours of the event **(POL-HR-007)**.
+2. **External Staffing:** If internal coverage requests are unsuccessful, contact the regional temp agency, **StaffNow (800-555-0147)**, to fill the remaining gaps **(POL-HR-007)**.
+3. **Training Backlog:** Once the shift stabilizes, prioritize the POS certification for the two new hires currently restricted to bagging to prevent further operational bottlenecks **(ISS-009 / POL-HR-012)**.
+
+### **Revenue Impact &amp; Cross-Store Patterns**
+* **Revenue Impact:** The estimated revenue impact for this staffing shortage is **$2,200** (ISS-003). This loss is driven by the closure of the bakery and deli departments and reduced transaction volume during your peak Saturday hours.
+* **Regional Trends:** You are currently part of a broader regional trend of operational strain. Other stores in the Northeast are managing high-severity inventory gaps (ISS-001, ISS-002) and equipment failures (ISS-004). When seeking internal coverage, prioritize requests to stores not currently reporting &quot;critical&quot; status to increase your success rate.</div></div><div class="col"><div style="font-weight:600;font-size:.8125rem;margin-bottom:.5rem">Judgment <span class="badge" style="color:#22c55e;background:#22c55e15;border-color:#22c55e40">PASS</span></div><div class="sgrid"><span class="sl">Similarity</span><div class="b"><div class="bf" style="width:73.3%;background:#d97757"></div><div class="bl">0.73</div></div><span class="sl">Cost delta</span><div style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:#22c55e">-74.4%</div><span class="sl">Quality</span><div class="b"><div class="bf" style="width:73.3%;background:#60a5fa"></div><div class="bl">7.3/10</div></div><span class="sl">Tool parity</span><div class="b"><div class="bf" style="width:100.0%;background:#94a3b8"></div><div class="bl">1.00</div></div></div><div class="sub" style="font-size:.625rem;margin-top:.5rem">ref overlap: <strong>0.60</strong> · struct score: <strong>1.00</strong> · num overlap: <strong>0.67</strong></div></div></div></div><div class="card"><h3>floorai_cooler_emergency — Our walk-in cooler is at 52 degrees, what do I do?</h3><h4 style="color:#60a5fa">Distilled WorkflowSpec</h4><div class="spec"><strong>Orchestrator system prompt</strong> (502 chars)<br/><strong>3 workers</strong>: Information_Retriever, Action_Planner, Impact_Analyzer<br/><strong>4 tools</strong>: search_active_issues, search_policies, calculate_revenue_impact, check_cross_store_patterns<br/><strong>3 domain rules</strong>: Any cold-holding temperature exceeding 41 degrees Fahrenheit requires immediate ; Emergency equipment failures require immediate vendor contact; if the primary ve; All discarded inventory must be explicitly documented for shrinkage and loss rep<br/><strong>6 success criteria</strong>: Response includes a specific Reference Issue ID matching the format ISS-XXX.; Response includes a specific Reference Policy ID matching the format POL-XXX.; Response contains a numbered list titled &#x27;Immediate Actions&#x27; with at l</div><h4 style="margin-top:.75rem">Original (Pro) vs Replay (Flash Lite scaffold)</h4><div class="row3"><div class="col orig"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.5rem"><strong>Original (Pro)</strong><span class="sub">$0.006550</span></div><div class="sub" style="font-size:.625rem;margin-bottom:.4rem">4,319 tokens · single call</div><div class="resp">Here is the guidance for the walk-in cooler temperature failure:
+
+**1. Reference Issue ID:** 
+ISS-004 (Riverside Commons - Walk-in cooler #2 at 52°F)
+
+**2. Reference Policy ID:** 
+POL-MAINT-001: Emergency Equipment Failure
+
+**3. Immediate Actions (RIGHT NOW):**
+1. Check the temperature logs immediately (per POL-MAINT-001).
+2. Begin product evaluation immediately, as the current temperature (52°F) exceeds the safe cold-holding threshold of 41°F (per POL-MAINT-001).
+3. Discard any perishable products that remain above the safe temperature threshold (per POL-MAINT-001).
+
+**4. Follow-up Actions (Today / This Week):**
+1. Request emergency vendor authorization to expedite repairs, as the current HVAC vendor (CoolTech) is not available until Monday (per ISS-004).
+2. Document all discarded inventory for shrinkage and loss reporting. 
+
+**5. Cross-Store Patterns &amp; Revenue Impact:**
+* **Revenue Impact:** There is an estimated $8,000 worth of dairy and produce at risk in this specific cooler (per ISS-004).
+* **Cross-Store Patterns:** This is an isolated incident at Riverside Commons; there are no current cross-store patterns for cooler failures in the system.</div></div><div class="col repl"><div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.5rem"><strong>Replay (Flash Lite + scaffold)</strong><span class="sub">$0.001459</span></div><div class="sub" style="font-size:.625rem;margin-bottom:.4rem">14,313 tokens · 3 workers · 4 tool refs</div><div class="resp">**FINAL RESPONSE**
+
+**Subject: Urgent Action Required - Walk-in Cooler Failure (ISS-004)**
+
+Your report of a walk-in cooler at 52°F indicates a critical food safety failure. You must act immediately to mitigate health risks and financial loss in accordance with **Policy ID: POL-MAINT-001**.
+
+### Immediate Actions
+1. **Product Evaluation &amp; Discarding:** Immediately assess all perishables. Any product that has remained above 41°F for 2 or more hours must be discarded. All discarded inventory must be explicitly documented for shrinkage and loss reporting to ensure accurate financial reconciliation.
+2. **Temperature Log Verification:** Pull and review your temperature logs to determine the exact duration of the temperature excursion, which will dictate the scope of the required disposal.
+3. **Emergency Vendor Contact:** Since your primary vendor (CoolTech) is unavailable, you are authorized to contact any licensed HVAC vendor immediately. You have emergency spending authority of up to $5,000 to resolve this failure.
+
+### Follow-up Actions
+1. **Incident Documentation:** Once the repair is complete, verify the unit has returned to the safe range (35–38°F) and document the final temperature reading in the maintenance log. Ensure all actions taken, including the list of discarded inventory, are filed in your incident report to satisfy compliance and loss prevention requirements.
+
+**Revenue Impact**
+The estimated financial impact of the inventory currently at risk is **$8,000**.
+
+**Pattern Analysis**
+This is an **isolated incident** for your location. A review of all open issues confirms there are no cross-store patterns or regional reports of refrigeration-related equipment failures at this time.</div></div><div class="col"><div style="font-weight:600;font-size:.8125rem;margin-bottom:.5rem">Judgment <span class="badge" style="color:#22c55e;background:#22c55e15;border-color:#22c55e40">PASS</span></div><div class="sgrid"><span class="sl">Similarity</span><div class="b"><div class="bf" style="width:100.0%;background:#d97757"></div><div class="bl">1.00</div></div><span class="sl">Cost delta</span><div style="font-family:JetBrains Mono,monospace;font-size:.75rem;color:#22c55e">-77.7%</div><span class="sl">Quality</span><div class="b"><div class="bf" style="width:100.0%;background:#60a5fa"></div><div class="bl">10.0/10</div></div><span class="sl">Tool parity</span><div class="b"><div class="bf" style="width:100.0%;background:#94a3b8"></div><div class="bl">1.00</div></div></div><div class="sub" style="font-size:.625rem;margin-top:.5rem">ref overlap: <strong>1.00</strong> · struct score: <strong>1.00</strong> · num overlap: <strong>1.00</strong></div></div></div></div>
+<div class="card" style="border:2px solid #22c55e">
+  <h2>What this MVP proves</h2>
+  <p>The end-to-end distillation-as-a-service pipeline is <strong>real and working</strong>, not just a design doc:</p>
+  <ul>
+    <li><strong>Ingest</strong>: Captured 3 real Gemini Pro traces on FloorAI queries with full token accounting.</li>
+    <li><strong>Distill</strong>: Pro extracted a structured WorkflowSpec for each (orchestrator prompt, workers, tools, domain rules, success criteria).</li>
+    <li><strong>Generate</strong>: Emitted 3 runnable Python scaffolds using the Gemini SDK pattern (orchestrator + workers + tool stubs + formatter).</li>
+    <li><strong>Replay</strong>: Executed each scaffold with gemini-3.1-flash-lite-preview on the same original queries.</li>
+    <li><strong>Judge</strong>: Deterministic comparison of entity overlap, numeric parity, structural parity, and measured cost delta.</li>
+  </ul>
+
+  <h3>Caveats (honest)</h3>
+  <ul>
+    <li>MVP uses <strong>mock tools</strong>. Production path: user provides API endpoints or we infer from repo.</li>
+    <li>Only 3 queries, one domain (retail ops). V4 should scale to SWE-bench Verified (public, unit-test verified) per BENCHMARK_STRATEGY.md.</li>
+    <li>Replay invokes multiple LLM calls (orchestrator + N workers + formatter) — net cost depends on worker count. Prompt caching not yet applied.</li>
+    <li>Domain-agnostic generalization unproven beyond retail-ops.</li>
+  </ul>
+
+  <h3>Next</h3>
+  <ul>
+    <li>Apply Anthropic prompt caching (90% discount on repeated context) — closes the cost overhead V3 exposed.</li>
+    <li>Add SDK targets beyond Gemini: Claude Agent SDK, OpenAI Agents SDK, LangChain.</li>
+    <li>Wire the runtime as a visible page on attrition.sh with Chef-style live trace UI.</li>
+    <li>Support live connectors (user-provided APIs) alongside mocks.</li>
+    <li>Scale to SWE-bench Verified for ground-truth validation.</li>
+  </ul>
+</div>
+
+<div class="foot">
+  attrition.sh DaaS MVP · Real Gemini API tokens measured · No estimates · Generated from 3-trace FloorAI corpus · April 19, 2026
+</div>
+</div></body></html>

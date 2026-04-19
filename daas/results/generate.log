@@ -1,0 +1,5 @@
+[gen] floorai_milk_delivery -> workflow_floorai_milk_delivery.py
+[gen] floorai_staffing -> workflow_floorai_staffing.py
+[gen] floorai_cooler_emergency -> workflow_floorai_cooler_emergency.py
+
+Generated 3 scaffolds in D:\VSCode Projects\cafecorner_nodebench\nodebench-qa\daas\scaffolds

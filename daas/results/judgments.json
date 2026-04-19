@@ -1,0 +1,32 @@
+[
+  {
+    "original_trace_id": "floorai_milk_delivery",
+    "replay_id": "replay_floorai_milk_delivery",
+    "output_similarity": 0.767,
+    "cost_delta_pct": -78.0,
+    "tool_parity": 1.0,
+    "quality_score": 7.67,
+    "verdict": "pass",
+    "details": "{\"ref_overlap\": 0.667, \"num_overlap\": 0.667, \"struct_score\": 1.0, \"orig_structure\": {\"refs_cited\": 6, \"numbered_actions\": 6, \"has_immediate_actions\": true, \"has_followup\": true, \"has_cross_store\": true, \"response_length\": 1435}, \"replay_structure\": {\"refs_cited\": 6, \"numbered_actions\": 7, \"has_immediate_actions\": true, \"has_followup\": true, \"has_cross_store\": true, \"response_length\": 2217}, \"orig_cost_usd\": 0.0069099999999999995, \"replay_cost_usd\": 0.00151695}"
+  },
+  {
+    "original_trace_id": "floorai_staffing",
+    "replay_id": "replay_floorai_staffing",
+    "output_similarity": 0.733,
+    "cost_delta_pct": -74.4,
+    "tool_parity": 1.0,
+    "quality_score": 7.33,
+    "verdict": "pass",
+    "details": "{\"ref_overlap\": 0.6, \"num_overlap\": 0.667, \"struct_score\": 1.0, \"orig_structure\": {\"refs_cited\": 5, \"numbered_actions\": 5, \"has_immediate_actions\": true, \"has_followup\": true, \"has_cross_store\": true, \"response_length\": 1669}, \"replay_structure\": {\"refs_cited\": 7, \"numbered_actions\": 6, \"has_immediate_actions\": true, \"has_followup\": true, \"has_cross_store\": true, \"response_length\": 2122}, \"orig_cost_usd\": 0.00715875, \"replay_cost_usd\": 0.001830825}"
+  },
+  {
+    "original_trace_id": "floorai_cooler_emergency",
+    "replay_id": "replay_floorai_cooler_emergency",
+    "output_similarity": 1.0,
+    "cost_delta_pct": -77.7,
+    "tool_parity": 1.0,
+    "quality_score": 10.0,
+    "verdict": "pass",
+    "details": "{\"ref_overlap\": 1.0, \"num_overlap\": 1.0, \"struct_score\": 1.0, \"orig_structure\": {\"refs_cited\": 2, \"numbered_actions\": 5, \"has_immediate_actions\": true, \"has_followup\": true, \"has_cross_store\": true, \"response_length\": 1165}, \"replay_structure\": {\"refs_cited\": 2, \"numbered_actions\": 4, \"has_immediate_actions\": true, \"has_followup\": true, \"has_cross_store\": true, \"response_length\": 1717}, \"orig_cost_usd\": 0.00655, \"replay_cost_usd\": 0.0014593499999999999}"
+  }
+]
