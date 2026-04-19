@@ -1,0 +1,24 @@
+Loading existing results from D:\VSCode Projects\cafecorner_nodebench\nodebench-qa\experiments\scaffolding_wedge\results\raw_responses.json
+
+============================================================
+JUDGING (Pro judge with structured rubric)...
+============================================================
+  judging EVAL-001 / flash_alone... score=10.0 verdict=pass
+  judging EVAL-001 / pro_alone... score=10.0 verdict=pass
+  judging EVAL-001 / flash_plus_skill... score=10.0 verdict=pass
+  judging EVAL-002 / flash_alone... score=10.0 verdict=pass
+  judging EVAL-002 / pro_alone... score=10.0 verdict=pass
+  judging EVAL-002 / flash_plus_skill... score=10.0 verdict=pass
+  judging EVAL-003 / flash_alone... score=10.0 verdict=pass
+  judging EVAL-003 / pro_alone... score=10.0 verdict=pass
+  judging EVAL-003 / flash_plus_skill... score=10.0 verdict=pass
+
+Judgments saved to D:\VSCode Projects\cafecorner_nodebench\nodebench-qa\experiments\scaffolding_wedge\results\judgments.json
+
+============================================================
+EXPERIMENT COMPLETE
+============================================================
+Runs: 3
+Judgments: 3
+
+Next step: python report.py to generate visual HTML report.

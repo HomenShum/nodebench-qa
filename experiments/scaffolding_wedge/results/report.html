@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scaffolding Wedge Experiment — attrition.sh</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; background: #0a0a0a; color: #e8e6e3; margin: 0; padding: 2rem; line-height: 1.5; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 2rem; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.25rem; margin-top: 2rem; margin-bottom: 0.75rem; letter-spacing: -0.01em; color: #f5f5f4; }
+  h3 { font-size: 1rem; color: #d97757; margin-top: 1rem; }
+  h4 { font-size: 0.875rem; color: #e8e6e3; margin: 0.5rem 0; }
+  .sub { color: #9a9590; font-size: 0.875rem; }
+  .card { background: #151413; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; }
+  .verdict-card { background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.05)); border: 2px solid; padding: 2rem; text-align: center; }
+  .verdict-label { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.03em; }
+  .verdict-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1.5rem; }
+  .metric { background: rgba(255,255,255,0.03); padding: 1rem; border-radius: 8px; }
+  .metric-label { font-size: 0.625rem; text-transform: uppercase; letter-spacing: 0.12em; color: #9a9590; margin-bottom: 0.25rem; }
+  .metric-value { font-size: 1.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+  .col { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 1rem; min-width: 0; }
+  .col-flash-alone { border-left: 3px solid #60a5fa; }
+  .col-pro-alone { border-left: 3px solid #f59e0b; }
+  .col-flash-plus-skill { border-left: 3px solid #22c55e; }
+  .col-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; }
+  .col-title { font-weight: 600; font-size: 0.8125rem; }
+  .col-cost { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #9a9590; }
+  .response { background: #0a0a0a; border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 0.75rem; font-size: 0.75rem; max-height: 400px; overflow-y: auto; line-height: 1.5; }
+  .response p { margin: 0.25rem 0; }
+  .response h3 { font-size: 0.8125rem; color: #d97757; margin-top: 0.5rem; }
+  .response h4 { font-size: 0.75rem; margin: 0.25rem 0; }
+  .response code { background: rgba(255,255,255,0.05); padding: 1px 4px; border-radius: 3px; font-size: 0.6875rem; }
+  .response .listitem { margin: 0.125rem 0; padding-left: 0.5rem; }
+  .response .listitem .lnum { color: #d97757; font-weight: 600; margin-right: 0.25rem; }
+  .response .bullet { margin: 0.125rem 0 0.125rem 0.5rem; }
+  .score-grid { display: grid; grid-template-columns: auto 1fr auto; gap: 0.5rem; font-size: 0.75rem; margin-top: 0.75rem; }
+  .score-label { color: #9a9590; }
+  .bar-wrap { background: rgba(255,255,255,0.05); border-radius: 4px; height: 16px; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; transition: width 0.3s; }
+  .bar-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.625rem; font-family: 'JetBrains Mono', monospace; color: #fff; mix-blend-mode: difference; }
+  .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.6875rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+  .skill-box { background: rgba(217, 119, 87, 0.05); border: 1px dashed rgba(217, 119, 87, 0.3); border-radius: 8px; padding: 1rem; margin: 1rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; max-height: 250px; overflow-y: auto; line-height: 1.5; }
+  .chart-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+  .chart-box { background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; }
+  .bar-group { display: grid; grid-template-columns: 140px 1fr; gap: 0.5rem; align-items: center; margin: 0.375rem 0; font-size: 0.75rem; }
+  .bar-group-label { color: #9a9590; text-align: right; }
+  .footer { text-align: center; color: #5d5854; font-size: 0.6875rem; margin-top: 3rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.04); }
+  code.mono { font-family: 'JetBrains Mono', monospace; background: rgba(255,255,255,0.05); padding: 2px 6px; border-radius: 4px; }
+  .refs-row { display: flex; gap: 0.25rem; flex-wrap: wrap; margin: 0.25rem 0; font-size: 0.625rem; font-family: 'JetBrains Mono', monospace; }
+  .ref-chip { padding: 1px 6px; border-radius: 3px; }
+  .ref-found { background: rgba(34,197,94,0.12); color: #22c55e; }
+  .ref-missing { background: rgba(239,68,68,0.12); color: #ef4444; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Scaffolding Wedge Experiment</h1>
+<p class="sub">attrition.sh research arm — can distilled reasoning transfer from Pro to Flash?</p>
+
+<div class="card verdict-card" style="border-color: #22c55e;">
+  <div class="verdict-label" style="color: #22c55e;">WEDGE CONFIRMED</div>
+  <p class="sub">3 queries × 3 configurations × Pro judge with structured rubric</p>
+  <div class="verdict-metrics">
+    <div class="metric">
+      <div class="metric-label">Quality Retention</div>
+      <div class="metric-value" style="color:#22c55e">100.0%</div>
+      <div class="sub">(Flash+skill quality ÷ Pro quality)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Cost Fraction</div>
+      <div class="metric-value" style="color:#60a5fa">7.1%</div>
+      <div class="sub">(Flash+skill cost ÷ Pro cost)</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">Quality Uplift</div>
+      <div class="metric-value" style="color:#d97757">+0.00</div>
+      <div class="sub">(Flash+skill − Flash alone, /10)</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>First Principle</h2>
+  <p>From the <a style="color:#d97757" href="https://github.com/VILA-Lab/Dive-into-Claude-Code" target="_blank">Dive-into-Claude-Code</a> architecture analysis: <em>"As frontier models converge in capability, the operational harness becomes the differentiator. Less capable models need more scaffolding."</em></p>
+  <p>The Anthropic advisor pattern codifies this: Opus provides scaffolding (plans, corrections, stop signals) that Sonnet/Haiku lacks. <strong>attrition.sh's hypothesis</strong>: this scaffolding can be distilled from observed successful Pro runs and injected into cheaper-model replays — generating skill templates automatically rather than requiring hand-written state graphs.</p>
+  <h3>Test</h3>
+  <p>For each query, run three configurations and judge:</p>
+  <ul>
+    <li><code class="mono">A: Flash alone</code> — cheap baseline</li>
+    <li><code class="mono">B: Pro alone</code> — expensive ceiling</li>
+    <li><code class="mono">C: Flash + distilled skill</code> — the experiment. Pro's reasoning is extracted into a structured skill template, then injected into Flash's prompt.</li>
+  </ul>
+  <h3>Success criteria</h3>
+  <p>Wedge confirmed if <strong>quality retention ≥ 80%</strong> at <strong>cost fraction &lt; 40%</strong>.</p>
+</div>
+
+<div class="card">
+  <h2>Aggregate Results</h2>
+  <div class="chart-row">
+    <div class="chart-box">
+      <h4>Average Quality Score (0-10)</h4>
+<div class="bar-group"><div class="bar-group-label">Flash alone</div><div class="bar-wrap"><div class="bar-fill" style="width:100.0%;background:#60a5fa"></div><div class="bar-label">10.00</div></div></div><div class="bar-group"><div class="bar-group-label">Pro alone</div><div class="bar-wrap"><div class="bar-fill" style="width:100.0%;background:#f59e0b"></div><div class="bar-label">10.00</div></div></div><div class="bar-group"><div class="bar-group-label">Flash + skill</div><div class="bar-wrap"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div><div class="bar-label">10.00</div></div></div>
+    </div>
+    <div class="chart-box">
+      <h4>Avg Cost per Query (USD)</h4>
+<div class="bar-group"><div class="bar-group-label">Flash alone</div><div class="bar-wrap"><div class="bar-fill" style="width:5.939849624060151%;background:#60a5fa"></div><div class="bar-label">$0.000444</div></div></div><div class="bar-group"><div class="bar-group-label">Pro alone</div><div class="bar-wrap"><div class="bar-fill" style="width:98.39598997493734%;background:#f59e0b"></div><div class="bar-label">$0.007361</div></div></div><div class="bar-group"><div class="bar-group-label">Flash + skill</div><div class="bar-wrap"><div class="bar-fill" style="width:7.002840434419381%;background:#22c55e"></div><div class="bar-label">$0.000524</div></div></div>
+    </div>
+    <div class="chart-box">
+      <h4>Avg Tokens per Query</h4>
+<div class="bar-group"><div class="bar-group-label">Flash alone</div><div class="bar-wrap"><div class="bar-fill" style="width:84.93209611012107%;background:#60a5fa"></div><div class="bar-label">4,607</div></div></div><div class="bar-group"><div class="bar-group-label">Pro alone</div><div class="bar-wrap"><div class="bar-fill" style="width:84.76617710317704%;background:#f59e0b"></div><div class="bar-label">4,598</div></div></div><div class="bar-group"><div class="bar-group-label">Flash + skill</div><div class="bar-wrap"><div class="bar-fill" style="width:100.0%;background:#22c55e"></div><div class="bar-label">5,424</div></div></div></div></div></div><h2>Per-Query Breakdown</h2>
+<div class="card">
+  <h3>EVAL-001 — What&#x27;s happening with our milk delivery?</h3>
+  <p class="sub">Store: <code class="mono">STR-101</code> · Required refs: <code class="mono">ISS-001</code> <code class="mono">SKU-4411</code> <code class="mono">DairyFresh Co</code> <code class="mono">POL-INV-003</code> </p>
+<h4 style="color:#d97757;margin-top:1rem">🧪 Distilled Skill (extracted from Pro's reasoning)</h4>
+<div class="skill-box"><p><h4>SKILL TEMPLATE: Vendor Delivery Issue &amp; Escalation Analysis</h4></p><p><strong>TRIGGER:</strong> 
+Queries asking for status, updates, or explanations regarding a specific product delivery, vendor shortage, or supply chain disruption (e.g., &quot;What&#x27;s happening with [product/vendor] delivery?&quot;).</p><p><strong>CONTEXT CHECKS:</strong>
+<div class='bullet'>•   <strong>Local Issue Logs:</strong> Look up specific Issue IDs related to the product/vendor at the store level.</div>
+<div class='bullet'>•   <strong>Regional/Global Issue Logs:</strong> Check for broader Regional Issue IDs related to the same vendor or product category.</div>
+<div class='bullet'>•   <strong>Policy Database:</strong> Search for Vendor Non-Compliance, Inventory, and Escalation policies (e.g., POL-INV-*, POL-VENDOR-*).</div>
+<div class='bullet'>•   <strong>Delivery Records:</strong> Identify specific missed delivery dates, times, and affected SKUs.</div>
+<div class='bullet'>•   <strong>Financial Metrics:</strong> Look up estimated revenue impact for the specific SKU shortage at both local and regional levels.</div>
+<div class='bullet'>•   <strong>Cross-Store Data:</strong> Check if other stores are reporting issues with the same vendor.</div></p><p><strong>REASONING STEPS:</strong>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Identify Entities:</strong> Extract the specific product, vendor, and SKU from the query and context.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Map Issue IDs:</strong> Locate the local store issue ID and any corresponding regional/escalated issue IDs to establish the scope of the problem.</div>
+<div class='listitem'><span class='lnum'>3.</span>  <strong>Identify Governing Policies:</strong> Find the specific policy IDs that dictate vendor non-compliance, missed deliveries, and escalation procedures.</div>
+<div class='listitem'><span class='lnum'>4.</span>  <strong>Determine Immediate Actions:</strong> Evaluate the delivery records against policy thresholds (e.g., number of missed deliveries in a specific timeframe) to define immediate required actions (e.g., documentation, vendor contact, emergency substitution).</div>
+<div class='listitem'><span class='lnum'>5.</span>  <strong>Determine Follow-up Actions:</strong> Formulate next steps based on policy escalation SLAs (e.g., 48-hour resolution windows) and regional directives (e.g., performance reviews, customer communication templates).</div>
+<div class='listitem'><span class='lnum'>6.</span>  <strong>Analyze Systemic Patterns:</strong> Compare local issues with cross-store data to determine if the failure is isolated or a systemic vendor issue.</div>
+<div class='listitem'><span class='lnum'>7.</span>  <strong>Quantify Impact:</strong> Extract or calculate the estimated revenue impact at both the store and regional levels to highlight the severity of the issue.</div></p><p><strong>OUTPUT STRUCTURE:</strong>
+<div class='bullet'>•   <strong>1. Reference to Specific Issue ID</strong></div>
+    *   Bullet points listing Store Level and Regional Level Issue IDs with brief descriptions.
+<div class='bullet'>•   <strong>2. Reference to Specific Policy ID</strong></div>
+    *   Bullet points listing relevant Policy IDs and their titles.
+<div class='bullet'>•   <strong>3. Immediate Actions (Right Now)</strong></div>
+    *   Numbered list of actions to take immediately.
+    *   *Requirement:* Each action must end with a citation of the relevant Policy ID in parentheses.
+<div class='bullet'>•   <strong>4. Follow-up Actions (Today/This Week)</strong></div>
+    *   Numbered list of actions to take in the near future.
+    *   *Requirement:* Include notes on pending statuses and cite the relevant Policy ID or Issue ID in parentheses.
+<div class='bullet'>•   <strong>5. Cross-Store Patterns &amp; Revenue Impact</strong></div>
+    *   *Cross-Store Pattern:* Explanation of whether the issue is isolated or systemic, referencing other affected stores and Issue IDs.
+    *   *Revenue Impact:* Specific dollar amounts lost at the store level and regional level, citing Issue IDs.</p><p><strong>DOMAIN RULES:</strong>
+<div class='bullet'>•   <strong>Emergency Substitution Threshold:</strong> Two missed scheduled deliveries within 7 days automatically authorizes the use of an emergency substitute supplier.</div>
+<div class='bullet'>•   <strong>Escalation SLA:</strong> If there is no resolution from a non-compliant vendor within 48 hours, the issue must be escalated to the Regional Manager.</div>
+<div class='bullet'>•   <strong>Mandatory Citation:</strong> Every immediate and follow-up action must explicitly cite the Policy ID or Issue ID that mandates it.</div>
+<div class='bullet'>•   <strong>Systemic Classification:</strong> If multiple stores (local and adjacent regions) report missed deliveries from the same vendor, it must be classified and explicitly stated as a &quot;systemic vendor failure.&quot;</div></p></div>
+<p class="sub">Distillation cost: <code class="mono">$0.004935</code> · 1,464 tokens (one-time per pattern)</p>
+
+<div class="row">
+
+  <div class="col col-flash-alone">
+    <div class="col-header">
+      <div class="col-title">Flash alone</div>
+      <div class="col-cost">$0.000458</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      4,643 tokens · 2830ms · gemini-3.1-flash-lite-preview
+    </div>
+    <div class="response"><p>Regarding the milk delivery issues for SKU-4411 (Horizon Organic 64oz whole milk):</p><p><strong>1. Issue ID:</strong> 
+<div class='bullet'>•   <strong>ISS-001</strong> (Greenfield Plaza) and <strong>ISS-002</strong> (Elm Street Market). This is confirmed as a systemic regional issue under <strong>ISS-018</strong>.</div></p><p><strong>2. Applicable Policy:</strong>
+<div class='bullet'>•   <strong>POL-INV-003: Vendor Non-Compliance Escalation</strong> (requires documentation of missed deliveries and escalation to Regional Manager).</div>
+<div class='bullet'>•   <strong>POL-VENDOR-001: Vendor Performance Review</strong> (initiated by Regional Manager due to multi-store impact).</div></p><p><strong>3. Immediate Actions:</strong>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Document:</strong> Ensure all missed delivery dates (4/10 and 4/12) are logged in the store’s vendor compliance file per <strong>POL-INV-003</strong>.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Contact:</strong> Reach out to the DairyFresh Co account representative immediately to demand a status update and recovery plan.</div>
+<div class='listitem'><span class='lnum'>3.</span>  <strong>Substitute:</strong> Per <strong>POL-INV-003</strong>, since the vendor has missed two deliveries, you are authorized to source an emergency substitute supplier to mitigate stockouts.</div></p><p><strong>4. Follow-up Actions:</strong>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Report:</strong> Submit all delivery reliability metrics (on-time percentage and fill rate) to the Regional Manager to support the formal performance review initiated in <strong>ISS-018</strong>.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Communicate:</strong> Prepare customer signage or communication regarding the temporary shortage as requested by the Regional Manager in <strong>ISS-018</strong>.</div>
+<div class='listitem'><span class='lnum'>3.</span>  <strong>Review:</strong> If no resolution is provided by the vendor within 48 hours of the initial escalation, finalize the transition to a backup supplier.</div></p><p><strong>5. Cross-Store Patterns &amp; Revenue Impact:</strong>
+<div class='bullet'>•   <strong>Pattern:</strong> This is a confirmed systemic failure of DairyFresh Co affecting at least four stores in the Northeast region (<strong>ISS-018</strong>).</div>
+<div class='bullet'>•   <strong>Revenue Impact:</strong> The estimated revenue loss for Greenfield Plaza (STR-101) is <strong>$480</strong>, and for Elm Street Market (STR-102) is <strong>$360</strong>. The total regional impact identified by the Regional Manager is <strong>$4,200</strong> (<strong>ISS-018</strong>).</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-001</span><span class="ref-chip ref-found">✓ SKU-4411</span><span class="ref-chip ref-found">✓ DairyFresh Co</span><span class="ref-chip ref-found">✓ POL-INV-003</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by including all required references, accurately grounding the issue in policy, providing clear and numbered actionable steps, and comprehensively covering cross-store patterns and revenue impact.</em></p>
+    </div>
+  </div>
+
+  <div class="col col-pro-alone">
+    <div class="col-header">
+      <div class="col-title">Pro alone</div>
+      <div class="col-cost">$0.007479</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      4,612 tokens · 13163ms · gemini-3.1-pro-preview
+    </div>
+    <div class="response"><p>Here is the information regarding your milk delivery issue:</p><p><strong>1. Reference to Specific Issue ID</strong>
+<div class='bullet'>• <strong>ISS-001</strong> (Store Level: Greenfield Plaza organic milk shortage)</div>
+<div class='bullet'>• <strong>ISS-018</strong> (Regional Level: DairyFresh Co vendor review)</div></p><p><strong>2. Reference to Specific Policy ID</strong>
+<div class='bullet'>• <strong>POL-INV-003</strong>: Vendor Non-Compliance Escalation</div></p><p><strong>3. Immediate Actions (Right Now)</strong>
+<div class='listitem'><span class='lnum'>1.</span> Document the two missed deliveries (4/10 and 4/12) from DairyFresh Co with specific dates and times (POL-INV-003).</div>
+<div class='listitem'><span class='lnum'>2.</span> Contact the DairyFresh Co vendor account representative immediately to report the non-compliance (POL-INV-003).</div>
+<div class='listitem'><span class='lnum'>3.</span> Authorize an emergency substitute supplier to restock the Horizon Organic 64oz whole milk (SKU-4411) since two scheduled deliveries were missed within 7 days (POL-INV-003).</div></p><p><strong>4. Follow-up Actions (Today/This Week)</strong>
+<div class='listitem'><span class='lnum'>1.</span> Escalate to Regional Manager Sandra Williams if there is no resolution from the vendor within 48 hours (POL-INV-003). *(Note: Regional escalation is already pending per ISS-001).*</div>
+<div class='listitem'><span class='lnum'>2.</span> Implement the customer communication template for the affected SKU once provided by the Regional Manager (ISS-018).</div>
+<div class='listitem'><span class='lnum'>3.</span> Prepare to supply delivery reliability metrics to regional leadership to support the formal 30-day vendor performance review against DairyFresh Co (ISS-018, POL-VENDOR-001).</div></p><p><strong>5. Cross-Store Patterns &amp; Revenue Impact</strong>
+<div class='bullet'>• <strong>Cross-Store Pattern:</strong> This is a systemic vendor failure. DairyFresh Co has also missed deliveries at Elm Street Market (ISS-002) and at least two other stores in an adjacent region (ISS-018). </div>
+<div class='bullet'>• <strong>Revenue Impact:</strong> The shortage of SKU-4411 is causing an estimated $480 revenue impact at your store (ISS-001) and a $4,200 estimated revenue impact across the region (ISS-018).</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-001</span><span class="ref-chip ref-found">✓ SKU-4411</span><span class="ref-chip ref-found">✓ DairyFresh Co</span><span class="ref-chip ref-found">✓ POL-INV-003</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by including all required references, providing highly actionable and numbered steps grounded in the correct policy, and thoroughly covering cross-store patterns and revenue impacts.</em></p>
+    </div>
+  </div>
+
+  <div class="col col-flash-plus-skill">
+    <div class="col-header">
+      <div class="col-title">Flash + skill</div>
+      <div class="col-cost">$0.000536</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      5,474 tokens · 2245ms · gemini-3.1-flash-lite-preview
+    </div>
+    <div class="response"><p><h4>1. Reference to Specific Issue ID</h4>
+<div class='bullet'>•   <strong>Store Level:</strong> ISS-001 (Greenfield Plaza) – Organic milk shortage due to two missed deliveries by DairyFresh Co (SKU-4411).</div>
+<div class='bullet'>•   <strong>Regional Level:</strong> ISS-018 (Regional Pattern) – Systemic vendor failure involving DairyFresh Co affecting multiple stores, including STR-101 and STR-102.</div></p><p><h4>2. Reference to Specific Policy ID</h4>
+<div class='bullet'>•   <strong>POL-INV-003:</strong> Vendor Non-Compliance Escalation</div>
+<div class='bullet'>•   <strong>POL-VENDOR-001:</strong> Vendor Performance Review</div></p><p><h4>3. Immediate Actions (Right Now)</h4>
+<div class='listitem'><span class='lnum'>1.</span>  Document the specific missed delivery dates (4/10 and 4/12) and times in the store log to satisfy non-compliance documentation requirements (POL-INV-003).</div>
+<div class='listitem'><span class='lnum'>2.</span>  Contact the DairyFresh Co account representative immediately to demand a resolution, as the 48-hour escalation window is active (POL-INV-003).</div>
+<div class='listitem'><span class='lnum'>3.</span>  Since two scheduled deliveries have been missed within 7 days, proceed with the authorization of an emergency substitute supplier to mitigate further stockouts (POL-INV-003).</div></p><p><h4>4. Follow-up Actions (Today/This Week)</h4>
+<div class='listitem'><span class='lnum'>1.</span>  Monitor the status of ISS-001; if no resolution is provided by the vendor within 48 hours of the initial report, ensure the issue is formally escalated to the Regional Manager (POL-INV-003).</div>
+<div class='listitem'><span class='lnum'>2.</span>  Coordinate with the Regional Manager regarding the 30-day vendor performance review initiated under ISS-018 to ensure local data is included in the corrective action plan (POL-VENDOR-001).</div>
+<div class='listitem'><span class='lnum'>3.</span>  Utilize the customer communication template requested by the Regional Manager in ISS-018 to address ongoing customer complaints regarding SKU-4411 (ISS-018).</div></p><p><h4>5. Cross-Store Patterns &amp; Revenue Impact</h4>
+<div class='bullet'>•   <strong>Cross-Store Pattern:</strong> This is a <strong>systemic vendor failure</strong>. The issue is not isolated to STR-101; it is confirmed across multiple locations, including STR-102 (Elm Street Market) and stores in adjacent regions, as documented in ISS-018.</div>
+<div class='bullet'>•   <strong>Revenue Impact:</strong> </div>
+    *   <strong>Store Level (STR-101):</strong> $480 estimated revenue loss (ISS-001).
+    *   <strong>Regional Level:</strong> $4,200 estimated total revenue impact across the affected stores (ISS-018).</p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-001</span><span class="ref-chip ref-found">✓ SKU-4411</span><span class="ref-chip ref-found">✓ DairyFresh Co</span><span class="ref-chip ref-found">✓ POL-INV-003</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by including all required references, providing highly actionable and structured steps, and thoroughly grounding the actions in the correct policies while addressing cross-store impacts.</em></p>
+    </div>
+  </div>
+</div></div>
+<div class="card">
+  <h3>EVAL-002 — We&#x27;re short-staffed today, 3 people called out. What should I do?</h3>
+  <p class="sub">Store: <code class="mono">STR-103</code> · Required refs: <code class="mono">ISS-003</code> <code class="mono">POL-HR-007</code> </p>
+<h4 style="color:#d97757;margin-top:1rem">🧪 Distilled Skill (extracted from Pro's reasoning)</h4>
+<div class="skill-box"><p><h4>SKILL TEMPLATE: Emergency Staffing Shortage Mitigation</h4></p><p><strong>TRIGGER:</strong>
+<div class='bullet'>•   User reports sudden staffing shortages, multiple call-outs, or requests immediate guidance on handling an understaffed shift.</div>
+<div class='bullet'>•   Keywords: &quot;short-staffed&quot;, &quot;called out&quot;, &quot;call-outs&quot;, &quot;need coverage&quot;, &quot;emergency staffing&quot;.</div></p><p><strong>CONTEXT CHECKS:</strong>
+<div class='bullet'>•   <strong>Store Identifier:</strong> Look up the specific Store ID (e.g., STR-103).</div>
+<div class='bullet'>•   <strong>Staffing Metrics:</strong> Total scheduled staff vs. number of call-outs (to calculate the absence percentage).</div>
+<div class='bullet'>•   <strong>Active Issues:</strong> Look up active Issue IDs (ISS-XXX) related to the store&#x27;s staffing, scheduling, or compounding operational bottlenecks (e.g., training backlogs, system outages).</div>
+<div class='bullet'>•   <strong>Policy Guidelines:</strong> Look up relevant HR/Operations Policy IDs (e.g., POL-HR-007 Emergency Staffing Protocol) and specific thresholds for overtime or external hiring.</div>
+<div class='bullet'>•   <strong>Departmental Impact:</strong> Identify specific zones or departments left unstaffed by the call-outs.</div>
+<div class='bullet'>•   <strong>Financial/Systemic Data:</strong> Look up estimated revenue at risk for the affected shift and check for broader regional call-out patterns.</div></p><p><strong>REASONING STEPS:</strong>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Identify Store &amp; Context:</strong> Retrieve the Store ID and cross-reference with active Issue IDs and Policy IDs related to staffing.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Calculate Severity:</strong> Divide the number of call-outs by the total scheduled staff to determine the absence percentage. </div>
+<div class='listitem'><span class='lnum'>3.</span>  <strong>Determine Immediate Internal Actions:</strong> Compare the absence percentage against policy thresholds (e.g., &gt;30%) to authorize emergency measures like overtime. Identify critical unstaffed departments to reallocate remaining floor staff.</div>
+<div class='listitem'><span class='lnum'>4.</span>  <strong>Determine Escalation Path:</strong> Formulate a step-by-step external coverage plan (e.g., neighboring stores first, then approved temp agencies with contact info).</div>
+<div class='listitem'><span class='lnum'>5.</span>  <strong>Identify Compounding Factors:</strong> Review other active store issues (e.g., new hires unable to work registers due to training/system issues) that are exacerbating the shortage.</div>
+<div class='listitem'><span class='lnum'>6.</span>  <strong>Formulate Follow-Up Actions:</strong> Create tasks to resolve the compounding factors (e.g., expedite training) to relieve future pressure.</div>
+<div class='listitem'><span class='lnum'>7.</span>  <strong>Assess Impact &amp; Patterns:</strong> Quantify the financial risk (revenue at risk) and determine if the issue is an isolated local event or part of a regional trend.</div></p><p><strong>OUTPUT STRUCTURE:</strong>
+<div class='bullet'>•   <strong>Introduction:</strong> Brief opening acknowledging the Store ID and stating the purpose of the action plan.</div>
+<div class='bullet'>•   <strong>Reference IDs:</strong> Bulleted list of relevant Issue IDs (with brief descriptions) and Policy IDs.</div>
+<div class='bullet'>•   <strong>Immediate Actions (Right Now):</strong> Numbered list of urgent steps (Overtime, Reallocation, Neighboring Stores, Temp Agency). *Must include citations to relevant IDs in parentheses.*</div>
+<div class='bullet'>•   <strong>Follow-Up Actions (Today/This Week):</strong> Numbered list of steps to address compounding operational issues (e.g., training backlogs). *Must include citations to relevant IDs in parentheses.*</div>
+<div class='bullet'>•   <strong>Revenue Impact &amp; Patterns:</strong> </div>
+    *   *Revenue Impact:* Bullet point stating the estimated dollar amount at risk.
+    *   *Store Pattern:* Bullet point explaining regional trends vs. local compounding factors.</p><p><strong>DOMAIN RULES:</strong>
+<div class='bullet'>•   <strong>Overtime Threshold Rule:</strong> If call-outs exceed 30% of the scheduled staff, immediately approve overtime (up to 8 hours) for the remaining team members.</div>
+<div class='bullet'>•   <strong>Coverage Escalation Hierarchy:</strong> Staffing gaps must be filled in this strict order: 1) Reallocate existing internal staff -&gt; 2) Solicit voluntary coverage from neighboring stores -&gt; 3) Contact approved regional temp agencies.</div>
+<div class='bullet'>•   <strong>Citation Requirement:</strong> Every actionable step must cite the specific Policy ID or Issue ID that justifies it.</div>
+<div class='bullet'>•   <strong>Minimum Floor Coverage:</strong> Reallocation of existing staff must prioritize maintaining minimum coverage in specialized/service-heavy departments (e.g., bakery, deli) before general floor coverage.</div></p></div>
+<p class="sub">Distillation cost: <code class="mono">$0.005083</code> · 1,498 tokens (one-time per pattern)</p>
+
+<div class="row">
+
+  <div class="col col-flash-alone">
+    <div class="col-header">
+      <div class="col-title">Flash alone</div>
+      <div class="col-cost">$0.000447</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      4,623 tokens · 2545ms · gemini-3.1-flash-lite-preview
+    </div>
+    <div class="response"><p>To address your current staffing shortage at Harbor View (STR-103), please follow the <strong>POL-HR-007: Emergency Staffing Protocol</strong>.</p><p><h4>1. Relevant Issue ID</h4>
+<div class='bullet'>•   <strong>ISS-003</strong>: Critical staffing shortage (3 call-outs) resulting in unstaffed bakery and deli sections.</div></p><p><h4>2. Applicable Policy</h4>
+<div class='bullet'>•   <strong>POL-HR-007: Emergency Staffing Protocol</strong></div></p><p><h4>3. Immediate Actions (Right Now)</h4>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Authorize Overtime:</strong> Approve up to 8 hours of overtime for the 4 associates currently on-site to cover essential floor tasks.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Request Coverage:</strong> Contact neighboring stores immediately to request voluntary coverage from their staff.</div>
+<div class='listitem'><span class='lnum'>3.</span>  <strong>Engage Temp Agency:</strong> If floor coverage remains below minimum requirements after internal outreach, contact <strong>StaffNow at 800-555-0147</strong> to request emergency temporary staffing.</div>
+<div class='listitem'><span class='lnum'>4.</span>  <strong>Prioritize Departments:</strong> Focus remaining staff on high-risk areas (Bakery/Deli) to maintain food safety and service standards.</div></p><p><h4>4. Follow-up Actions (Today/This Week)</h4>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Address Training Backlog:</strong> Per <strong>ISS-009</strong>, prioritize POS certification for your two new hires immediately. They are currently limited to bagging; getting them register-certified is essential to alleviate the pressure on your remaining experienced staff during the weekend rush.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Documentation:</strong> Ensure all overtime hours and temp agency requests are logged for regional reporting.</div></p><p><h4>5. Cross-Store Patterns &amp; Revenue Impact</h4>
+<div class='bullet'>•   <strong>Revenue Impact:</strong> The current staffing issue (ISS-003) has an estimated revenue impact of <strong>$2,200</strong>.</div>
+<div class='bullet'>•   <strong>Pattern Note:</strong> You are currently experiencing a secondary operational bottleneck with new hire training (ISS-009). Additionally, the region is facing a broader staffing challenge; per <strong>ISS-020</strong>, the regional manager is already coordinating a summer hiring pipeline. Ensure your current staffing gaps are reflected in the headcount forecast due by April 15th.</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-003</span><span class="ref-chip ref-found">✓ POL-HR-007</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by providing highly actionable, well-structured steps grounded in the required policy and issue references, while also covering follow-up actions and cross-store impacts.</em></p>
+    </div>
+  </div>
+
+  <div class="col col-pro-alone">
+    <div class="col-header">
+      <div class="col-title">Pro alone</div>
+      <div class="col-cost">$0.007481</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      4,629 tokens · 12312ms · gemini-3.1-pro-preview
+    </div>
+    <div class="response"><p>Based on the details for your store (STR-103), here is the action plan to handle today&#x27;s staffing shortage.</p><p><strong>Reference IDs:</strong>
+<div class='bullet'>•   <strong>Issue ID:</strong> ISS-003 (3 call-outs on Saturday) and ISS-009 (New hire POS training backlog)</div>
+<div class='bullet'>•   <strong>Policy ID:</strong> POL-HR-007: Emergency Staffing Protocol</div></p><p><strong>Immediate Actions (Right Now):</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Approve Overtime:</strong> Because 3 out of 7 scheduled associates called out (over the 30% policy threshold), immediately approve up to 8 hours of overtime for your 4 remaining team members (POL-HR-007, ISS-003).</div>
+<div class='listitem'><span class='lnum'>2.</span> <strong>Reallocate Floor Coverage:</strong> Shift available staff to maintain minimum floor coverage, specifically targeting the currently unstaffed bakery and deli sections (ISS-003, POL-HR-007).</div>
+<div class='listitem'><span class='lnum'>3.</span> <strong>Call Neighboring Stores:</strong> Contact nearby locations to request voluntary shift coverage from their associates (POL-HR-007).</div>
+<div class='listitem'><span class='lnum'>4.</span> <strong>Contact Temp Agency:</strong> If you are still short-staffed after reaching out to neighboring stores, call the regional temp staffing agency, StaffNow, at 800-555-0147 for emergency coverage (POL-HR-007).</div></p><p><strong>Follow-Up Actions (Today/This Week):</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Expedite New Hire Training:</strong> Prioritize resolving the POS training backlog for your two new hires who started 4/7. They are currently only bagging, and getting them register-certified will help alleviate floor pressure during weekend rushes (ISS-009). </div></p><p><strong>Revenue Impact &amp; Patterns:</strong>
+<div class='bullet'>•   <strong>Revenue Impact:</strong> This specific staffing shortage puts an estimated $2,200 in revenue at risk for today&#x27;s busiest shift (ISS-003).</div>
+<div class='bullet'>•   <strong>Store Pattern:</strong> There is no regional call-out pattern, but your store&#x27;s floor coverage is being compounded by the ongoing POS training system outage (ISS-009) that is preventing your new hires from operating the registers.</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-003</span><span class="ref-chip ref-found">✓ POL-HR-007</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by providing highly actionable, numbered steps grounded in the required policies and issue IDs, while comprehensively covering immediate actions, follow-ups, cross-store coordination, and revenue risks.</em></p>
+    </div>
+  </div>
+
+  <div class="col col-flash-plus-skill">
+    <div class="col-header">
+      <div class="col-title">Flash + skill</div>
+      <div class="col-cost">$0.000553</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      5,568 tokens · 3149ms · gemini-3.1-flash-lite-preview
+    </div>
+    <div class="response"><p><h4>Emergency Staffing Shortage Mitigation Plan: STR-103</h4></p><p><strong>Introduction:</strong>
+This action plan is designed to address the critical staffing shortage at Harbor View (STR-103) following the call-out of three associates, which has left the bakery and deli departments unstaffed.</p><p><strong>Reference IDs:</strong>
+<div class='bullet'>•   <strong>ISS-003:</strong> Critical staffing shortage (3 call-outs) at STR-103.</div>
+<div class='bullet'>•   <strong>ISS-009:</strong> POS training backlog for new hires, limiting their ability to assist with the register rush.</div>
+<div class='bullet'>•   <strong>POL-HR-007:</strong> Emergency Staffing Protocol (defines overtime thresholds and coverage hierarchy).</div>
+<div class='bullet'>•   <strong>POL-HR-012:</strong> New Hire Certification Timeline (governs POS training requirements).</div></p><p><strong>Immediate Actions (Right Now):</strong>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Authorize Overtime:</strong> Since 3 out of 7 scheduled staff (42.8%) have called out, you are authorized to approve up to 8 hours of overtime for each of the 4 remaining associates to ensure store operations continue (<strong>POL-HR-007</strong>).</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Reallocate Internal Staff:</strong> Prioritize the immediate assignment of remaining staff to the bakery and deli departments to maintain minimum service coverage before addressing general floor needs (<strong>POL-HR-007</strong>).</div>
+<div class='listitem'><span class='lnum'>3.</span>  <strong>Solicit Neighboring Stores:</strong> Reach out to nearby stores to request voluntary coverage from their off-duty staff to fill the remaining gaps (<strong>POL-HR-007</strong>).</div>
+<div class='listitem'><span class='lnum'>4.</span>  <strong>Contact Temp Agency:</strong> If internal reallocation and neighboring store support are insufficient, contact the regional temp staffing agency, *StaffNow*, at 800-555-0147 to request emergency support (<strong>POL-HR-007</strong>).</div></p><p><strong>Follow-Up Actions (Today/This Week):</strong>
+<div class='listitem'><span class='lnum'>1.</span>  <strong>Expedite POS Training:</strong> Prioritize the register certification for the two new hires mentioned in <strong>ISS-009</strong> to ensure they can assist with the weekend rush and reduce the burden on senior staff.</div>
+<div class='listitem'><span class='lnum'>2.</span>  <strong>Review Attendance Patterns:</strong> Investigate if these call-outs are isolated or part of a broader trend to determine if additional scheduling adjustments are required for future high-volume shifts (<strong>ISS-003</strong>).</div></p><p><strong>Revenue Impact &amp; Patterns:</strong>
+<div class='bullet'>•   *Revenue Impact:* Estimated $2,200 in revenue is at risk for today’s shift due to the inability to fully staff the bakery and deli departments (<strong>ISS-003</strong>).</div>
+<div class='bullet'>•   *Store Pattern:* This appears to be a local, acute staffing crisis. Unlike the regional vendor issues affecting other stores (e.g., <strong>ISS-018</strong>), this is a localized operational bottleneck compounded by the inability to utilize new hires for register support (<strong>ISS-009</strong>).</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-003</span><span class="ref-chip ref-found">✓ POL-HR-007</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by providing highly actionable, numbered steps grounded in the required policies and issue IDs, while comprehensively covering immediate actions, follow-ups, cross-store context, and revenue risk.</em></p>
+    </div>
+  </div>
+</div></div>
+<div class="card">
+  <h3>EVAL-003 — Our walk-in cooler is at 52 degrees, what do I do?</h3>
+  <p class="sub">Store: <code class="mono">STR-104</code> · Required refs: <code class="mono">ISS-004</code> <code class="mono">POL-MAINT-001</code> </p>
+<h4 style="color:#d97757;margin-top:1rem">🧪 Distilled Skill (extracted from Pro's reasoning)</h4>
+<div class="skill-box"><p><h4>SKILL TEMPLATE: Emergency Equipment Failure &amp; Food Safety Response</h4></p><p><strong>TRIGGER:</strong> 
+<div class='bullet'>• Queries reporting refrigeration, freezer, or walk-in cooler failures.</div>
+<div class='bullet'>• Queries mentioning temperature readings above safe cold-holding thresholds (e.g., &gt; 41°F).</div>
+<div class='bullet'>• Keywords: cooler, freezer, temperature, degrees, broken, warm, HVAC, emergency.</div></p><p><strong>CONTEXT CHECKS:</strong>
+<div class='bullet'>• <strong>Store-Specific Tickets:</strong> Look up active issue IDs (e.g., ISS-004) related to the store&#x27;s equipment.</div>
+<div class='bullet'>• <strong>Policy Documents:</strong> Look up maintenance and emergency equipment failure policies (e.g., POL-MAINT-001).</div>
+<div class='bullet'>• <strong>Vendor Status:</strong> Check the availability and SLA of the store&#x27;s primary HVAC/refrigeration vendor.</div>
+<div class='bullet'>• <strong>Inventory Value:</strong> Look up the financial value of the inventory currently stored in the affected equipment.</div>
+<div class='bullet'>• <strong>Cross-Store/Regional Issues:</strong> Check global or regional tickets (e.g., ISS-018) for supply chain shortages affecting the specific categories of food at risk.</div></p><p><strong>REASONING STEPS:</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Assess the Threat:</strong> Compare the reported temperature against the strict food safety threshold (41°F). </div>
+<div class='listitem'><span class='lnum'>2.</span> <strong>Determine Immediate Food Safety Actions:</strong> Instruct the user to check temperature logs to establish the duration of the temperature breach. Apply the time/temperature domain rules to determine what must be discarded.</div>
+<div class='listitem'><span class='lnum'>3.</span> <strong>Determine Vendor Action:</strong> Check primary vendor availability. If unavailable, apply emergency policy rules to authorize an alternative licensed vendor to prevent further loss.</div>
+<div class='listitem'><span class='lnum'>4.</span> <strong>Determine Administrative Follow-up:</strong> Formulate steps for documenting inventory loss and managing the financial/invoicing side of the emergency ticket.</div>
+<div class='listitem'><span class='lnum'>5.</span> <strong>Calculate Revenue Impact:</strong> Identify the exact dollar amount of inventory at risk in the specific unit.</div>
+<div class='listitem'><span class='lnum'>6.</span> <strong>Synthesize Regional Context:</strong> Cross-reference the at-risk inventory with regional supply chain data. If a shortage exists, emphasize the critical need for preservation since replenishment is compromised.</div></p><p><strong>OUTPUT STRUCTURE:</strong>
+<strong>Issue Reference:</strong> [Relevant Ticket ID]
+<strong>Applicable Policy:</strong> [Policy ID]: [Policy Name]</p><p><strong>Immediate Actions (Right Now):</strong>
+<div class='listitem'><span class='lnum'>1.</span> [Instruction to check logs and establish time out of temperature]</div>
+<div class='listitem'><span class='lnum'>2.</span> [Instruction to evaluate product against thresholds]</div>
+<div class='listitem'><span class='lnum'>3.</span> [Instruction on discarding specific items based on domain rules]</div>
+<div class='listitem'><span class='lnum'>4.</span> [Instruction on vendor dispatch, including alternative authorization if applicable]</div></p><p><strong>Follow-up Actions (Today/This Week):</strong>
+<div class='listitem'><span class='lnum'>1.</span> [Instruction on documenting inventory loss/waste]</div>
+<div class='listitem'><span class='lnum'>2.</span> [Instruction on ticket, invoice, or vendor follow-up]</div></p><p><strong>Cross-Store Patterns &amp; Revenue Impact:</strong>
+<div class='bullet'>• <strong>Revenue Impact:</strong> [Dollar amount] worth of [Product Categories] is currently at risk.</div>
+<div class='bullet'>• <strong>Cross-Store Patterns:</strong> [Details of any regional shortages or related tickets] + [Strategic advice on why preserving this specific stock is critical].</div></p><p><strong>DOMAIN RULES:</strong>
+<div class='bullet'>• <strong>Cold Holding Threshold:</strong> The maximum safe temperature for cold holding is 41°F.</div>
+<div class='bullet'>• <strong>Spoilage Time Limit:</strong> Dairy and produce must be discarded if they remain above 41°F for 2 or more hours.</div>
+<div class='bullet'>• <strong>Emergency Vendor Authorization:</strong> If a primary vendor is unavailable during a food-safety equipment emergency, store management is authorized to use an alternative licensed vendor.</div>
+<div class='bullet'>• <strong>Waste Documentation:</strong> All discarded items must be strictly documented to account for inventory loss.</div></p></div>
+<p class="sub">Distillation cost: <code class="mono">$0.004341</code> · 1,295 tokens (one-time per pattern)</p>
+
+<div class="row">
+
+  <div class="col col-flash-alone">
+    <div class="col-header">
+      <div class="col-title">Flash alone</div>
+      <div class="col-cost">$0.000428</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      4,555 tokens · 2367ms · gemini-3.1-flash-lite-preview
+    </div>
+    <div class="response"><p>Regarding the walk-in cooler failure at Riverside Commons (STR-104):</p><p><strong>1. Issue ID:</strong> ISS-004
+<strong>2. Policy ID:</strong> POL-MAINT-001: Emergency Equipment Failure</p><p><strong>3. Immediate Actions (RIGHT NOW):</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Product Evaluation:</strong> Immediately assess all dairy and produce items. Per policy, any product that has remained above 41°F for 2 or more hours must be discarded.</div>
+<div class='listitem'><span class='lnum'>2.</span> <strong>Temperature Logging:</strong> Document the current 52°F reading and the time of discovery in your temperature logs to establish the timeline for potential insurance or vendor claims.</div>
+<div class='listitem'><span class='lnum'>3.</span> <strong>Emergency Vendor:</strong> Since your primary vendor (CoolTech) is unavailable until Monday, contact an alternative licensed HVAC vendor immediately to attempt an emergency repair, as this is a critical food-safety failure.</div></p><p><strong>4. Follow-up Actions (Today/This Week):</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Inventory Disposal:</strong> Complete the disposal of all compromised perishables and document the loss for your inventory records.</div>
+<div class='listitem'><span class='lnum'>2.</span> <strong>Regional Escalation:</strong> Since you have already flagged this as critical, provide a status update to your Regional Manager regarding the $8,000 in estimated revenue impact and the status of the emergency repair.</div>
+<div class='listitem'><span class='lnum'>3.</span> <strong>System Monitoring:</strong> Continue to monitor the temperature of other refrigeration units to ensure the issue is isolated to cooler #2.</div></p><p><strong>5. Cross-Store Patterns &amp; Revenue Impact:</strong>
+<div class='bullet'>• <strong>Revenue Impact:</strong> This incident represents an estimated <strong>$8,000</strong> loss in perishable inventory.</div>
+<div class='bullet'>• <strong>Cross-Store Patterns:</strong> While this is an isolated equipment failure, note that STR-104 is also experiencing operational issues with self-checkout lanes (ISS-011). Ensure that the focus on the cooler failure does not further degrade the customer experience at the front end.</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-004</span><span class="ref-chip ref-found">✓ POL-MAINT-001</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by providing highly actionable, numbered steps, accurately citing the required issue and policy IDs, and comprehensively covering immediate, follow-up, and cross-store impacts.</em></p>
+    </div>
+  </div>
+
+  <div class="col col-pro-alone">
+    <div class="col-header">
+      <div class="col-title">Pro alone</div>
+      <div class="col-cost">$0.007124</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      4,553 tokens · 14589ms · gemini-3.1-pro-preview
+    </div>
+    <div class="response"><p><strong>Issue Reference:</strong> ISS-004
+<strong>Applicable Policy:</strong> POL-MAINT-001: Emergency Equipment Failure</p><p><strong>Immediate Actions (Right Now):</strong>
+<div class='listitem'><span class='lnum'>1.</span> Check your temperature logs immediately to determine exactly how long the cooler has been above safe levels (POL-MAINT-001).</div>
+<div class='listitem'><span class='lnum'>2.</span> Begin product evaluation immediately, as the 52°F reading exceeds the maximum 41°F cold holding threshold (POL-MAINT-001).</div>
+<div class='listitem'><span class='lnum'>3.</span> Discard any dairy or produce that has remained above 41°F for 2 or more hours (POL-MAINT-001).</div>
+<div class='listitem'><span class='lnum'>4.</span> Call *any* alternative licensed HVAC vendor for immediate dispatch. Because your primary vendor (CoolTech) is unavailable until Monday, policy authorizes you to use another licensed vendor for food-safety equipment emergencies (ISS-004, POL-MAINT-001).</div></p><p><strong>Follow-up Actions (Today/This Week):</strong>
+<div class='listitem'><span class='lnum'>1.</span> Document all discarded items to account for inventory loss (POL-MAINT-001).</div>
+<div class='listitem'><span class='lnum'>2.</span> Follow up on the emergency vendor authorization requested in your open ticket to ensure the alternative HVAC invoice is approved (ISS-004).</div></p><p><strong>Cross-Store Patterns &amp; Revenue Impact:</strong>
+<div class='bullet'>• <strong>Revenue Impact:</strong> Approximately $8,000 worth of dairy and produce is currently at risk in your walk-in cooler (ISS-004). </div>
+<div class='bullet'>• <strong>Cross-Store Patterns:</strong> While this equipment failure is isolated to STR-104, there is a severe regional shortage of organic dairy (SKU-4411) caused by vendor delivery failures across at least 4 other stores (ISS-018). Preserving any safe dairy in your cooler is critical, as replenishment stock is currently unreliable.</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-004</span><span class="ref-chip ref-found">✓ POL-MAINT-001</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by providing clear, actionable steps grounded in the required policies and issue tickets, while comprehensively covering immediate actions, follow-ups, and cross-store risks.</em></p>
+    </div>
+  </div>
+
+  <div class="col col-flash-plus-skill">
+    <div class="col-header">
+      <div class="col-title">Flash + skill</div>
+      <div class="col-cost">$0.000483</div>
+    </div>
+    <div class="sub" style="font-size:0.6875rem;margin-bottom:0.5rem">
+      5,231 tokens · 2103ms · gemini-3.1-flash-lite-preview
+    </div>
+    <div class="response"><p><strong>Issue Reference:</strong> ISS-004
+<strong>Applicable Policy:</strong> POL-MAINT-001: Emergency Equipment Failure</p><p><strong>Immediate Actions (Right Now):</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Check Logs:</strong> Immediately review the walk-in cooler’s temperature logs to determine the exact time the unit rose above 41°F.</div>
+<div class='listitem'><span class='lnum'>2.</span> <strong>Evaluate Product:</strong> Assess all dairy and produce items currently stored in the unit. </div>
+<div class='listitem'><span class='lnum'>3.</span> <strong>Discard Items:</strong> Per domain rules, any dairy or produce that has remained at or above 41°F for 2 or more hours must be discarded immediately to ensure food safety.</div>
+<div class='listitem'><span class='lnum'>4.</span> <strong>Vendor Dispatch:</strong> Since your primary vendor (CoolTech) is unavailable until Monday, you are authorized under POL-MAINT-001 to contact and dispatch an alternative licensed HVAC vendor immediately to prevent further inventory loss.</div></p><p><strong>Follow-up Actions (Today/This Week):</strong>
+<div class='listitem'><span class='lnum'>1.</span> <strong>Document Loss:</strong> Create a detailed log of all discarded inventory, including item descriptions, quantities, and the reason for disposal (temperature breach), to account for the financial loss.</div>
+<div class='listitem'><span class='lnum'>2.</span> <strong>Administrative Follow-up:</strong> Update the existing ticket (ISS-004) with the name of the alternative vendor used, the time of their arrival, and the final inventory waste report for invoicing and insurance purposes.</div></p><p><strong>Cross-Store Patterns &amp; Revenue Impact:</strong>
+<div class='bullet'>• <strong>Revenue Impact:</strong> Approximately $8,000 worth of dairy and produce is currently at risk.</div>
+<div class='bullet'>• <strong>Cross-Store Patterns:</strong> While there are no specific regional equipment failures reported, there is a systemic supply chain issue regarding dairy (ISS-001, ISS-002, ISS-018) involving DairyFresh Co. Because organic milk and other dairy products are currently experiencing regional shortages, preserving your existing stock is critical; if you are forced to discard items, you may face significant difficulty replenishing them through standard supply channels.</div></p></div>
+    <div class="score-grid">
+      <span class="score-label">Factual</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Policy</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Actionability</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label">Completeness</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#22c55e;"></div><div class="bar-label">10/10</div></div>
+      <span></span>
+      <span class="score-label" style="font-weight:600">Overall</span><div class="bar-wrap"><div class="bar-fill" style="width:100.0%; background:#d97757;"></div><div class="bar-label">10.0/10</div></div>
+      <span><span class="badge" style="background:#22c55e20;color:#22c55e;border:1px solid #22c55e40">PASS</span></span>
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.625rem">
+      <strong>Refs found (deterministic):</strong>
+      <div class="refs-row"><span class="ref-chip ref-found">✓ ISS-004</span><span class="ref-chip ref-found">✓ POL-MAINT-001</span>
+      </div>
+      <p class="sub" style="font-size:0.625rem;margin-top:0.5rem"><em>The response perfectly addresses the query by providing clear, actionable steps grounded in the required policy and issue references, while comprehensively covering immediate actions, follow-ups, and cross-store risks.</em></p>
+    </div>
+  </div>
+</div></div>
+<div class="card" style="border-color:#22c55e;border-width:2px">
+  <h2>First-Principles Conclusion</h2>
+
+  <p><strong style="color:#22c55e">The wedge is real.</strong> Flash + distilled skill recovers <strong>100.0%</strong> of Pro quality at <strong>7.1%</strong> of the cost. Distillation transfers reasoning, not just prompts.</p>
+  <p><strong>What this means for attrition.sh</strong>: the product is not "yet another cost dashboard." It is a research arm that captures expensive expert runs, distills them into reusable skills, and measurably reduces cost on replays. The data moat compounds per captured run.</p>
+  <h3>Next experiment</h3>
+  <ul>
+    <li>Test skill transfer across WORKLOADS (does a retail-ops skill help with similar queries it wasn't distilled from?)</li>
+    <li>Test skill decay over time as domain facts evolve</li>
+    <li>Scale to 20+ queries, compute statistical significance</li>
+  </ul>
+
+</div>
+
+<div class="footer">
+  Generated by attrition.sh scaffolding wedge experiment · All data measured from real Gemini API usageMetadata · No estimates
+</div>
+</div></body></html>

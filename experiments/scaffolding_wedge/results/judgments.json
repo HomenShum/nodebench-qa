@@ -1,0 +1,164 @@
+[
+  {
+    "case_id": "EVAL-001",
+    "query": "What's happening with our milk delivery?",
+    "flash_alone": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-001",
+        "SKU-4411",
+        "DairyFresh Co",
+        "POL-INV-003"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by including all required references, accurately grounding the issue in policy, providing clear and numbered actionable steps, and comprehensively covering cross-store patterns and revenue impact.",
+      "_judge_cost_usd": 0.0017737499999999997,
+      "_judge_tokens": 912
+    },
+    "pro_alone": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-001",
+        "SKU-4411",
+        "DairyFresh Co",
+        "POL-INV-003"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by including all required references, providing highly actionable and numbered steps grounded in the correct policy, and thoroughly covering cross-store patterns and revenue impacts.",
+      "_judge_cost_usd": 0.001725,
+      "_judge_tokens": 879
+    },
+    "flash_plus_skill": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-001",
+        "SKU-4411",
+        "DairyFresh Co",
+        "POL-INV-003"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by including all required references, providing highly actionable and structured steps, and thoroughly grounding the actions in the correct policies while addressing cross-store impacts.",
+      "_judge_cost_usd": 0.00185125,
+      "_judge_tokens": 980
+    }
+  },
+  {
+    "case_id": "EVAL-002",
+    "query": "We're short-staffed today, 3 people called out. What should I do?",
+    "flash_alone": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-003",
+        "POL-HR-007"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by providing highly actionable, well-structured steps grounded in the required policy and issue references, while also covering follow-up actions and cross-store impacts.",
+      "_judge_cost_usd": 0.0016275,
+      "_judge_tokens": 849
+    },
+    "pro_alone": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-003",
+        "POL-HR-007"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by providing highly actionable, numbered steps grounded in the required policies and issue IDs, while comprehensively covering immediate actions, follow-ups, cross-store coordination, and revenue risks.",
+      "_judge_cost_usd": 0.0016549999999999998,
+      "_judge_tokens": 859
+    },
+    "flash_plus_skill": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-003",
+        "POL-HR-007"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by providing highly actionable, numbered steps grounded in the required policies and issue IDs, while comprehensively covering immediate actions, follow-ups, cross-store context, and revenue risk.",
+      "_judge_cost_usd": 0.0018425,
+      "_judge_tokens": 1009
+    }
+  },
+  {
+    "case_id": "EVAL-003",
+    "query": "Our walk-in cooler is at 52 degrees, what do I do?",
+    "flash_alone": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-004",
+        "POL-MAINT-001"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by providing highly actionable, numbered steps, accurately citing the required issue and policy IDs, and comprehensively covering immediate, follow-up, and cross-store impacts.",
+      "_judge_cost_usd": 0.0015575,
+      "_judge_tokens": 787
+    },
+    "pro_alone": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-004",
+        "POL-MAINT-001"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by providing clear, actionable steps grounded in the required policies and issue tickets, while comprehensively covering immediate actions, follow-ups, and cross-store risks.",
+      "_judge_cost_usd": 0.00155,
+      "_judge_tokens": 784
+    },
+    "flash_plus_skill": {
+      "factual_alignment": 10,
+      "policy_grounding": 10,
+      "actionability": 10,
+      "completeness": 10,
+      "overall_score": 10.0,
+      "references_found": [
+        "ISS-004",
+        "POL-MAINT-001"
+      ],
+      "references_missing": [],
+      "verdict": "pass",
+      "rationale": "The response perfectly addresses the query by providing clear, actionable steps grounded in the required policy and issue references, while comprehensively covering immediate actions, follow-ups, and cross-store risks.",
+      "_judge_cost_usd": 0.00157375,
+      "_judge_tokens": 803
+    }
+  }
+]
