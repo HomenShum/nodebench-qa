@@ -30,28 +30,28 @@ type Stat = {
 
 const STATS: Stat[] = [
   {
-    label: "Flash Lite solo",
+    label: "gemini-3.1-flash-lite-preview",
     rate: 93.0,
     ciLo: 88.6,
     ciHi: 95.8,
     accent: "#94a3b8",
-    sub: "the \"cheap\" choice",
+    sub: "Flash Lite solo · native function calling",
   },
   {
-    label: "Pro solo",
+    label: "gemini-3.1-pro-preview",
     rate: 74.5,
     ciLo: 68.0,
     ciHi: 80.0,
     accent: "#ef4444",
-    sub: "the \"expensive\" ceiling",
+    sub: "Pro solo · same function-calling config",
   },
   {
-    label: "Flash Lite + attrition",
+    label: "gemini-3.1-flash-lite-preview + attrition normalizer",
     rate: 95.0,
     ciLo: 91.0,
     ciHi: 97.3,
     accent: "#22c55e",
-    sub: "cheap + our scaffold",
+    sub: "Flash Lite + deterministic post-processor",
   },
 ];
 
@@ -77,7 +77,7 @@ export function ProofSection() {
           marginBottom: 6,
         }}
       >
-        Proof · BFCL v3 simple · n=200
+        Proof · Loop B · BFCL v3 simple · n=200 · function calling
       </div>
 
       <h2
@@ -91,8 +91,8 @@ export function ProofSection() {
         }}
       >
         The &quot;upgrade to Pro&quot; assumption is{" "}
-        <span style={{ color: "#d97757" }}>wrong by 18.5pp</span> on this
-        benchmark.
+        <span style={{ color: "#d97757" }}>wrong by 18.5pp</span> on
+        tool-calling.
       </h2>
 
       <p
@@ -104,12 +104,19 @@ export function ProofSection() {
           maxWidth: 680,
         }}
       >
-        We measured Flash Lite vs Pro vs Flash-Lite-plus-attrition-normalizer
-        on 200 BFCL v3 simple tasks — a public ground-truth benchmark where
-        correct tool calls are scored by AST comparison, not by an LLM
-        judge. The bars below show pass rate with Wilson 95% confidence
-        intervals. Pro and Flash Lite CIs do not overlap. Newcombe-method
-        CI on the difference excludes zero.
+        We measured <code style={{ fontSize: 12 }}>gemini-3.1-flash-lite-preview</code>{" "}
+        vs <code style={{ fontSize: 12 }}>gemini-3.1-pro-preview</code> on 200
+        BFCL v3 simple tasks. BFCL is a function-calling benchmark: each
+        task declares one or more tool specs, the model emits a{" "}
+        <code style={{ fontSize: 12 }}>functionCall</code> part, and the
+        scorer does AST comparison against a gold set of acceptable
+        call shapes. Both models ran with the same config —{" "}
+        <code style={{ fontSize: 12 }}>
+          toolConfig.functionCallingConfig.mode = &quot;ANY&quot;
+        </code>
+        , <code style={{ fontSize: 12 }}>temperature 0.0</code>, 1024
+        max output tokens. The bars below show pass rate with Wilson 95%
+        confidence intervals; Newcombe CI on (Pro − Flash) excludes zero.
       </p>
 
       <div style={{ display: "grid", gap: 14, marginBottom: 20 }}>
@@ -149,6 +156,78 @@ export function ProofSection() {
         />
       </div>
 
+      <details
+        style={{
+          marginBottom: 14,
+          padding: "10px 14px",
+          background: "rgba(0,0,0,0.25)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 8,
+          fontSize: 12,
+          color: "rgba(255,255,255,0.75)",
+        }}
+      >
+        <summary
+          style={{
+            cursor: "pointer",
+            color: "rgba(255,255,255,0.85)",
+            fontSize: 12,
+            fontWeight: 500,
+          }}
+        >
+          Methodology (click to expand)
+        </summary>
+        <ul
+          style={{
+            margin: "10px 0 0",
+            paddingLeft: 20,
+            lineHeight: 1.6,
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 11,
+            color: "rgba(255,255,255,0.7)",
+          }}
+        >
+          <li>
+            Benchmark: <code>princeton-nlp</code>-hosted
+            <code> BFCL_v3_simple.json</code> +{" "}
+            <code>possible_answer/BFCL_v3_simple.json</code> gold
+          </li>
+          <li>Task count: n=200 sequential</li>
+          <li>
+            Baseline model: <code>gemini-3.1-flash-lite-preview</code>
+          </li>
+          <li>
+            Ceiling model: <code>gemini-3.1-pro-preview</code>
+          </li>
+          <li>
+            Call config: <code>temperature=0.0</code>,{" "}
+            <code>maxOutputTokens=1024</code>,{" "}
+            <code>tools=[{"{functionDeclarations: [...]}"}]</code>,{" "}
+            <code>toolConfig.functionCallingConfig.mode=&quot;ANY&quot;</code>
+          </li>
+          <li>
+            Scorer:{" "}
+            <code>
+              daas.benchmarks.bfcl.runner.score_calls
+            </code>{" "}
+            — BFCL v3 any-of gold shape, whitespace-insensitive compare,
+            loose numeric coercion, AST match
+          </li>
+          <li>
+            Distilled scaffold:{" "}
+            <code>daas.benchmarks.bfcl.normalizers.normalize_artifact</code>{" "}
+            — deterministic rules (<code>x^2 → x**2</code>,{" "}
+            <code>3*x → 3x</code>, int-interval → float-interval); 27
+            scenario tests
+          </li>
+          <li>Stats: Wilson 95% CI per rate; Newcombe CI for diffs</li>
+          <li>
+            Raw verdict row: <code>daasFidelityVerdicts</code> where{" "}
+            <code>externalizationId = bfcl_normalizer_v2</code>
+          </li>
+        </ul>
+      </details>
+
       <p
         style={{
           fontSize: 12,
@@ -158,7 +237,7 @@ export function ProofSection() {
         }}
       >
         <strong style={{ color: "rgba(255,255,255,0.8)" }}>The frame:</strong>{" "}
-        BFCL's AST grader rewards mechanical output. Pro over-specifies
+        BFCL&apos;s AST grader rewards mechanical output. Pro over-specifies
         (e.g. emits{" "}
         <code style={{ fontSize: 11 }}>species: &quot;Homo sapiens&quot;</code>{" "}
         when the task prompt said &quot;human&quot;). Flash Lite happens to
