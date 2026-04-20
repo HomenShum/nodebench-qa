@@ -10,9 +10,9 @@
  * (direct navigation to /build), show a graceful empty state linking back.
  */
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../_convex/api";
 import { Nav } from "../components/Nav";
 
@@ -30,14 +30,43 @@ const WORLD_MODEL_LABEL: Record<string, string> = {
   full: "Full world model",
 };
 
+type TranscriptTurn = { ts: number; role: "user" | "assistant"; content: string };
+
 export function Builder() {
   const { slug } = useParams<{ slug: string }>();
   const [tab, setTab] = useState<Tab>("scaffold");
+  const [followUp, setFollowUp] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
 
   const session = useQuery(
     api.domains.daas.architect.getSessionBySlug,
     slug ? { sessionSlug: slug } : "skip",
   );
+  const appendTurn = useMutation(api.domains.daas.architect.appendTurn);
+  const reclassify = useAction(
+    api.domains.daas.architectClassifier.reclassifyFromTranscript,
+  );
+
+  const transcript = useMemo<TranscriptTurn[]>(() => {
+    if (!session?.transcriptJson) return [];
+    try {
+      return JSON.parse(session.transcriptJson);
+    } catch {
+      return [];
+    }
+  }, [session?.transcriptJson]);
+
+  async function submitFollowUp() {
+    if (!slug || !followUp.trim() || isRefining) return;
+    setIsRefining(true);
+    try {
+      await appendTurn({ sessionSlug: slug, role: "user", content: followUp.trim() });
+      void reclassify({ sessionSlug: slug });
+      setFollowUp("");
+    } finally {
+      setIsRefining(false);
+    }
+  }
 
   if (!slug) {
     return (
@@ -166,6 +195,109 @@ export function Builder() {
               </p>
             </>
           ) : null}
+
+          {/* Transcript history (compact, latest 4 turns) */}
+          {transcript.length > 1 ? (
+            <>
+              <div style={{ margin: "20px 0 8px", fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>
+                Transcript · {transcript.length} turns
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {transcript.slice(-4).map((turn, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: "6px 10px",
+                      background:
+                        turn.role === "user"
+                          ? "rgba(217,119,87,0.05)"
+                          : "rgba(0,0,0,0.2)",
+                      borderLeft:
+                        turn.role === "user"
+                          ? "2px solid rgba(217,119,87,0.5)"
+                          : "2px solid rgba(255,255,255,0.1)",
+                      borderRadius: 4,
+                      fontSize: 11,
+                      lineHeight: 1.4,
+                      color: "rgba(255,255,255,0.7)",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color:
+                          turn.role === "user" ? "#d97757" : "rgba(255,255,255,0.45)",
+                        marginRight: 6,
+                      }}
+                    >
+                      {turn.role === "user" ? "u" : "a"}:
+                    </span>
+                    {turn.content.length > 120
+                      ? turn.content.slice(0, 120) + "…"
+                      : turn.content}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : null}
+
+          {/* Interactive chat / clarification box */}
+          <div style={{ margin: "20px 0 0" }}>
+            <div style={{ fontSize: 11, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
+              Refine
+            </div>
+            <textarea
+              value={followUp}
+              onChange={(e) => setFollowUp(e.target.value)}
+              rows={3}
+              placeholder="Clarify, correct, or add missing context…"
+              style={{
+                width: "100%",
+                padding: 8,
+                background: "rgba(0,0,0,0.3)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 6,
+                color: "rgba(255,255,255,0.92)",
+                fontSize: 12,
+                fontFamily: "inherit",
+                resize: "vertical",
+                lineHeight: 1.4,
+              }}
+              onKeyDown={(e) => {
+                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                  e.preventDefault();
+                  void submitFollowUp();
+                }
+              }}
+            />
+            <div
+              style={{
+                marginTop: 6,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ fontSize: 10, color: "rgba(255,255,255,0.4)" }}>
+                {isRefining ? "re-classifying…" : "Cmd+Enter"}
+              </span>
+              <button
+                type="button"
+                disabled={!followUp.trim() || isRefining}
+                onClick={submitFollowUp}
+                style={{
+                  padding: "4px 10px",
+                  background: followUp.trim() ? "rgba(217,119,87,0.2)" : "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(217,119,87,0.35)",
+                  borderRadius: 4,
+                  color: followUp.trim() ? "#fff" : "rgba(255,255,255,0.4)",
+                  fontSize: 11,
+                  cursor: followUp.trim() ? "pointer" : "not-allowed",
+                }}
+              >
+                Send
+              </button>
+            </div>
+          </div>
 
           <div
             style={{
@@ -298,6 +430,35 @@ function LabelRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+const CONNECTOR_MODE_KEY = "attrition:connector_mode";
+type ConnectorMode = "mock" | "live" | "hybrid";
+
+function useConnectorMode(): [ConnectorMode, (m: ConnectorMode) => void] {
+  const [mode, setModeState] = useState<ConnectorMode>(() => {
+    if (typeof window === "undefined") return "mock";
+    const saved = window.localStorage.getItem(CONNECTOR_MODE_KEY);
+    if (saved === "live" || saved === "hybrid" || saved === "mock") return saved;
+    return "mock";
+  });
+  const setMode = (m: ConnectorMode) => {
+    setModeState(m);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(CONNECTOR_MODE_KEY, m);
+    }
+  };
+  return [mode, setMode];
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator === "undefined" || !navigator.clipboard) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
   const { slug } = useParams<{ slug: string }>();
   const artifact = useQuery(
@@ -305,6 +466,8 @@ function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
     slug ? { sessionSlug: slug } : "skip",
   );
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [copiedFile, setCopiedFile] = useState<string | null>(null);
+  const [copiedAll, setCopiedAll] = useState(false);
 
   // If we have a real artifact, render the generated file tree instead of the plan.
   if (artifact) {
@@ -317,16 +480,57 @@ function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
     const files = bundle.files ?? [];
     const active = selectedFile ?? files[0]?.path ?? null;
     const activeFile = files.find((f) => f.path === active);
+
+    async function doCopyFile(path: string, content: string) {
+      const ok = await copyToClipboard(content);
+      if (ok) {
+        setCopiedFile(path);
+        window.setTimeout(() => setCopiedFile(null), 1500);
+      }
+    }
+
+    async function doCopyAll() {
+      const text = files
+        .map((f) => `=== ${f.path} (${f.language}) ===\n${f.content}`)
+        .join("\n\n");
+      const ok = await copyToClipboard(text);
+      if (ok) {
+        setCopiedAll(true);
+        window.setTimeout(() => setCopiedAll(false), 1500);
+      }
+    }
+
     return (
       <div>
-        <h3 style={{ fontSize: 14, fontWeight: 500, margin: "0 0 4px" }}>
-          Generated scaffold ({runtimeLane})
-        </h3>
-        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: "0 0 20px" }}>
-          {artifact.filesCount} files · {artifact.totalBytes} bytes · emitter{" "}
-          <code style={{ fontSize: 11 }}>{artifact.emitterVersion}</code> · target{" "}
-          <code style={{ fontSize: 11 }}>{artifact.targetModel}</code>
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+          <div>
+            <h3 style={{ fontSize: 14, fontWeight: 500, margin: "0 0 4px" }}>
+              Generated scaffold ({runtimeLane})
+            </h3>
+            <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: "0 0 20px" }}>
+              {artifact.filesCount} files · {artifact.totalBytes} bytes · emitter{" "}
+              <code style={{ fontSize: 11 }}>{artifact.emitterVersion}</code> · target{" "}
+              <code style={{ fontSize: 11 }}>{artifact.targetModel}</code>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={doCopyAll}
+            style={{
+              padding: "6px 12px",
+              background: copiedAll ? "rgba(34,197,94,0.2)" : "rgba(217,119,87,0.15)",
+              border: `1px solid ${copiedAll ? "rgba(34,197,94,0.5)" : "rgba(217,119,87,0.4)"}`,
+              borderRadius: 6,
+              color: copiedAll ? "#22c55e" : "#d97757",
+              fontSize: 11,
+              fontWeight: 500,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            {copiedAll ? "Copied!" : "Copy all files"}
+          </button>
+        </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
           <ul
@@ -407,6 +611,11 @@ function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
           . Run with <code style={{ fontSize: 11 }}>--record</code> to push new
           emissions here.
         </div>
+
+        <h4 style={{ fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", margin: "24px 0 10px" }}>
+          Connector mode
+        </h4>
+        <ConnectorModeSelector />
       </div>
     );
   }
@@ -450,32 +659,70 @@ function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
       <h4 style={{ fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", color: "rgba(255,255,255,0.5)", margin: "24px 0 10px" }}>
         Connector mode
       </h4>
+      <ConnectorModeSelector />
+    </div>
+  );
+}
+
+function ConnectorModeSelector() {
+  const [connectorMode, setConnectorMode] = useConnectorMode();
+  const modes: ConnectorMode[] = ["mock", "live", "hybrid"];
+  return (
+    <div>
       <div style={{ display: "flex", gap: 8 }}>
-        {["mock", "live", "hybrid"].map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            style={{
-              padding: "8px 16px",
-              background: mode === "mock" ? "rgba(34,197,94,0.12)" : "rgba(255,255,255,0.04)",
-              border:
-                mode === "mock"
-                  ? "1px solid rgba(34,197,94,0.4)"
-                  : "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 6,
-              color: mode === "mock" ? "#22c55e" : "rgba(255,255,255,0.65)",
-              fontSize: 12,
-              cursor: "pointer",
-              textTransform: "capitalize",
-            }}
-          >
-            {mode}
-          </button>
-        ))}
+        {modes.map((mode) => {
+          const active = mode === connectorMode;
+          const bg = active
+            ? mode === "mock"
+              ? "rgba(34,197,94,0.12)"
+              : mode === "live"
+                ? "rgba(239,68,68,0.12)"
+                : "rgba(245,158,11,0.12)"
+            : "rgba(255,255,255,0.04)";
+          const border = active
+            ? mode === "mock"
+              ? "rgba(34,197,94,0.4)"
+              : mode === "live"
+                ? "rgba(239,68,68,0.4)"
+                : "rgba(245,158,11,0.4)"
+            : "rgba(255,255,255,0.08)";
+          const fg = active
+            ? mode === "mock"
+              ? "#22c55e"
+              : mode === "live"
+                ? "#ef4444"
+                : "#f59e0b"
+            : "rgba(255,255,255,0.65)";
+          return (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setConnectorMode(mode)}
+              style={{
+                padding: "8px 16px",
+                background: bg,
+                border: `1px solid ${border}`,
+                borderRadius: 6,
+                color: fg,
+                fontSize: 12,
+                cursor: "pointer",
+                textTransform: "capitalize",
+                fontWeight: active ? 500 : 400,
+              }}
+            >
+              {mode}
+            </button>
+          );
+        })}
       </div>
       <p style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", margin: "10px 0 0" }}>
-        Start with mocks. Promote to live only once source-of-truth connectors are
-        wired — ungrounded replays produced hallucinated IDs in our FloorAI test.
+        Selection persists in localStorage under{" "}
+        <code>attrition:connector_mode</code>.{" "}
+        {connectorMode === "live"
+          ? "Live: stubs must be replaced with real handlers + fidelity verified before production."
+          : connectorMode === "hybrid"
+            ? "Hybrid: some tools mocked, others live. Use when a full source-of-truth surface isn't yet wired."
+            : "Mocks: safe default. Promote to live after fidelity verification — ungrounded replays produced hallucinated IDs in our FloorAI test."}
       </p>
     </div>
   );
