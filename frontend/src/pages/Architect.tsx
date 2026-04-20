@@ -16,6 +16,8 @@ import { api } from "../_convex/api";
 import { Nav } from "../components/Nav";
 import { HeroDemoLoop } from "../components/HeroDemoLoop";
 import { ProofSection } from "../components/ProofSection";
+import { TraceDropzone } from "../components/TraceDropzone";
+import type { TraceSummary } from "../lib/normalize_trace";
 
 type TranscriptTurn = { ts: number; role: "user" | "assistant"; content: string };
 
@@ -484,6 +486,19 @@ export function Architect() {
 
         {!slug ? (
           <section>
+            {/* Trace upload — parse a real agent run in-browser and
+                prefill the prompt with a structured brief. */}
+            <TraceDropzone
+              onSummary={(summary: TraceSummary) => {
+                // Prepend the brief above any existing prompt text
+                setPrompt((prev) =>
+                  prev?.trim()
+                    ? `${summary.brief}\n\n---\n\nAlso: ${prev.trim()}`
+                    : summary.brief,
+                );
+              }}
+            />
+
             <PromptTextarea
               value={prompt}
               onChange={setPrompt}
@@ -1112,7 +1127,31 @@ export function Architect() {
                   </div>
                 </div>
 
-                <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 12,
+                    justifyContent: "flex-end",
+                    alignItems: "center",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      color: "rgba(255,255,255,0.5)",
+                      marginRight: "auto",
+                      maxWidth: 420,
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Next: the Builder opens with the emitted scaffold.
+                    Each file is <code>ast.parse</code>-valid on emit,
+                    ships with <code>README.md</code> +{" "}
+                    <code>requirements.txt</code> + <code>run.sh</code>{" "}
+                    + <code>.env.example</code>, and downloads as a
+                    single ZIP that runs in mock mode with no API key.
+                  </span>
                   <button
                     type="button"
                     onClick={reset}
@@ -1142,7 +1181,7 @@ export function Architect() {
                       cursor: "pointer",
                     }}
                   >
-                    Accept → open Builder
+                    Build this scaffold → open runnable code
                   </button>
                 </div>
               </div>
