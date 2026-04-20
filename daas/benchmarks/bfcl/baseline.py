@@ -31,6 +31,7 @@ from daas.benchmarks.bfcl.runner import (
     load_tasks,
     run_task,
 )
+from daas.benchmarks.bfcl.live import live_replay
 
 
 def golden_replay(task: dict[str, Any]) -> dict[str, Any]:
@@ -74,6 +75,8 @@ def broken_replay(task: dict[str, Any]) -> dict[str, Any]:
 MODES: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
     "golden": golden_replay,
     "broken": broken_replay,
+    # live-mode replay calls Gemini Flash Lite — real cost, real latency.
+    "live": live_replay,
 }
 
 
@@ -88,6 +91,21 @@ def main(argv: list[str] | None = None) -> int:
         default=BFCL_CACHE_DIR / "baseline.jsonl",
         help="JSONL path to append results to",
     )
+    p.add_argument(
+        "--record",
+        action="store_true",
+        help="Push each result to the attrition Convex daasBenchmarkRuns table",
+    )
+    p.add_argument(
+        "--convex-url",
+        default="https://joyous-walrus-428.convex.cloud",
+        help="Convex deployment URL (attrition prod by default)",
+    )
+    p.add_argument(
+        "--session-id-prefix",
+        default="bfcl_v3",
+        help="Prefix for synthesized sessionId (<prefix>_<timestamp>_<taskId>)",
+    )
     args = p.parse_args(argv)
 
     try:
@@ -101,17 +119,88 @@ def main(argv: list[str] | None = None) -> int:
         tasks = _synthetic_fixture(args.category, args.limit)
 
     replay_fn = MODES[args.mode]
+
+    convex_client = None
+    if args.record:
+        try:
+            from convex import ConvexClient  # type: ignore
+        except ImportError as exc:
+            print(
+                f"[fatal] --record requires `convex` python client: {exc}",
+                file=sys.stderr,
+            )
+            return 3
+        convex_client = ConvexClient(args.convex_url)
+
     results = []
+    run_ts = int(time.time())
+    recorded = 0
+    record_errors = 0
     started = time.time()
     for task in tasks:
         artifact = replay_fn(task)
-        results.append(run_task(task, artifact))
+        result = run_task(task, artifact)
+        results.append(result)
+        if convex_client is not None:
+            meta = result.raw_result.get("_meta") if isinstance(result.raw_result, dict) else None
+            cost = float(meta.get("cost_usd") or 0) if isinstance(meta, dict) else 0.0
+            duration = int(meta.get("duration_ms") or 0) if isinstance(meta, dict) else 0
+            # Strip the (possibly-large) rows detail to stay under 16KB. Keep
+            # the structured detail summary without per-row arguments.
+            raw_for_storage = dict(result.raw_result)
+            detail = raw_for_storage.get("detail")
+            if isinstance(detail, dict) and isinstance(detail.get("rows"), list):
+                detail = {k: v for k, v in detail.items() if k != "rows"}
+                raw_for_storage["detail"] = detail
+            raw_json = json.dumps(raw_for_storage, ensure_ascii=False)
+            if len(raw_json) > 16_000:
+                raw_json = json.dumps(
+                    {"truncated": True, "size_chars": len(raw_json), "task_id": result.task_id}
+                )
+            try:
+                convex_client.mutation(
+                    "domains/daas/benchmarks:recordRun",
+                    {
+                        "benchmarkId": result.benchmark_id,
+                        "taskId": result.task_id,
+                        "sessionId": f"{args.session_id_prefix}_{run_ts}_{result.task_id}",
+                        "executorModel": (
+                            meta.get("model") if isinstance(meta, dict) else "offline_dry_run"
+                        ),
+                        "passed": result.passed,
+                        "score": result.score,
+                        "rawResultJson": raw_json,
+                        "replayCostUsd": cost,
+                        "durationMs": duration,
+                        **({"harnessError": result.harness_error} if result.harness_error else {}),
+                    },
+                )
+                recorded += 1
+            except Exception as exc:
+                record_errors += 1
+                print(
+                    f"[warn] convex record failed for {result.task_id}: {exc}",
+                    file=sys.stderr,
+                )
     elapsed_ms = int((time.time() - started) * 1000)
 
     passed = sum(1 for r in results if r.passed)
     total = len(results)
     pass_rate = passed / total if total else 0.0
     avg_score = sum(r.score for r in results) / total if total else 0.0
+
+    # Aggregate cost + harness errors across results (live mode only; golden
+    # and broken have no meta block so these stay zero).
+    total_cost = 0.0
+    harness_errors = 0
+    for r in results:
+        meta = r.raw_result.get("_meta") if isinstance(r.raw_result, dict) else None
+        if isinstance(meta, dict):
+            total_cost += float(meta.get("cost_usd") or 0)
+            if meta.get("error"):
+                harness_errors += 1
+        if r.harness_error:
+            harness_errors += 1
 
     print(
         f"\n=== BFCL v3 baseline: category={args.category} mode={args.mode} ==="
@@ -121,6 +210,11 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  pass rate: {pass_rate:.1%}")
     print(f"  avg score: {avg_score:.3f}")
     print(f"  elapsed:   {elapsed_ms} ms")
+    if args.mode == "live":
+        print(f"  cost:      ${total_cost:.6f}")
+        print(f"  errors:    {harness_errors}")
+    if args.record:
+        print(f"  recorded:  {recorded} to Convex ({record_errors} failed)")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("a", encoding="utf-8") as fh:

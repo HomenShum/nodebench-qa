@@ -275,8 +275,15 @@ export const daasBenchmarkRuns = defineTable({
   taskId: v.string(),
   /** DaaS trace session id the scaffold was distilled from (may be synthetic for benchmark-only runs) */
   sessionId: v.string(),
-  /** Replay row the harness scored against */
-  replayId: v.id("daasReplays"),
+  /**
+   * Replay row the harness scored against. Optional for standalone eval
+   * runs (e.g. BFCL where the benchmark task IS the replay input and
+   * doesn't need a separate distilled scaffold). When absent, this row
+   * represents a raw executor-vs-benchmark measurement, not a scaffold
+   * replay. Dashboards should filter by presence when comparing
+   * "scaffold lift" vs "executor solo" numbers.
+   */
+  replayId: v.optional(v.id("daasReplays")),
   /** Executor model used in replay (e.g. "gemini-3.1-flash-lite-preview") */
   executorModel: v.string(),
   /** Ground-truth pass/fail from the benchmark harness itself (NO LLM in the loop) */

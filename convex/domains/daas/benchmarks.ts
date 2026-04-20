@@ -37,7 +37,7 @@ export const recordRun = mutation({
     benchmarkId: v.string(),
     taskId: v.string(),
     sessionId: v.string(),
-    replayId: v.id("daasReplays"),
+    replayId: v.optional(v.id("daasReplays")),
     executorModel: v.string(),
     passed: v.boolean(),
     score: v.number(),

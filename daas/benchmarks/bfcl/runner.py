@@ -450,17 +450,28 @@ def run_task(
                 harness_error="missing_ground_truth: answer file not merged; check possible_answer/ download",
             )
         passed, score, detail = score_calls(expected, actual)
-        raw_result = {
+        raw_result: dict[str, Any] = {
             "expected": expected,
             "actual": [c.as_dict() for c in actual],
             "detail": detail,
         }
+        # Preserve upstream replay telemetry (model, cost, duration, error)
+        # so the runner can roll up per-task cost/latency without another
+        # data path. Live-mode scripts put this under ``_meta``.
+        meta = replay_artifact.get("_meta") if isinstance(replay_artifact, dict) else None
+        if isinstance(meta, dict):
+            raw_result["_meta"] = meta
+        # If the upstream replay itself errored (API failure, etc.), surface
+        # it as harness_error too — a network-failed replay is NOT a
+        # scaffold failure on the underlying task.
+        meta_error = meta.get("error") if isinstance(meta, dict) else None
         return BenchmarkResult(
             benchmark_id="bfcl_v3",
             task_id=str(task.get(task_id_key, "<missing_id>")),
             passed=passed,
             score=score,
             raw_result=raw_result,
+            harness_error=str(meta_error) if meta_error else None,
         )
     except Exception as exc:
         return BenchmarkResult(
