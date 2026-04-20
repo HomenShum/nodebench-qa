@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /_internal/
+
+Sitemap: https://attrition.sh/sitemap.xml

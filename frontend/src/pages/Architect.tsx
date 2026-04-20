@@ -24,6 +24,44 @@ const STARTER_CHIPS = [
   "Show me what this would look like as an orchestrator-worker system",
 ] as const;
 
+// Hand-picked examples with frozen gold verdicts. Showing these on the
+// landing page acts as both social proof and calibration — users see
+// what a triage output looks like before they submit their own prompt.
+type SampleVerdict = {
+  prompt: string;
+  runtime: string;
+  world_model: string;
+  intent: string;
+  note: string;
+};
+
+const SAMPLE_VERDICTS: SampleVerdict[] = [
+  {
+    prompt:
+      "Retail inventory agent on Claude Opus 4.7, $20/day. Cut to $2/day on core lookups.",
+    runtime: "Tool-first chain",
+    world_model: "Lite",
+    intent: "Compile down",
+    note: "Bounded retrieval — no policy engine needed. Gemini Flash Lite + schema.",
+  },
+  {
+    prompt:
+      "400-line LangChain support agent on GPT-4. Want proper orchestrator with retries and escalation.",
+    runtime: "Orchestrator-worker",
+    world_model: "Full",
+    intent: "Compile up",
+    note: "Stateful, retries, escalation → full world model with policies + outcomes.",
+  },
+  {
+    prompt:
+      "Weekly financial report from a revenue spreadsheet. Email to finance.",
+    runtime: "Simple chain",
+    world_model: "Lite",
+    intent: "Greenfield",
+    note: "Bounded + deterministic. Don't oversell a scaffold here.",
+  },
+];
+
 type ChecklistStep = {
   step: string;
   status: "ok" | "missing" | "pending";
@@ -289,6 +327,83 @@ export function Architect() {
                   {chip}
                 </button>
               ))}
+            </div>
+
+            {/* Sample verdicts — social proof + calibration before first submit */}
+            <div
+              style={{
+                marginTop: 36,
+                padding: "16px 0 0",
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.5)",
+                  marginBottom: 12,
+                }}
+              >
+                What triage looks like
+              </div>
+              <div style={{ display: "grid", gap: 10 }}>
+                {SAMPLE_VERDICTS.map((s, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      padding: 14,
+                      background: "rgba(255,255,255,0.02)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                      borderRadius: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "rgba(255,255,255,0.72)",
+                        marginBottom: 8,
+                        lineHeight: 1.5,
+                        fontStyle: "italic",
+                      }}
+                    >
+                      “{s.prompt}”
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 6,
+                        flexWrap: "wrap",
+                        marginBottom: 8,
+                      }}
+                    >
+                      <SampleBadge label="Runtime" value={s.runtime} accent="#d97757" />
+                      <SampleBadge label="World model" value={s.world_model} accent="#8b5cf6" />
+                      <SampleBadge label="Intent" value={s.intent} accent="#22c55e" />
+                    </div>
+                    <div
+                      style={{
+                        fontSize: 12,
+                        color: "rgba(255,255,255,0.55)",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {s.note}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p
+                style={{
+                  marginTop: 10,
+                  fontSize: 11,
+                  color: "rgba(255,255,255,0.4)",
+                }}
+              >
+                These are handpicked — your own prompt gets classified live by Gemini
+                Flash Lite against the same bounded enums.
+              </p>
             </div>
             <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
@@ -681,6 +796,33 @@ export function Architect() {
         )}
       </main>
     </div>
+  );
+}
+
+function SampleBadge({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent: string;
+}) {
+  return (
+    <span
+      style={{
+        padding: "3px 10px",
+        fontSize: 11,
+        color: accent,
+        background: `${accent}15`,
+        border: `1px solid ${accent}40`,
+        borderRadius: 4,
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ color: "rgba(255,255,255,0.5)", marginRight: 4 }}>{label}:</span>
+      <strong style={{ fontWeight: 500 }}>{value}</strong>
+    </span>
   );
 }
 
