@@ -299,13 +299,130 @@ function LabelRow({ label, value }: { label: string; value: string }) {
 }
 
 function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
+  const { slug } = useParams<{ slug: string }>();
+  const artifact = useQuery(
+    api.domains.daas.compileDown.getArtifactForSession,
+    slug ? { sessionSlug: slug } : "skip",
+  );
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+  // If we have a real artifact, render the generated file tree instead of the plan.
+  if (artifact) {
+    let bundle: { files?: Array<{ path: string; content: string; language: string }> } = {};
+    try {
+      bundle = JSON.parse(artifact.artifactBundleJson);
+    } catch {
+      bundle = {};
+    }
+    const files = bundle.files ?? [];
+    const active = selectedFile ?? files[0]?.path ?? null;
+    const activeFile = files.find((f) => f.path === active);
+    return (
+      <div>
+        <h3 style={{ fontSize: 14, fontWeight: 500, margin: "0 0 4px" }}>
+          Generated scaffold ({runtimeLane})
+        </h3>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: "0 0 20px" }}>
+          {artifact.filesCount} files · {artifact.totalBytes} bytes · emitter{" "}
+          <code style={{ fontSize: 11 }}>{artifact.emitterVersion}</code> · target{" "}
+          <code style={{ fontSize: 11 }}>{artifact.targetModel}</code>
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
+          <ul
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              background: "rgba(0,0,0,0.3)",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.06)",
+              overflow: "auto",
+            }}
+          >
+            {files.map((f) => (
+              <li key={f.path}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFile(f.path)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "8px 12px",
+                    background: active === f.path ? "rgba(217,119,87,0.12)" : "transparent",
+                    border: "none",
+                    borderLeft: active === f.path ? "2px solid #d97757" : "2px solid transparent",
+                    color: active === f.path ? "#fff" : "rgba(255,255,255,0.75)",
+                    fontSize: 12,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    cursor: "pointer",
+                  }}
+                >
+                  {f.path}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <pre
+            style={{
+              margin: 0,
+              padding: 14,
+              background: "rgba(0,0,0,0.4)",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.06)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "rgba(255,255,255,0.88)",
+              fontFamily: "'JetBrains Mono', monospace",
+              overflow: "auto",
+              whiteSpace: "pre-wrap",
+              minHeight: 360,
+              maxHeight: 480,
+            }}
+          >
+            <code>{activeFile?.content ?? "(select a file)"}</code>
+          </pre>
+        </div>
+
+        <div
+          style={{
+            marginTop: 16,
+            padding: 12,
+            background: "rgba(34,197,94,0.06)",
+            border: "1px solid rgba(34,197,94,0.3)",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "rgba(255,255,255,0.85)",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: "#22c55e" }}>Download / fork:</strong> all files
+          also live at{" "}
+          <code style={{ fontSize: 11 }}>
+            daas/compile_down/output/{slug}/{runtimeLane}/
+          </code>{" "}
+          on the machine that ran <code style={{ fontSize: 11 }}>
+            python -m daas.compile_down.cli
+          </code>
+          . Run with <code style={{ fontSize: 11 }}>--record</code> to push new
+          emissions here.
+        </div>
+      </div>
+    );
+  }
+
+  // No artifact yet — show the plan.
   const files = filesForRuntime(runtimeLane);
   return (
     <div>
       <h3 style={{ fontSize: 14, fontWeight: 500, margin: "0 0 4px" }}>Planned scaffold</h3>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: "0 0 20px" }}>
-        These files will be generated when you confirm. Change the runtime lane in
-        Architect to see a different plan.
+        Nothing generated yet. Run{" "}
+        <code style={{ fontSize: 11 }}>
+          python -m daas.compile_down.cli --session-slug {slug ?? "<slug>"} --trace ...
+        </code>{" "}
+        to emit real files, or change the runtime lane in Architect to see
+        a different plan.
       </p>
 
       <div

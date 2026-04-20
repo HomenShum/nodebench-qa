@@ -438,6 +438,36 @@ export const RADAR_CATEGORIES = [
 
 export const RADAR_SOURCE_TIERS = ["tier1_official", "tier2_interpreter", "tier3_weak"] as const;
 
+/**
+ * daasGeneratedArtifacts — compile_down / compile_up / translate
+ *   emitted runnable code bundles.
+ *
+ * One row per (architectSessions.sessionSlug, runtimeLane) pair.
+ * Emit is idempotent — re-running the emitter upserts the same row.
+ *
+ * Bundle shape is opaque JSON of:
+ *   { runtime_lane, target_model, files: [{ path, content, language }] }
+ *
+ * BOUND: total bundle capped at 256KB at the mutation boundary so a
+ * runaway emitter can't balloon the table.
+ */
+export const daasGeneratedArtifacts = defineTable({
+  sessionSlug: v.string(),
+  runtimeLane: v.string(),
+  targetModel: v.string(),
+  artifactBundleJson: v.string(),
+  filesCount: v.number(),
+  totalBytes: v.number(),
+  /** Which emitter produced this (for re-emission diffing) */
+  emitterVersion: v.string(),
+  /** Optional workflow spec JSON for downstream re-emission */
+  workflowSpecJson: v.optional(v.string()),
+  generatedAt: v.number(),
+})
+  .index("by_sessionSlug", ["sessionSlug"])
+  .index("by_sessionSlug_runtimeLane", ["sessionSlug", "runtimeLane"])
+  .index("by_generatedAt", ["generatedAt"]);
+
 export const radarItems = defineTable({
   /** Stable id: "<category>:<slug>:<iso_date>" */
   itemId: v.string(),

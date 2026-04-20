@@ -18,6 +18,7 @@ import {
   daasFidelityVerdicts,
   architectSessions,
   radarItems,
+  daasGeneratedArtifacts,
 } from "./domains/daas/schema";
 
 export default defineSchema({
@@ -34,4 +35,5 @@ export default defineSchema({
   daasFidelityVerdicts,
   architectSessions,
   radarItems,
+  daasGeneratedArtifacts,
 });
