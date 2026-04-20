@@ -12,6 +12,7 @@ import {
   daasRateBuckets,
   daasAuditLog,
   daasApiKeys,
+  daasBenchmarkRuns,
 } from "./domains/daas/schema";
 
 export default defineSchema({
@@ -22,4 +23,5 @@ export default defineSchema({
   daasRateBuckets,
   daasAuditLog,
   daasApiKeys,
+  daasBenchmarkRuns,
 });

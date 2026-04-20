@@ -240,3 +240,61 @@ export const daasRateBuckets = defineTable({
 })
   .index("by_bucketKey", ["bucketKey"])
   .index("by_updatedAt", ["updatedAt"]);
+
+/**
+ * daasBenchmarkRuns — public-benchmark task executions with ground-truth scoring.
+ *
+ * The LLM-rubric judge (daasJudgments) catches hallucination + structural
+ * failures, but it is still an LLM judging an LLM. Public benchmarks run
+ * each task through the replay scaffold and score against deterministic
+ * ground truth (unit tests, AST comparison, exact-match citations).
+ *
+ * Supported benchmarks (see docs/JUDGE_EVAL_BENCHMARKS.md):
+ *   - "bfcl_v3"         — AST-level function call comparison (Day 1-2)
+ *   - "mmlu_pro"        — single-letter exact match canary (Day 3-4)
+ *   - "tau2_retail"     — DB end-state + expected-action match (Day 5-7)
+ *   - "swebench_verified" — Docker unit-test PASS/FAIL (Day 8-10)
+ *   - "reportbench"     — citation set precision/recall (Day 11-12)
+ *
+ * One row per (benchmark, taskId, replayId) triple. `rawResultJson` is the
+ * benchmark-specific harness output verbatim; `passed` is the harness's
+ * own boolean verdict (NOT an LLM's interpretation).
+ */
+export const DAAS_BENCHMARK_IDS = [
+  "bfcl_v3",
+  "mmlu_pro",
+  "tau2_retail",
+  "swebench_verified",
+  "reportbench",
+] as const;
+
+export const daasBenchmarkRuns = defineTable({
+  /** One of DAAS_BENCHMARK_IDS */
+  benchmarkId: v.string(),
+  /** Benchmark-native task identifier (BFCL call id, MMLU-Pro question_id, SWE-bench instance_id, etc.) */
+  taskId: v.string(),
+  /** DaaS trace session id the scaffold was distilled from (may be synthetic for benchmark-only runs) */
+  sessionId: v.string(),
+  /** Replay row the harness scored against */
+  replayId: v.id("daasReplays"),
+  /** Executor model used in replay (e.g. "gemini-3.1-flash-lite-preview") */
+  executorModel: v.string(),
+  /** Ground-truth pass/fail from the benchmark harness itself (NO LLM in the loop) */
+  passed: v.boolean(),
+  /** Benchmark-specific score (0..1 float; e.g., BFCL AST match ratio, ReportBench F1) */
+  score: v.number(),
+  /** Harness-native structured output — JSON string, bounded < 16KB */
+  rawResultJson: v.string(),
+  /** Measured replay cost for this specific task (for cost-per-task-resolved reporting) */
+  replayCostUsd: v.number(),
+  /** Wall-clock duration from replay dispatch to harness verdict */
+  durationMs: v.number(),
+  /** Optional error if the harness itself failed (distinct from the scaffold failing a real task) */
+  harnessError: v.optional(v.string()),
+  createdAt: v.number(),
+})
+  .index("by_benchmarkId_taskId", ["benchmarkId", "taskId"])
+  .index("by_benchmarkId_createdAt", ["benchmarkId", "createdAt"])
+  .index("by_sessionId", ["sessionId"])
+  .index("by_replayId", ["replayId"])
+  .index("by_passed_createdAt", ["passed", "createdAt"]);
