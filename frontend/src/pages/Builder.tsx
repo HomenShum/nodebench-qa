@@ -19,6 +19,39 @@ import { downloadBundleAsZip } from "../lib/downloadZip";
 
 type Tab = "scaffold" | "eval" | "world_model" | "sources";
 
+// Evaluation gate — users only receive code that has been evaluated
+// and verified. Today's verdict comes from scaffold_runtime_fidelity.py
+// (BFCL-simple n=20): emitted tool_first_chain scaffold scored 0/20
+// vs Flash Lite solo baseline 15/20. Until the scaffold preserves
+// baseline parity, downloads are locked and the Builder tells the
+// user exactly why.
+const EVAL_VERDICT: {
+  status: "transfers" | "lossy" | "regression" | "pending";
+  n: number;
+  baseline_pass: number;
+  scaffold_pass: number;
+  baseline_rate_pct: number;
+  scaffold_rate_pct: number;
+  baseline_cost_usd: number;
+  scaffold_cost_usd: number;
+  reason: string;
+  benchmark: string;
+  ran_at: string;
+} = {
+  status: "regression",
+  n: 20,
+  baseline_pass: 15,
+  scaffold_pass: 0,
+  baseline_rate_pct: 75.0,
+  scaffold_rate_pct: 0.0,
+  baseline_cost_usd: 0.00042,
+  scaffold_cost_usd: 0.00217,
+  reason:
+    "emitted tool_first_chain scaffold scored 0/20 vs Flash Lite solo baseline 15/20 on BFCL-simple",
+  benchmark: "BFCL v3 simple · n=20",
+  ran_at: "2026-04-20",
+};
+
 const RUNTIME_LABEL: Record<string, string> = {
   simple_chain: "Simple chain",
   tool_first_chain: "Tool-first chain",
@@ -359,6 +392,7 @@ export function Builder() {
           </div>
           <div style={{ padding: 24 }}>
             <BetaBanner />
+            <EvaluationGateBanner />
             {tab === "scaffold" && <ScaffoldTab runtimeLane={session.runtimeLane ?? ""} />}
             {tab === "eval" && <EvalTab runtimeLane={session.runtimeLane ?? ""} />}
             {tab === "world_model" && (
@@ -397,6 +431,213 @@ function BetaBanner() {
       being shipped incrementally — see{" "}
       <code style={{ fontSize: 11 }}>/_internal/fidelity</code> for the live
       3-measurement fidelity trials.
+    </div>
+  );
+}
+
+function EvaluationGateBanner() {
+  const v = EVAL_VERDICT;
+  const isPass = v.status === "transfers";
+  const color = isPass
+    ? { bg: "rgba(34,197,94,0.05)", border: "rgba(34,197,94,0.4)", text: "#22c55e" }
+    : v.status === "lossy"
+    ? { bg: "rgba(245,158,11,0.05)", border: "rgba(245,158,11,0.4)", text: "#f59e0b" }
+    : { bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.4)", text: "#ef4444" };
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        marginBottom: 20,
+        padding: "12px 16px",
+        background: color.bg,
+        border: `1px solid ${color.border}`,
+        borderRadius: 10,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: 10,
+          flexWrap: "wrap",
+          marginBottom: 8,
+        }}
+      >
+        <span
+          style={{
+            fontSize: 10,
+            letterSpacing: "0.18em",
+            textTransform: "uppercase",
+            color: color.text,
+            fontWeight: 600,
+          }}
+        >
+          Evaluation gate · {v.status}
+        </span>
+        <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
+          {v.benchmark} · ran {v.ran_at}
+        </span>
+      </div>
+      <p
+        style={{
+          margin: "0 0 10px",
+          fontSize: 13,
+          lineHeight: 1.55,
+          color: "rgba(255,255,255,0.85)",
+        }}
+      >
+        <strong style={{ color: "rgba(255,255,255,0.95)" }}>
+          Users only take away code we&rsquo;ve built AND evaluated.
+        </strong>{" "}
+        The current emitter regresses vs a Flash Lite solo baseline on
+        single-call function tasks — it spends <em>more</em> tokens to
+        produce <em>fewer</em> correct tool calls. Downloads are locked
+        until the scaffold preserves parity.
+      </p>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: 10,
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: 11.5,
+        }}
+      >
+        <div
+          style={{
+            padding: "8px 10px",
+            background: "rgba(0,0,0,0.25)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 6,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9,
+              color: "rgba(255,255,255,0.5)",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            baseline · Flash Lite solo
+          </div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#22c55e",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {v.baseline_pass}/{v.n} · {v.baseline_rate_pct.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>
+            ${v.baseline_cost_usd.toFixed(5)}
+          </div>
+        </div>
+        <div
+          style={{
+            padding: "8px 10px",
+            background: "rgba(0,0,0,0.25)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 6,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9,
+              color: "rgba(255,255,255,0.5)",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            scaffold · tool_first_chain
+          </div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#ef4444",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {v.scaffold_pass}/{v.n} · {v.scaffold_rate_pct.toFixed(1)}%
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>
+            ${v.scaffold_cost_usd.toFixed(5)} · 5× baseline
+          </div>
+        </div>
+        <div
+          style={{
+            padding: "8px 10px",
+            background: "rgba(0,0,0,0.25)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 6,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 9,
+              color: "rgba(255,255,255,0.5)",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            pass delta
+          </div>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#ef4444",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            −{(v.baseline_rate_pct - v.scaffold_rate_pct).toFixed(1)}pp
+          </div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.5)" }}>
+            regression
+          </div>
+        </div>
+      </div>
+      <p
+        style={{
+          margin: "10px 0 0",
+          fontSize: 11,
+          color: "rgba(255,255,255,0.55)",
+          lineHeight: 1.5,
+        }}
+      >
+        <strong style={{ color: "rgba(255,255,255,0.75)" }}>Why it failed:</strong>{" "}
+        the emitted <code>tool_first_chain</code> prompt discourages tool
+        calls (&ldquo;Use at most ONE tool per turn&rdquo; framing leads
+        the model to respond with text instead of <code>functionCall</code>
+        parts). Next cycle tightens the prompt + aligns
+        <code>toolConfig.functionCallingConfig.mode=ANY</code> forcing
+        in the emitted scaffold so Flash Lite&rsquo;s solo behavior is
+        preserved inside the wrap.
+      </p>
+      <p
+        style={{
+          margin: "6px 0 0",
+          fontSize: 11,
+          color: "rgba(255,255,255,0.55)",
+          lineHeight: 1.5,
+        }}
+      >
+        Raw results:{" "}
+        <code style={{ fontSize: 10 }}>
+          daas/results/scaffold_runtime_fidelity.json
+        </code>{" "}
+        · Reproduce:{" "}
+        <code style={{ fontSize: 10 }}>
+          python -m daas.benchmarks.scaffold_runtime_fidelity --n 20
+        </code>
+      </p>
     </div>
   );
 }
@@ -531,25 +772,51 @@ function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
             </p>
           </div>
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-            <button
-              type="button"
-              onClick={async () => {
-                if (!slug || files.length === 0) return;
-                await downloadBundleAsZip(`${slug}-${runtimeLane}`, files);
-              }}
-              style={{
-                padding: "6px 12px",
-                background: "rgba(34,197,94,0.12)",
-                border: "1px solid rgba(34,197,94,0.4)",
-                borderRadius: 6,
-                color: "#22c55e",
-                fontSize: 11,
-                fontWeight: 500,
-                cursor: "pointer",
-              }}
-            >
-              Download ZIP
-            </button>
+            {/* Evaluation gate: Download ZIP is locked until the scaffold
+                passes runtime fidelity vs the baseline model. Today's
+                verdict comes from scaffold_runtime_fidelity.py on
+                BFCL-simple n=20 — see evaluation panel below. */}
+            {EVAL_VERDICT.status === "transfers" ? (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!slug || files.length === 0) return;
+                  await downloadBundleAsZip(`${slug}-${runtimeLane}`, files);
+                }}
+                style={{
+                  padding: "6px 12px",
+                  background: "rgba(34,197,94,0.12)",
+                  border: "1px solid rgba(34,197,94,0.4)",
+                  borderRadius: 6,
+                  color: "#22c55e",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+                title="Scaffold passed runtime fidelity vs baseline"
+              >
+                Download ZIP · verified
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                aria-disabled="true"
+                title={`Download locked: ${EVAL_VERDICT.reason}`}
+                style={{
+                  padding: "6px 12px",
+                  background: "rgba(239,68,68,0.10)",
+                  border: "1px solid rgba(239,68,68,0.4)",
+                  borderRadius: 6,
+                  color: "rgba(239,68,68,0.9)",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  cursor: "not-allowed",
+                }}
+              >
+                Download locked · {EVAL_VERDICT.status}
+              </button>
+            )}
             <button
               type="button"
               onClick={doCopyAll}

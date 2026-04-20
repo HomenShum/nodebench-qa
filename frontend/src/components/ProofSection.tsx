@@ -696,6 +696,86 @@ export function ProofSection() {
           real tool outputs, not just the playbook prose.
         </p>
 
+        {/* Loop D — runtime fidelity gate on the emitted scaffold itself */}
+        <div
+          style={{
+            marginTop: 8,
+            padding: "12px 16px",
+            background: "rgba(239,68,68,0.08)",
+            border: "1px solid rgba(239,68,68,0.4)",
+            borderRadius: 10,
+            marginBottom: 16,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "#ef4444",
+              marginBottom: 6,
+            }}
+          >
+            Runtime-fidelity gate · Loop D · product rule: no download without evaluation
+          </div>
+          <p
+            style={{
+              fontSize: 13,
+              color: "rgba(255,255,255,0.88)",
+              lineHeight: 1.55,
+              margin: "0 0 10px",
+            }}
+          >
+            We only want users to take away code we&rsquo;ve built{" "}
+            <em style={{ color: "#ef4444", fontStyle: "normal" }}>and</em>{" "}
+            evaluated. Current emitter fails that gate: on BFCL v3
+            simple (n=20, apples-to-apples, same subset, Flash Lite
+            across both conditions),{" "}
+            <strong style={{ color: "rgba(255,255,255,0.95)" }}>
+              wrapping the model in our scaffold drops its pass rate
+              from 75% solo to 0% inside the scaffold
+            </strong>{" "}
+            — while spending 5× more tokens. The Builder blocks
+            downloads with a red locked button until the scaffold
+            preserves parity.
+          </p>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+              gap: 8,
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            <Metric label="baseline · Flash solo" value="15 / 20 · 75%" accent="#22c55e" />
+            <Metric label="scaffold · tool_first_chain" value="0 / 20 · 0%" accent="#ef4444" />
+            <Metric label="pass delta" value="−75pp" accent="#ef4444" />
+            <Metric label="scaffold / baseline cost" value="5.2×" accent="#ef4444" />
+          </div>
+          <p
+            style={{
+              fontSize: 11,
+              color: "rgba(255,255,255,0.6)",
+              margin: "10px 0 0",
+              lineHeight: 1.55,
+            }}
+          >
+            <strong style={{ color: "rgba(255,255,255,0.8)" }}>
+              Why it failed:
+            </strong>{" "}
+            emitted prompt discourages tool calls (&ldquo;use at most
+            ONE tool per turn&rdquo;); model responds with text
+            instead of <code>functionCall</code> parts. Fix queued:
+            force <code>toolConfig.functionCallingConfig.mode=ANY</code>{" "}
+            inside the scaffold and tighten prompt so Flash Lite&rsquo;s
+            solo tool-calling behavior is preserved inside the wrap.
+            Reproduce:{" "}
+            <code>
+              python -m daas.benchmarks.scaffold_runtime_fidelity --n 20
+            </code>
+          </p>
+        </div>
+
         {/* SDK matrix */}
         <div
           style={{

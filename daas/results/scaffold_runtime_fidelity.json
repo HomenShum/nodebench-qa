@@ -1,0 +1,804 @@
+{
+  "n": 20,
+  "flash_model": "gemini-3.1-flash-lite-preview",
+  "summaries": [
+    {
+      "name": "baseline",
+      "passed": 15,
+      "total": 20,
+      "pass_rate": 0.75,
+      "ci95_lo": 0.531,
+      "ci95_hi": 0.888,
+      "total_in_tok": 2529,
+      "total_out_tok": 423,
+      "total_usd": 0.000422,
+      "wall_clock_s": 35.36,
+      "errors": 0
+    },
+    {
+      "name": "tool_first_chain",
+      "passed": 0,
+      "total": 20,
+      "pass_rate": 0.0,
+      "ci95_lo": 0.0,
+      "ci95_hi": 0.161,
+      "total_in_tok": 9672,
+      "total_out_tok": 3020,
+      "total_usd": 0.002175,
+      "wall_clock_s": 48.48,
+      "errors": 0
+    },
+    {
+      "name": "orchestrator_worker",
+      "passed": 0,
+      "total": 20,
+      "pass_rate": 0.0,
+      "ci95_lo": 0.0,
+      "ci95_hi": 0.161,
+      "total_in_tok": 0,
+      "total_out_tok": 0,
+      "total_usd": 0.0,
+      "wall_clock_s": 1.03,
+      "errors": 20
+    }
+  ],
+  "details": {
+    "baseline": {
+      "summary": {
+        "name": "baseline",
+        "passed": 15,
+        "total": 20,
+        "pass_rate": 0.75,
+        "ci95_lo": 0.531,
+        "ci95_hi": 0.888,
+        "total_in_tok": 2529,
+        "total_out_tok": 423,
+        "total_usd": 0.000422,
+        "wall_clock_s": 35.36,
+        "errors": 0
+      },
+      "per_task": [
+        {
+          "id": "simple_0",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "calculate_triangle_area",
+              "arguments": {
+                "base": 10,
+                "height": 5,
+                "unit": "units"
+              }
+            }
+          ],
+          "in_tok": 134,
+          "out_tok": 27,
+          "elapsed_s": 0.97,
+          "error": ""
+        },
+        {
+          "id": "simple_1",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "math.factorial",
+              "arguments": {
+                "number": 5
+              }
+            }
+          ],
+          "in_tok": 71,
+          "out_tok": 10,
+          "elapsed_s": 1.04,
+          "error": ""
+        },
+        {
+          "id": "simple_2",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "math.hypot",
+              "arguments": {
+                "y": 5,
+                "x": 4
+              }
+            }
+          ],
+          "in_tok": 160,
+          "out_tok": 15,
+          "elapsed_s": 1.24,
+          "error": ""
+        },
+        {
+          "id": "simple_3",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "algebra.quadratic_roots",
+              "arguments": {
+                "b": -3,
+                "a": 1,
+                "c": 2
+              }
+            }
+          ],
+          "in_tok": 131,
+          "out_tok": 20,
+          "elapsed_s": 0.73,
+          "error": ""
+        },
+        {
+          "id": "simple_4",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "solve_quadratic_equation",
+              "arguments": {
+                "a": 2,
+                "c": 5,
+                "b": 6
+              }
+            }
+          ],
+          "in_tok": 120,
+          "out_tok": 24,
+          "elapsed_s": 0.87,
+          "error": ""
+        },
+        {
+          "id": "simple_5",
+          "passed": false,
+          "tool_calls": [
+            {
+              "name": "solve_quadratic",
+              "arguments": {
+                "b": -11,
+                "a": 3,
+                "c": -4
+              }
+            }
+          ],
+          "in_tok": 221,
+          "out_tok": 23,
+          "elapsed_s": 1.02,
+          "error": ""
+        },
+        {
+          "id": "simple_6",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "solve_quadratic",
+              "arguments": {
+                "c": 3,
+                "b": 5,
+                "a": 2
+              }
+            }
+          ],
+          "in_tok": 121,
+          "out_tok": 22,
+          "elapsed_s": 0.82,
+          "error": ""
+        },
+        {
+          "id": "simple_7",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "calculate_circumference",
+              "arguments": {
+                "radius": 4,
+                "unit": "inches"
+              }
+            }
+          ],
+          "in_tok": 107,
+          "out_tok": 21,
+          "elapsed_s": 1.41,
+          "error": ""
+        },
+        {
+          "id": "simple_8",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "geometry.area_circle",
+              "arguments": {
+                "radius": 10
+              }
+            }
+          ],
+          "in_tok": 104,
+          "out_tok": 13,
+          "elapsed_s": 0.98,
+          "error": ""
+        },
+        {
+          "id": "simple_9",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "geometry.calculate_area_circle",
+              "arguments": {
+                "radius": 5,
+                "unit": "units"
+              }
+            }
+          ],
+          "in_tok": 105,
+          "out_tok": 20,
+          "elapsed_s": 1.13,
+          "error": ""
+        },
+        {
+          "id": "simple_10",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "calculate_area",
+              "arguments": {
+                "height": 10,
+                "base": 6,
+                "unit": "cm"
+              }
+            }
+          ],
+          "in_tok": 150,
+          "out_tok": 25,
+          "elapsed_s": 0.92,
+          "error": ""
+        },
+        {
+          "id": "simple_11",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "calculate_triangle_area",
+              "arguments": {
+                "base": 10,
+                "height": 5
+              }
+            }
+          ],
+          "in_tok": 113,
+          "out_tok": 21,
+          "elapsed_s": 1.15,
+          "error": ""
+        },
+        {
+          "id": "simple_12",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "geometry.circumference",
+              "arguments": {
+                "radius": 3
+              }
+            }
+          ],
+          "in_tok": 95,
+          "out_tok": 11,
+          "elapsed_s": 0.84,
+          "error": ""
+        },
+        {
+          "id": "simple_13",
+          "passed": false,
+          "tool_calls": [
+            {
+              "name": "calculate_area_under_curve",
+              "arguments": {
+                "interval": [
+                  1,
+                  3
+                ],
+                "function": "x^2"
+              }
+            }
+          ],
+          "in_tok": 165,
+          "out_tok": 28,
+          "elapsed_s": 1.0,
+          "error": ""
+        },
+        {
+          "id": "simple_14",
+          "passed": false,
+          "tool_calls": [
+            {
+              "name": "calculate_derivative",
+              "arguments": {
+                "function": "3*x^2 + 2*x - 1"
+              }
+            }
+          ],
+          "in_tok": 110,
+          "out_tok": 28,
+          "elapsed_s": 1.01,
+          "error": ""
+        },
+        {
+          "id": "simple_15",
+          "passed": false,
+          "tool_calls": [
+            {
+              "name": "integrate",
+              "arguments": {
+                "start_x": -2,
+                "function": "x^3",
+                "end_x": 3,
+                "method": "simpson"
+              }
+            }
+          ],
+          "in_tok": 203,
+          "out_tok": 35,
+          "elapsed_s": 0.87,
+          "error": ""
+        },
+        {
+          "id": "simple_16",
+          "passed": false,
+          "tool_calls": [
+            {
+              "name": "calculus.derivative",
+              "arguments": {
+                "function": "2*x^2",
+                "value": 1
+              }
+            }
+          ],
+          "in_tok": 143,
+          "out_tok": 21,
+          "elapsed_s": 0.75,
+          "error": ""
+        },
+        {
+          "id": "simple_17",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "get_prime_factors",
+              "arguments": {
+                "formatted": true,
+                "number": 450
+              }
+            }
+          ],
+          "in_tok": 104,
+          "out_tok": 22,
+          "elapsed_s": 1.4,
+          "error": ""
+        },
+        {
+          "id": "simple_18",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "number_analysis.prime_factors",
+              "arguments": {
+                "number": 123456
+              }
+            }
+          ],
+          "in_tok": 76,
+          "out_tok": 19,
+          "elapsed_s": 1.11,
+          "error": ""
+        },
+        {
+          "id": "simple_19",
+          "passed": true,
+          "tool_calls": [
+            {
+              "name": "math.gcd",
+              "arguments": {
+                "num1": 40,
+                "num2": 50
+              }
+            }
+          ],
+          "in_tok": 96,
+          "out_tok": 18,
+          "elapsed_s": 0.85,
+          "error": ""
+        }
+      ]
+    },
+    "tool_first_chain": {
+      "summary": {
+        "name": "tool_first_chain",
+        "passed": 0,
+        "total": 20,
+        "pass_rate": 0.0,
+        "ci95_lo": 0.0,
+        "ci95_hi": 0.161,
+        "total_in_tok": 9672,
+        "total_out_tok": 3020,
+        "total_usd": 0.002175,
+        "wall_clock_s": 48.48,
+        "errors": 0
+      },
+      "per_task": [
+        {
+          "id": "simple_0",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 467,
+          "out_tok": 54,
+          "elapsed_s": 1.92,
+          "error": ""
+        },
+        {
+          "id": "simple_1",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 431,
+          "out_tok": 50,
+          "elapsed_s": 2.46,
+          "error": ""
+        },
+        {
+          "id": "simple_2",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 789,
+          "out_tok": 134,
+          "elapsed_s": 2.95,
+          "error": ""
+        },
+        {
+          "id": "simple_3",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 453,
+          "out_tok": 272,
+          "elapsed_s": 2.83,
+          "error": ""
+        },
+        {
+          "id": "simple_4",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 445,
+          "out_tok": 268,
+          "elapsed_s": 2.39,
+          "error": ""
+        },
+        {
+          "id": "simple_5",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 467,
+          "out_tok": 324,
+          "elapsed_s": 2.52,
+          "error": ""
+        },
+        {
+          "id": "simple_6",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 453,
+          "out_tok": 278,
+          "elapsed_s": 2.61,
+          "error": ""
+        },
+        {
+          "id": "simple_7",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 441,
+          "out_tok": 88,
+          "elapsed_s": 2.54,
+          "error": ""
+        },
+        {
+          "id": "simple_8",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 447,
+          "out_tok": 54,
+          "elapsed_s": 2.13,
+          "error": ""
+        },
+        {
+          "id": "simple_9",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 439,
+          "out_tok": 50,
+          "elapsed_s": 2.14,
+          "error": ""
+        },
+        {
+          "id": "simple_10",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 479,
+          "out_tok": 56,
+          "elapsed_s": 1.86,
+          "error": ""
+        },
+        {
+          "id": "simple_11",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 467,
+          "out_tok": 54,
+          "elapsed_s": 1.9,
+          "error": ""
+        },
+        {
+          "id": "simple_12",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 747,
+          "out_tok": 105,
+          "elapsed_s": 3.24,
+          "error": ""
+        },
+        {
+          "id": "simple_13",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 451,
+          "out_tok": 140,
+          "elapsed_s": 2.39,
+          "error": ""
+        },
+        {
+          "id": "simple_14",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 449,
+          "out_tok": 159,
+          "elapsed_s": 2.0,
+          "error": ""
+        },
+        {
+          "id": "simple_15",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 471,
+          "out_tok": 282,
+          "elapsed_s": 2.8,
+          "error": ""
+        },
+        {
+          "id": "simple_16",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 445,
+          "out_tok": 74,
+          "elapsed_s": 2.09,
+          "error": ""
+        },
+        {
+          "id": "simple_17",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 433,
+          "out_tok": 197,
+          "elapsed_s": 2.31,
+          "error": ""
+        },
+        {
+          "id": "simple_18",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 451,
+          "out_tok": 342,
+          "elapsed_s": 2.97,
+          "error": ""
+        },
+        {
+          "id": "simple_19",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 447,
+          "out_tok": 39,
+          "elapsed_s": 2.0,
+          "error": ""
+        }
+      ]
+    },
+    "orchestrator_worker": {
+      "summary": {
+        "name": "orchestrator_worker",
+        "passed": 0,
+        "total": 20,
+        "pass_rate": 0.0,
+        "ci95_lo": 0.0,
+        "ci95_hi": 0.161,
+        "total_in_tok": 0,
+        "total_out_tok": 0,
+        "total_usd": 0.0,
+        "wall_clock_s": 1.03,
+        "errors": 20
+      },
+      "per_task": [
+        {
+          "id": "simple_0",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_1",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.04,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_2",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_3",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_4",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_5",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_6",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.04,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_7",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_8",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_9",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_10",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_11",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_12",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_13",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_14",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_15",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_16",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_17",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_18",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.03,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        },
+        {
+          "id": "simple_19",
+          "passed": false,
+          "tool_calls": [],
+          "in_tok": 0,
+          "out_tok": 0,
+          "elapsed_s": 0.02,
+          "error": "ImportError: cannot import name 'ORCHESTRATOR_SYSTEM_PROMPT' from 'prompts' (C:\\Users\\hshum\\.claude\\plugins\\cache\\claude-context-mode\\context-mode\\0.9.22\\attrition_tool_first_chain_8al1yfd8\\prompts.py)"
+        }
+      ]
+    }
+  }
+}
