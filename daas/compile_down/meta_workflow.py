@@ -158,11 +158,103 @@ class Phase:
     step_span_start: int
     step_span_end: int  # exclusive
     step_count: int
-    # Playbook-entry slots (added Cycle 25 — Goal / Angles / Method / Stop)
+    # Playbook-entry slots (Cycle 25 — Goal / Angles / Method / Stop)
     goal: str = ""
     method: list[str] = field(default_factory=list)  # ordered tool-class sequence
     stop_condition: str = ""
     playbook_score: int = 0  # 0-4, count of filled slots (goal/angles/method/stop)
+    # Loop-A slot signature (Cycle 30 — fixes 0/4 on reproduces_specific_artifacts)
+    # Which CATEGORIES of concrete output this phase actually produced.
+    # We pass the KINDS (not the values) into the replay briefing so the
+    # cheap runtime knows what specifics to surface — or explicitly say
+    # "insufficient_data:<kind>" instead of fabricating.
+    slot_kinds: list[str] = field(default_factory=list)  # e.g. ["file_path", "count", "status"]
+    slot_examples: list[str] = field(default_factory=list)  # a few example values (redacted)
+
+
+# --- slot extraction (Loop A) -----------------------------------------
+# Regexes for the four concrete artifact kinds that dominate Claude Code
+# output: file paths, numeric counts with unit, status / verdict lines,
+# and section headers / ALL-CAPS labels. These are the exact things the
+# expensive baseline produces that the distilled playbook was losing.
+_SLOT_FILE_RE = re.compile(
+    r"(?<![\w./])(?:[\w.-]+/)*[\w.-]+\.(?:"
+    r"tsx?|py|md|mdx|json|jsonl|ya?ml|toml|rs|go|sh|html|css|scss|"
+    r"sql|lock|env|cfg|ini|txt|log|proto"
+    r")(?![\w])",
+)
+_SLOT_COUNT_RE = re.compile(
+    r"\b(?:\d{1,3}(?:,\d{3})+|\d+)\s*(?:"
+    r"errors?|warnings?|tests?|files?|lines?|steps?|phases?|tools?|"
+    r"sessions?|bytes?|tokens?|rows?|issues?|passing|failing|pending|"
+    r"%|pp|ms|s|MB|KB|GB"
+    r")\b",
+    re.IGNORECASE,
+)
+_SLOT_STATUS_RE = re.compile(
+    r"(?:\bPASS\b|\bFAIL\b|\bOK\b|\bERROR\b|\bREADY\b|"
+    r"\bDONE\b|\bFAILED\b|\bSUCCESS\b|\bSKIPPED\b|"
+    r"\bBLOCKED\b|\bPUBLISHED\b|\bCOMMITTED\b|\bDEPLOYED\b|"
+    r"\u2713|\u2717|\u2714|\u2718|\[OK\]|\[FAIL\]|\[ERR\]|\[SKIP\])",
+)
+_SLOT_SECTION_RE = re.compile(
+    r"(?m)^(?:#{1,4}\s+.{3,80}|(?:[A-Z][A-Z0-9 _/-]{4,60}))\s*$",
+)
+
+
+def _extract_slot_signature(texts: list[str]) -> tuple[list[str], list[str]]:
+    """Return (slot_kinds, slot_examples).
+
+    kinds lists which categories appeared; examples shows a few redacted
+    sample values so the briefing can be specific about what shape of
+    concrete output this phase is known to produce.
+    """
+    if not texts:
+        return [], []
+    joined = "\n".join(texts[:6])[:20000]  # cap scan to keep fast
+    kinds: list[str] = []
+    examples: list[str] = []
+
+    files = _SLOT_FILE_RE.findall(joined)
+    if files:
+        kinds.append("file_path")
+        for f in files[:3]:
+            if f not in examples:
+                examples.append(f[:80])
+
+    counts = _SLOT_COUNT_RE.findall(joined)
+    if counts:
+        kinds.append("count")
+        # findall returns the literal group — rescan to get short samples
+        for m in _SLOT_COUNT_RE.finditer(joined):
+            v = m.group(0).strip()
+            if v and v not in examples:
+                examples.append(v[:40])
+            if sum(1 for e in examples if e in counts or any(c in e for c in counts)) >= 3:
+                break
+
+    statuses = _SLOT_STATUS_RE.findall(joined)
+    if statuses:
+        kinds.append("status")
+        seen: set[str] = set()
+        for s in statuses:
+            if s not in seen and len(seen) < 3:
+                seen.add(s)
+                if s not in examples:
+                    examples.append(s[:40])
+
+    sections = _SLOT_SECTION_RE.findall(joined)
+    if sections:
+        kinds.append("section_header")
+        for h in sections[:2]:
+            h_norm = re.sub(r"\s+", " ", h).strip()
+            if h_norm and h_norm not in examples:
+                examples.append(h_norm[:80])
+
+    # Dedupe kinds preserving order
+    seen_k: set[str] = set()
+    unique_kinds = [k for k in kinds if not (k in seen_k or seen_k.add(k))]
+    return unique_kinds, examples[:8]
 
 
 # --- goal / method / stop extractors (heuristic, no LLM) -----------------
@@ -425,6 +517,8 @@ def distill_meta_workflow(trace: Any) -> MetaWorkflow:
             playbook_score = sum(
                 1 for slot in (goal, angles, method, stop) if slot
             )
+            # --- Loop-A slot signature ---------------------------------
+            slot_kinds, slot_examples = _extract_slot_signature(texts_in_sub)
 
             phases.append(
                 Phase(
@@ -442,6 +536,8 @@ def distill_meta_workflow(trace: Any) -> MetaWorkflow:
                     method=method,
                     stop_condition=stop,
                     playbook_score=playbook_score,
+                    slot_kinds=slot_kinds,
+                    slot_examples=slot_examples,
                 )
             )
 

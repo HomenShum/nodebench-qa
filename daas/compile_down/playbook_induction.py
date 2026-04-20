@@ -136,6 +136,12 @@ class PlaybookPhase:
     angles_union: list[str]
     member_session_ids: list[str]
     coverage: float  # members / N
+    # Loop-A slot contract: which artifact kinds (file_path / count /
+    # status / section_header) this phase is expected to produce.
+    # Derived from the union of member phases' slot_kinds; a kind is
+    # REQUIRED if it appeared in >= 50% of members.
+    required_slot_kinds: list[str] = field(default_factory=list)
+    optional_slot_kinds: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -232,6 +238,16 @@ def induce_playbook(
             for a in p.get("angles", []) or []:
                 if a and a not in angles_all:
                     angles_all.append(a)
+        # Loop-A slot-kind aggregation: count how many cluster members
+        # emitted each kind, split into required (>=50%) / optional.
+        slot_counts: dict[str, int] = {}
+        for _, p, _ in pc:
+            for k in (p.get("slot_kinds") or []):
+                slot_counts[k] = slot_counts.get(k, 0) + 1
+        half = max(1, (m + 1) // 2)  # ceil(m/2)
+        required_kinds = sorted([k for k, c in slot_counts.items() if c >= half])
+        optional_kinds = sorted([k for k, c in slot_counts.items() if 0 < c < half])
+
         playbook_phases.append(
             PlaybookPhase(
                 role=role,
@@ -242,6 +258,8 @@ def induce_playbook(
                 angles_union=angles_all[:10],
                 member_session_ids=member_session_ids,
                 coverage=round(m / n, 3),
+                required_slot_kinds=required_kinds,
+                optional_slot_kinds=optional_kinds,
             )
         )
         covered_sessions.update(member_session_ids)

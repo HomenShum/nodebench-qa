@@ -55,7 +55,7 @@ PRO_PRICE_OUT = 10.0 / 1_000_000
 MAX_QUERY_CHARS = 6000
 MAX_ORIGINAL_ANSWER_CHARS = 4000
 FLASH_MAX_OUTPUT_TOKENS = 2048
-JUDGE_MAX_OUTPUT_TOKENS = 2048
+JUDGE_MAX_OUTPUT_TOKENS = 4096
 
 JUDGE_RUBRIC = """You are a fidelity judge evaluating agent replay.
 
@@ -125,8 +125,14 @@ def _gemini_call(
     user: str,
     api_key: str,
     max_output_tokens: int,
+    response_mime_type: str = "text/plain",
 ) -> tuple[str, int, int]:
-    """One-shot generateContent call. Returns (text, in_toks, out_toks)."""
+    """One-shot generateContent call. Returns (text, in_toks, out_toks).
+
+    When ``response_mime_type="application/json"`` Gemini guarantees the
+    text is valid JSON (no markdown fences, no leading prose) which
+    fixes the judge-parse truncation we were hitting.
+    """
     import urllib.request
     import urllib.error
 
@@ -134,15 +140,17 @@ def _gemini_call(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
         f":generateContent?key={api_key}"
     )
+    gen_config: dict = {
+        "temperature": 0.2,
+        "maxOutputTokens": max_output_tokens,
+        "responseMimeType": response_mime_type,
+    }
     payload = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [
             {"role": "user", "parts": [{"text": user}]},
         ],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": max_output_tokens,
-        },
+        "generationConfig": gen_config,
     }
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
@@ -179,17 +187,44 @@ def _gemini_call(
 
 
 # --------- playbook -> operator briefing ---------------------------------
+# Human-readable explanations of each slot kind, used in the honesty
+# clause of the briefing so the cheap runtime knows EXACTLY what it's
+# allowed to fabricate (nothing) and how to mark a missing concrete.
+_SLOT_KIND_BLURB: dict[str, str] = {
+    "file_path": "specific file names (e.g. `src/foo/Bar.tsx`)",
+    "count": "specific numeric counts with units (e.g. `12 errors`, `n=200`, `80 tests`)",
+    "status": "concrete status / verdict tokens (e.g. `PASS`, `OK`, `READY`, `✓`, `FAIL`)",
+    "section_header": "concrete section titles or ALL-CAPS labels",
+}
+
+
 def build_operator_briefing(playbook: dict) -> str:
-    """Compact text the cheap runtime uses as its system prompt."""
+    """Compact text the cheap runtime uses as its system prompt.
+
+    Now includes SLOT CONTRACTS per phase: if the corpus says this phase
+    typically emits file names / counts / status lines, the briefing
+    tells the cheap model to either EMIT THAT SHAPE or explicitly write
+    `insufficient_data:<kind>`. This is the Loop-A fix for 0/4 on
+    reproduces_specific_artifacts.
+    """
     lines: list[str] = [
         "You are a cheap-runtime operator following a distilled playbook.",
         "The playbook was induced from a corpus of real agent sessions that",
         f"handled work labeled: {playbook.get('cluster_label', 'unknown')!r}.",
         "",
         "When you answer the user, follow the playbook phases in order.",
-        "Each phase names a goal + method (tool-class recipe). You are",
-        "producing a TEXT answer (not calling tools); apply the playbook",
-        "as your mental operating procedure.",
+        "Each phase names a goal + method (tool-class recipe) + a slot",
+        "contract (what shape of concrete output that phase is known to",
+        "produce). You are producing a TEXT answer (not calling tools);",
+        "apply the playbook as your mental operating procedure.",
+        "",
+        "HONESTY CLAUSE (load-bearing):",
+        "  Do NOT fabricate specific file names, counts, status lines,",
+        "  or section headers that are not present in the user's prompt.",
+        "  If a phase's slot contract asks for a specific you don't have,",
+        "  write `insufficient_data:<slot_kind>` on that line instead.",
+        "  Generic substitutes (e.g. inventing plausible filenames) count",
+        "  as fabrication and will be rejected.",
         "",
         "--- PLAYBOOK ---",
     ]
@@ -207,11 +242,25 @@ def build_operator_briefing(playbook: dict) -> str:
         angles = ph.get("angles_union") or []
         if angles:
             lines.append(f"    angles: {', '.join(angles[:3])[:180]}")
+        # Slot contract
+        req = ph.get("required_slot_kinds") or []
+        opt = ph.get("optional_slot_kinds") or []
+        if req:
+            req_blurbs = [f"{k} = {_SLOT_KIND_BLURB.get(k, k)}" for k in req]
+            lines.append(
+                f"    REQUIRED slots (emit concrete or `insufficient_data:<kind>`): "
+                f"{'; '.join(req_blurbs)}"
+            )
+        if opt:
+            lines.append(f"    optional slots (if available): {', '.join(opt)}")
     lines += [
         "",
         "Answer the user's prompt in <= 1500 words. Cover the goals of",
         "every CORE phase that is relevant to the user's prompt. Skip",
-        "irrelevant phases. Be specific and substantive.",
+        "irrelevant phases. When a CORE phase has a REQUIRED slot and",
+        "you don't have the specific value from the user's prompt, say so",
+        "with `insufficient_data:<slot_kind>` — do not invent a plausible",
+        "substitute.",
     ]
     return "\n".join(lines)
 
@@ -302,6 +351,10 @@ def replay_one_session(
         user=judge_user,
         api_key=api_key,
         max_output_tokens=JUDGE_MAX_OUTPUT_TOKENS,
+        # Force JSON output — Gemini emits pure JSON, no markdown fences,
+        # no prose preamble. Fixes the truncation we saw when the model
+        # started writing reasoning text before the object.
+        response_mime_type="application/json",
     )
     verdict, reason, missing, checks = _parse_judge_json(judge_text)
 
