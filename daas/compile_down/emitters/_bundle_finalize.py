@@ -1,19 +1,27 @@
-"""Bundle finalizer — makes every emitted ZIP actually runnable.
+"""Bundle finalizer — makes every emitted bundle a full 9-layer cut.
 
-After the lane-specific emitter returns its ArtifactBundle, this module
-appends the connective tissue a user needs to clone-and-run:
+After the lane-specific emitter returns its ArtifactBundle of Layer 3/4
+(+ sometimes Layer 6/9 partials), this module appends files covering
+every remaining layer so the bundle is a complete, runnable service:
 
-    README.md         — what this is, how to run, how to flip connector mode
-    requirements.txt  — pinned deps for the lane
-    run.sh            — one-command entry point
-    .env.example      — required API keys (copy to .env)
+    Layer 0  workflow_spec.json    explicit serialized spec (regen-ready)
+    Layer 2  server.py             FastAPI + SSE wrapper
+    Layer 5  state_store.py        SQLite persistence for runs + scratchpad
+    Layer 7  eval/scenarios.py     mock-mode smoke tests
+    Layer 7  eval/rubric.py        6-boolean judge (LLM-judged, deterministic rollup)
+    Layer 8  observability.py      OpenTelemetry hooks (graceful no-op)
+    Layer 9  mcp_server.py         MCP endpoint wrapper over tools.dispatch
 
-All four files are deterministic functions of (runtime_lane, spec), so
-the same spec emits the same bundle on re-run. No network, no LLM.
+Plus the "runnable" connective tissue from the prior cycle:
+    README.md · requirements.txt · run.sh · .env.example
+
+All files are deterministic functions of (runtime_lane, spec), so the
+same spec emits the same bundle on re-run. No network, no LLM.
 """
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from daas.compile_down.artifact import ArtifactBundle, ArtifactFile
@@ -49,6 +57,21 @@ _LANE_DEPS: dict[str, list[str]] = {
     ],
 }
 
+# Optional extras — 9-layer-cut deps. The CORE runtime runs without
+# these (server.py / observability.py / mcp_server.py all fall through
+# to no-op on ImportError). Installed when the user runs
+# `pip install -r requirements-all.txt`.
+_EXTRAS_DEPS: list[str] = [
+    # Layer 2 — server
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    # Layer 8 — observability
+    "opentelemetry-api>=1.25.0",
+    "opentelemetry-sdk>=1.25.0",
+    # Layer 9 — MCP server
+    "mcp>=1.2.0 ; python_version>='3.10'",
+]
+
 _LANE_ENV: dict[str, list[tuple[str, str]]] = {
     "simple_chain": [
         ("GEMINI_API_KEY", "Required — get one at https://aistudio.google.com/apikey"),
@@ -83,7 +106,693 @@ _LANE_ENTRYPOINT: dict[str, str] = {
 }
 
 
-# --- file builders --------------------------------------------------------
+# --- 9-layer file builders ----------------------------------------------
+def _workflow_spec_json(spec: Any) -> str:
+    """Layer 0 — explicit serialized spec (regen-ready).
+
+    Any emitted scaffold can be regenerated from this file alone:
+        python -m daas.compile_down.cli --spec workflow_spec.json --lane <lane>
+    """
+    tools_out: list[dict[str, Any]] = []
+    for t in getattr(spec, "tools", []) or []:
+        if isinstance(t, dict):
+            tools_out.append(
+                {
+                    "name": t.get("name", ""),
+                    "purpose": t.get("purpose", ""),
+                    "input_schema": t.get("input_schema", {}),
+                }
+            )
+        else:
+            tools_out.append(
+                {
+                    "name": getattr(t, "name", ""),
+                    "purpose": getattr(t, "purpose", ""),
+                    "input_schema": getattr(t, "input_schema", {}),
+                }
+            )
+    payload = {
+        "source_trace_id": getattr(spec, "source_trace_id", ""),
+        "executor_model": getattr(spec, "executor_model", ""),
+        "orchestrator_system_prompt": getattr(spec, "orchestrator_system_prompt", ""),
+        "tools": tools_out,
+    }
+    return json.dumps(payload, indent=2)
+
+
+def _server_py(lane: str) -> str:
+    """Layer 2 — FastAPI + SSE wrapper."""
+    return '''"""FastAPI + SSE wrapper around the lane runtime. Layer 2.
+
+GET  /health         — mode + status
+GET  /api/spec       — serve workflow_spec.json
+POST /api/run        — stream the scaffold's run as SSE events
+                       (event: start | result | error | done)
+
+Requires: fastapi, uvicorn. Falls back gracefully if not installed.
+"""
+from __future__ import annotations
+
+import json
+import os
+from typing import Any
+
+try:
+    from fastapi import FastAPI, Request
+    from fastapi.responses import JSONResponse, StreamingResponse
+except ImportError:  # pragma: no cover - optional extra
+    FastAPI = None  # type: ignore[assignment]
+    Request = None  # type: ignore[assignment]
+    JSONResponse = None  # type: ignore[assignment]
+    StreamingResponse = None  # type: ignore[assignment]
+
+# Import the lane's runner — every lane ships a runner.py with a
+# callable ``main(prompt: str) -> dict`` entry point.
+try:
+    from runner import main as run_main  # type: ignore
+except Exception:  # noqa: BLE001
+    run_main = None  # type: ignore[assignment]
+
+
+app = FastAPI() if FastAPI is not None else None
+
+
+if app is not None:
+    @app.get("/health")
+    def health() -> dict[str, Any]:
+        return {
+            "status": "ok",
+            "connector_mode": os.environ.get("CONNECTOR_MODE", "mock"),
+            "runner_imported": run_main is not None,
+        }
+
+    @app.get("/api/spec")
+    def spec_endpoint() -> Any:
+        try:
+            with open("workflow_spec.json", "r", encoding="utf-8") as fh:
+                return json.load(fh)
+        except FileNotFoundError:
+            return JSONResponse(
+                status_code=404, content={"error": "workflow_spec.json missing"}
+            )
+
+    @app.post("/api/run")
+    async def run_endpoint(request: "Request") -> Any:
+        body = await request.json()
+        prompt = str(body.get("prompt", "")).strip()
+
+        def stream():  # type: ignore[no-untyped-def]
+            yield (
+                "event: start\\ndata: "
+                + json.dumps({"prompt": prompt[:400]})
+                + "\\n\\n"
+            )
+            if run_main is None:
+                yield (
+                    "event: error\\ndata: "
+                    + json.dumps({"error": "runner.main not importable"})
+                    + "\\n\\n"
+                )
+                yield "event: done\\ndata: {}\\n\\n"
+                return
+            try:
+                result = run_main(prompt)
+            except Exception as e:  # noqa: BLE001
+                yield (
+                    "event: error\\ndata: "
+                    + json.dumps({"error": f"{type(e).__name__}: {e}"[:400]})
+                    + "\\n\\n"
+                )
+                yield "event: done\\ndata: {}\\n\\n"
+                return
+            yield (
+                "event: result\\ndata: "
+                + json.dumps(result if isinstance(result, (dict, list, str)) else str(result))
+                + "\\n\\n"
+            )
+            yield "event: done\\ndata: {}\\n\\n"
+
+        return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+if __name__ == "__main__":
+    if app is None:
+        raise SystemExit(
+            "server requires fastapi + uvicorn. "
+            "pip install -r requirements-all.txt"
+        )
+    import uvicorn
+
+    port = int(os.environ.get("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
+'''
+
+
+def _state_store_py() -> str:
+    """Layer 5 — SQLite persistence for runs + scratchpad."""
+    return '''"""SQLite persistence for scratchpad + runs. Layer 5.
+
+No ORM, no migration tool — one file, stdlib-only, graceful schema
+bootstrap. Enable via env var ``ATTRITION_DB=./attrition.db``.
+"""
+from __future__ import annotations
+
+import json
+import os
+import sqlite3
+import time
+import uuid
+from contextlib import contextmanager
+from typing import Iterator, Optional
+
+DB_PATH = os.environ.get("ATTRITION_DB", "./attrition.db")
+
+
+_SCHEMA = """
+CREATE TABLE IF NOT EXISTS runs (
+    run_id       TEXT PRIMARY KEY,
+    query        TEXT NOT NULL,
+    result_json  TEXT,
+    created_at   INTEGER NOT NULL,
+    completed_at INTEGER
+);
+CREATE TABLE IF NOT EXISTS scratchpad (
+    run_id     TEXT NOT NULL,
+    section    TEXT NOT NULL,
+    content    TEXT NOT NULL,
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (run_id, section)
+);
+CREATE INDEX IF NOT EXISTS idx_runs_created ON runs(created_at);
+"""
+
+
+@contextmanager
+def conn() -> Iterator[sqlite3.Connection]:
+    c = sqlite3.connect(DB_PATH)
+    try:
+        c.executescript(_SCHEMA)
+        yield c
+        c.commit()
+    finally:
+        c.close()
+
+
+def new_run(query: str) -> str:
+    """Create a new run row, return the run_id (uuid4)."""
+    run_id = str(uuid.uuid4())
+    with conn() as c:
+        c.execute(
+            "INSERT INTO runs (run_id, query, result_json, created_at, completed_at)"
+            " VALUES (?, ?, NULL, ?, NULL)",
+            (run_id, query, int(time.time())),
+        )
+    return run_id
+
+
+def finish_run(run_id: str, result: dict) -> None:
+    with conn() as c:
+        c.execute(
+            "UPDATE runs SET result_json = ?, completed_at = ? WHERE run_id = ?",
+            (json.dumps(result), int(time.time()), run_id),
+        )
+
+
+def save_scratchpad(run_id: str, section: str, content: str) -> None:
+    with conn() as c:
+        c.execute(
+            "INSERT OR REPLACE INTO scratchpad (run_id, section, content, updated_at)"
+            " VALUES (?, ?, ?, ?)",
+            (run_id, section, content, int(time.time())),
+        )
+
+
+def load_scratchpad(run_id: str) -> dict[str, str]:
+    with conn() as c:
+        rows = c.execute(
+            "SELECT section, content FROM scratchpad WHERE run_id = ?",
+            (run_id,),
+        ).fetchall()
+    return {section: content for section, content in rows}
+
+
+def load_run(run_id: str) -> Optional[dict]:
+    with conn() as c:
+        row = c.execute(
+            "SELECT run_id, query, result_json, created_at, completed_at"
+            " FROM runs WHERE run_id = ?",
+            (run_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return {
+        "run_id": row[0],
+        "query": row[1],
+        "result": json.loads(row[2]) if row[2] else None,
+        "created_at": row[3],
+        "completed_at": row[4],
+    }
+'''
+
+
+def _eval_scenarios_py() -> str:
+    """Layer 7 — mock-mode smoke tests + per-tool dispatch checks."""
+    return '''"""Scenario-based smoke tests. Layer 7.
+
+Every declared tool must dispatch in mock mode without crashing.
+Extend with live queries once you have real handlers wired.
+
+Usage:
+    python -m eval.scenarios          # run smoke test, print JSON
+    pytest eval/scenarios.py          # pytest-compatible test fn
+"""
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+try:
+    # Present in tool_first_chain / orchestrator_worker / openai_agents_sdk
+    from tools import dispatch  # type: ignore
+except Exception:  # noqa: BLE001
+    dispatch = None  # type: ignore[assignment]
+
+
+def load_declared_tools() -> list[str]:
+    p = Path("workflow_spec.json")
+    if not p.exists():
+        return []
+    try:
+        spec = json.loads(p.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    return [str(t.get("name", "")) for t in spec.get("tools", []) if t.get("name")]
+
+
+def assert_mock_dispatch_works(tool_names: list[str]) -> list[dict[str, Any]]:
+    os.environ["CONNECTOR_MODE"] = "mock"
+    results: list[dict[str, Any]] = []
+    for name in tool_names:
+        if dispatch is None:
+            results.append(
+                {"tool": name, "passed": False, "reason": "no dispatch() available (simple_chain lane)"}
+            )
+            continue
+        try:
+            r = dispatch(name, {})
+            passed = isinstance(r, dict) and r.get("status") == "mock"
+            results.append({"tool": name, "passed": passed, "response": r})
+        except Exception as e:  # noqa: BLE001
+            results.append({"tool": name, "passed": False, "reason": f"{type(e).__name__}: {e}"})
+    return results
+
+
+def run_smoke_test() -> dict[str, Any]:
+    tools = load_declared_tools()
+    dispatch_results = assert_mock_dispatch_works(tools)
+    passed = sum(1 for r in dispatch_results if r["passed"])
+    return {
+        "tool_count": len(tools),
+        "passed": passed,
+        "failed": len(tools) - passed,
+        "details": dispatch_results,
+    }
+
+
+def test_all_tools_dispatch_in_mock_mode() -> None:  # pytest entry
+    result = run_smoke_test()
+    assert result["failed"] == 0, json.dumps(result, indent=2)
+
+
+if __name__ == "__main__":
+    print(json.dumps(run_smoke_test(), indent=2))
+'''
+
+
+def _eval_rubric_py() -> str:
+    """Layer 7 — boolean-rubric judge."""
+    return '''"""6-boolean rubric judge. Layer 7.
+
+Matches the pattern attrition.sh uses in its own replay harness:
+the LLM judges 6 independent booleans, the verdict is derived
+DETERMINISTICALLY from the vector. The LLM only judges dimensions;
+the rollup is pure Python.
+
+Usage:
+    from eval.rubric import judge
+    result = judge(user_prompt, original_answer, replay_answer)
+    # result = {"verdict": ..., "reason": ..., "checks": {...}}
+
+Requires GEMINI_API_KEY for the LLM-judged bools. Returns
+insufficient_data when the key is missing or the call fails.
+"""
+from __future__ import annotations
+
+import json
+import os
+import re
+import urllib.error
+import urllib.request
+from typing import Any
+
+CHECK_KEYS: tuple[str, ...] = (
+    "covers_main_points",
+    "reproduces_specific_artifacts",
+    "addresses_user_prompt",
+    "no_hallucination",
+    "structural_coherence",
+    "baseline_is_substantive",
+)
+
+_RUBRIC = """You are a fidelity judge. Emit a PURE JSON object with exactly these six keys, each an object {bool, reason}:
+
+covers_main_points · reproduces_specific_artifacts · addresses_user_prompt · no_hallucination · structural_coherence · baseline_is_substantive
+
+Definitions:
+  covers_main_points             REPLAY hits every substantive point ORIGINAL hits.
+  reproduces_specific_artifacts  REPLAY includes concrete filenames / counts / status lines from ORIGINAL.
+  addresses_user_prompt          REPLAY answers what USER_PROMPT asked.
+  no_hallucination               REPLAY invents nothing that USER_PROMPT / playbook didn't imply.
+  structural_coherence           REPLAY has the shape of a helpful answer.
+  baseline_is_substantive        ORIGINAL_ANSWER is rich enough to be a meaningful baseline.
+
+Do NOT emit a verdict — the verdict is computed downstream from your booleans.
+"""
+
+
+def verdict_from_checks(checks: dict[str, Any]) -> tuple[str, str]:
+    """Deterministic rollup."""
+
+    def b(k: str) -> bool:
+        v = checks.get(k, {})
+        return bool(v.get("bool") if isinstance(v, dict) else v)
+
+    def r(k: str) -> str:
+        v = checks.get(k, {})
+        if isinstance(v, dict):
+            return str(v.get("reason") or "")
+        return ""
+
+    if not b("baseline_is_substantive"):
+        return "insufficient_data", r("baseline_is_substantive") or "baseline not substantive"
+    if not b("addresses_user_prompt") or not b("no_hallucination"):
+        rr = r("addresses_user_prompt") if not b("addresses_user_prompt") else r("no_hallucination")
+        return "regression", rr
+    fidelity = ("covers_main_points", "reproduces_specific_artifacts", "structural_coherence")
+    misses = [k for k in fidelity if not b(k)]
+    if not misses:
+        return "transfers", "all fidelity bools pass"
+    if len(misses) == 1:
+        return "lossy", r(misses[0]) or "one fidelity bool failed"
+    return "regression", "; ".join(r(k) for k in misses[:2])
+
+
+def _extract_balanced_json(s: str) -> str:
+    depth = 0
+    in_str = False
+    esc = False
+    start = -1
+    for i, ch in enumerate(s):
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+        elif ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            if depth > 0:
+                depth -= 1
+                if depth == 0 and start != -1:
+                    return s[start : i + 1]
+    return ""
+
+
+def judge(
+    user_prompt: str,
+    original_answer: str,
+    replay_answer: str,
+    *,
+    api_key: str | None = None,
+    model: str = "gemini-3.1-pro-preview",
+) -> dict[str, Any]:
+    key = api_key or os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        return {"verdict": "insufficient_data", "reason": "no GEMINI_API_KEY set", "checks": {}}
+
+    body = (
+        f"USER_PROMPT:\\n{user_prompt[:2500]}\\n\\n"
+        f"ORIGINAL_ANSWER:\\n{original_answer[:4000]}\\n\\n"
+        f"REPLAY_ANSWER:\\n{replay_answer[:4000]}"
+    )
+    payload = {
+        "systemInstruction": {"parts": [{"text": _RUBRIC}]},
+        "contents": [{"role": "user", "parts": [{"text": body}]}],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 2048,
+            "responseMimeType": "application/json",
+        },
+    }
+    url = (
+        f"https://generativelanguage.googleapis.com/v1beta/models/{model}"
+        f":generateContent?key={key}"
+    )
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60) as resp:
+            raw = resp.read().decode("utf-8")
+    except (urllib.error.HTTPError, urllib.error.URLError, TimeoutError) as e:
+        return {"verdict": "insufficient_data", "reason": f"judge call failed: {e}", "checks": {}}
+
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return {"verdict": "insufficient_data", "reason": "invalid JSON wrapper", "checks": {}}
+
+    candidates = parsed.get("candidates") or []
+    if not candidates:
+        return {"verdict": "insufficient_data", "reason": "empty judge candidates", "checks": {}}
+    parts = (candidates[0].get("content") or {}).get("parts") or []
+    text = "\\n".join(str(p.get("text") or "") for p in parts if isinstance(p, dict))
+
+    try:
+        checks_obj = json.loads(text.strip())
+    except json.JSONDecodeError:
+        chunk = _extract_balanced_json(text)
+        try:
+            checks_obj = json.loads(chunk) if chunk else None
+        except json.JSONDecodeError:
+            checks_obj = None
+    if not isinstance(checks_obj, dict):
+        return {"verdict": "insufficient_data", "reason": "unparseable judge output", "checks": {}}
+
+    # Normalize missing keys as failed checks
+    checks: dict[str, Any] = {}
+    for k in CHECK_KEYS:
+        v = checks_obj.get(k, {})
+        if isinstance(v, dict):
+            checks[k] = {"bool": bool(v.get("bool")), "reason": str(v.get("reason") or "")[:240]}
+        elif isinstance(v, bool):
+            checks[k] = {"bool": v, "reason": ""}
+        else:
+            checks[k] = {"bool": False, "reason": "check missing from judge output"}
+
+    verdict, reason = verdict_from_checks(checks)
+    return {"verdict": verdict, "reason": reason[:240], "checks": checks}
+
+
+if __name__ == "__main__":
+    # Self-test with trivial inputs
+    demo = judge("How many files?", "Three: a.py, b.py, c.py", "Some files exist.")
+    print(json.dumps(demo, indent=2))
+'''
+
+
+def _eval_init_py() -> str:
+    return '"""Evaluation layer — 6-boolean rubric + mock-mode smoke tests."""\n'
+
+
+def _observability_py() -> str:
+    """Layer 8 — OpenTelemetry hooks (graceful no-op)."""
+    return '''"""OpenTelemetry tracing hooks. Layer 8.
+
+Idempotent setup; falls back to no-op cleanly if opentelemetry is
+not installed. Enable OTLP export via OTEL_EXPORTER_OTLP_ENDPOINT.
+"""
+from __future__ import annotations
+
+import functools
+import os
+from typing import Any, Callable, TypeVar
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+_initialized = False
+
+
+def setup_tracing(service_name: str | None = None) -> None:
+    """Install a tracer provider. Safe to call many times."""
+    global _initialized
+    if _initialized:
+        return
+    _initialized = True
+
+    try:
+        from opentelemetry import trace
+        from opentelemetry.sdk.resources import Resource
+        from opentelemetry.sdk.trace import TracerProvider
+        from opentelemetry.sdk.trace.export import (
+            BatchSpanProcessor,
+            ConsoleSpanExporter,
+        )
+    except ImportError:
+        print("[observability] opentelemetry not installed; using no-op tracer")
+        return
+
+    name = service_name or os.environ.get("SERVICE_NAME", "attrition-scaffold")
+    resource = Resource(attributes={"service.name": name})
+    provider = TracerProvider(resource=resource)
+
+    endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT")
+    if endpoint:
+        try:
+            from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                OTLPSpanExporter,
+            )
+
+            provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+        except ImportError:
+            provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    else:
+        provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+
+    trace.set_tracer_provider(provider)
+
+
+def traced(name: str | None = None) -> Callable[[F], F]:
+    """Decorator: wrap a function in an OTel span. No-op if OTel is absent."""
+
+    def decorator(fn: F) -> F:
+        @functools.wraps(fn)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            try:
+                from opentelemetry import trace as _trace
+
+                tracer = _trace.get_tracer(fn.__module__)
+                with tracer.start_as_current_span(name or fn.__qualname__) as span:
+                    span.set_attribute("function.module", fn.__module__)
+                    return fn(*args, **kwargs)
+            except ImportError:
+                return fn(*args, **kwargs)
+
+        return wrapper  # type: ignore[return-value]
+
+    return decorator
+
+
+__all__ = ["setup_tracing", "traced"]
+'''
+
+
+def _mcp_server_py() -> str:
+    """Layer 9 — MCP endpoint wrapper over tools.dispatch."""
+    return '''"""MCP server exposing this scaffold's tools. Layer 9.
+
+Wraps tools.dispatch() so other agents can call this scaffold's
+capabilities over the Model Context Protocol. Respects
+CONNECTOR_MODE (mock / live / hybrid) just like direct dispatch.
+
+Run:
+    python mcp_server.py
+
+Requires `mcp` package. Falls back with a clean error if missing.
+"""
+from __future__ import annotations
+
+import asyncio
+import json
+import os
+
+try:
+    from mcp import types  # type: ignore
+    from mcp.server import Server  # type: ignore
+    from mcp.server.stdio import stdio_server  # type: ignore
+except ImportError:
+    types = None  # type: ignore[assignment]
+    Server = None  # type: ignore[assignment]
+    stdio_server = None  # type: ignore[assignment]
+
+try:
+    from tools import STUB_HANDLERS, dispatch  # type: ignore
+    TOOL_NAMES = sorted(STUB_HANDLERS.keys()) if isinstance(STUB_HANDLERS, dict) else []
+except Exception:  # noqa: BLE001
+    dispatch = None  # type: ignore[assignment]
+    TOOL_NAMES = []
+
+
+app = Server("attrition-scaffold") if Server is not None else None
+
+
+if app is not None:
+
+    @app.list_tools()  # type: ignore[misc]
+    async def list_tools():  # type: ignore[no-untyped-def]
+        mode = os.environ.get("CONNECTOR_MODE", "mock")
+        return [
+            types.Tool(
+                name=name,
+                description=(
+                    f"attrition scaffold tool — dispatched via connector "
+                    f"resolver (current mode: {mode})"
+                ),
+                inputSchema={"type": "object", "additionalProperties": True},
+            )
+            for name in TOOL_NAMES
+        ]
+
+    @app.call_tool()  # type: ignore[misc]
+    async def call_tool(name: str, arguments: dict):  # type: ignore[no-untyped-def]
+        if dispatch is None:
+            return [
+                types.TextContent(
+                    type="text",
+                    text=json.dumps({"error": "dispatch() unavailable in this scaffold"}),
+                )
+            ]
+        result = dispatch(name, arguments or {})
+        return [types.TextContent(type="text", text=json.dumps(result))]
+
+
+async def _main() -> None:
+    if app is None or stdio_server is None:
+        raise SystemExit(
+            "mcp package not installed. pip install 'mcp>=1.2.0'"
+        )
+    async with stdio_server() as (read_stream, write_stream):
+        await app.run(read_stream, write_stream, app.create_initialization_options())
+
+
+if __name__ == "__main__":
+    asyncio.run(_main())
+'''
+
+
+# --- README / requirements / .env.example / run.sh (unchanged below) ----
 def _readme(lane: str, spec: Any) -> str:
     title = _LANE_TITLE.get(lane, lane)
     entrypoint = _LANE_ENTRYPOINT.get(lane, "main.py")
@@ -166,6 +875,29 @@ python -m daas.compile_down.cli \\
     --lane {lane} \\
     --out ./regenerated
 ```
+
+## The 9 layers in this bundle
+
+| Layer | File(s) | Purpose |
+|---|---|---|
+| 0 Specification | `workflow_spec.json` | Serialized spec — regenerate any lane: `python -m daas.compile_down.cli --spec workflow_spec.json --lane <lane>` |
+| 1 Frontend | *(not emitted — bring your own app)* | Call `POST /api/run` from your UI |
+| 2 Server | `server.py` | FastAPI + SSE at `/health`, `/api/spec`, `/api/run` |
+| 3 Services | lane-specific (`orchestrator.py` / `runner.py` / `graph.py`) | Pipeline / state machine |
+| 4 Agents | lane-specific (same as Layer 3) | LLM orchestration (plan → dispatch → compact or equivalent) |
+| 5 Database | `state_store.py` | SQLite persistence for runs + scratchpad |
+| 6 Security | `tools.py` connector resolver | Mock vs live dispatch boundary |
+| 7 Evaluation | `eval/scenarios.py`, `eval/rubric.py` | Mock-mode smoke tests + 6-boolean judge |
+| 8 Observability | `observability.py` | OpenTelemetry hooks (console by default, OTLP if `OTEL_EXPORTER_OTLP_ENDPOINT` set) |
+| 9 MCP tools | `mcp_server.py` | Expose `tools.dispatch()` as an MCP endpoint |
+
+Extras required only for layers 2 / 8 / 9:
+
+```bash
+pip install -r requirements-all.txt
+```
+
+Core agent runtime (layers 3 / 4) needs only `requirements.txt`.
 
 ---
 
@@ -259,12 +991,34 @@ def finalize_bundle(
     existing_paths = {f.path for f in bundle.files}
     appended: list[ArtifactFile] = list(bundle.files)
 
+    # Detect whether this bundle already has a tools.py (Layer 6 + 9 hook).
+    has_tools_py = any(f.path == "tools.py" for f in bundle.files)
+    # requirements-all.txt pins the optional 9-layer extras (fastapi, otel, mcp)
+    extras_text = (
+        _requirements(runtime_lane)
+        + "\n# --- optional extras for layers 2 / 8 / 9 ---\n"
+        + "\n".join(_EXTRAS_DEPS)
+        + "\n"
+    )
+
     candidates: list[tuple[str, str, str]] = [
         ("README.md", _readme(runtime_lane, spec), "markdown"),
         ("requirements.txt", _requirements(runtime_lane), "text"),
+        ("requirements-all.txt", extras_text, "text"),
         ("run.sh", _run_sh(runtime_lane), "shell"),
         (".env.example", _env_example(runtime_lane), "text"),
+        # 9-layer-cut files
+        ("workflow_spec.json", _workflow_spec_json(spec), "json"),
+        ("server.py", _server_py(runtime_lane), "python"),
+        ("state_store.py", _state_store_py(), "python"),
+        ("eval/__init__.py", _eval_init_py(), "python"),
+        ("eval/scenarios.py", _eval_scenarios_py(), "python"),
+        ("eval/rubric.py", _eval_rubric_py(), "python"),
+        ("observability.py", _observability_py(), "python"),
     ]
+    # MCP server only makes sense when the lane has a tools.py to wrap.
+    if has_tools_py:
+        candidates.append(("mcp_server.py", _mcp_server_py(), "python"))
     for path, content, lang in candidates:
         if path in existing_paths:
             continue
