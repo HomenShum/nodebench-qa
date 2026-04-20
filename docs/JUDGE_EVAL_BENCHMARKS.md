@@ -1,177 +1,139 @@
-# Public Benchmarks for DaaS Judge Eval Cycles
+# Judge + Eval Benchmarks (shipped inventory)
 
-## Why this matters
+Every adapter, its tier, its scoring mode, and what it's for in
+attrition's two-loop eval architecture:
 
-The DaaS judge currently relies on an LLM applying a bounded boolean rubric. That catches hallucination and structural failures (as the FloorAI showcase proved), but it's still an LLM judging an LLM. For **ground-truth** verification we need public benchmarks with deterministic scoring — unit tests, exact match, AST comparison — that can run in our replay harness without any LLM in the loop.
+- **Loop A** — evaluate the judge itself. Deterministic or pairwise-gold
+  benchmarks that ask: "does our rubric judge agree with ground truth?"
+- **Loop B** — evaluate the scaffold. Workflow-shaped benchmarks where
+  the grader is deterministic or a stateful simulator.
 
-This doc picks **5 public benchmarks** we can integrate today, ranked by impact-per-effort for the DaaS replay judge. Framing anchors on the [Vellum Opus 4.7 analysis](https://www.vellum.ai/blog/claude-opus-4-7-benchmarks-explained) that we agreed shifted our evaluation strategy from MMLU to workload-realistic benchmarks.
+## Shipped adapters
 
-## Selection criteria
+| Adapter | Loop | Scoring | Install / data | File |
+|---|---|---|---|---|
+| BFCL v3 | B | AST tool-call match (deterministic) | HF `gorilla-llm/Berkeley-Function-Calling-Leaderboard` | `daas/benchmarks/bfcl/` |
+| BFCL v4 | B | AST + multi-turn (delegates to v3 until upstream v4 split stable) | same | `daas/benchmarks/bfcl_v4/` |
+| MMLU-Pro | A canary | Letter match (deterministic) | HF `TIGER-Lab/MMLU-Pro` | `daas/benchmarks/mmlu_pro/` |
+| JudgeBench | A primary | Pairwise A-or-B match against correctness gold | HF `ScalerLab/JudgeBench` | `daas/benchmarks/judgebench/` |
+| IF-RewardBench | A | Pairwise chosen-vs-rejected w/ per-task checklist | HF `allenai/IF-RewardBench` | `daas/benchmarks/if_rewardbench/` |
+| τ²-bench retail | B | DB state + action match via Sierra simulator | `pip install -e git+github.com/sierra-research/tau2-bench` | `daas/benchmarks/tau2/` |
+| SWE-bench Verified | B | Docker unit-test PASS/FAIL | HF `princeton-nlp/SWE-bench_Verified` + Docker | `daas/benchmarks/swebench_verified/` |
+| MCP-Atlas | B | Real MCP servers (partially LLM-judged per upstream) | `pip install -e git+github.com/mcp-atlas/mcp-atlas` | `daas/benchmarks/mcp_atlas/` |
+| Terminal-Bench 2.0 | B | Docker sandbox terminal success | `pip install terminal-bench` + Docker | `daas/benchmarks/terminal_bench_2/` |
+| BrowseComp | B | Exact-match short answer after browsing | Local JSONL (OpenAI license) | `daas/benchmarks/browsecomp/` |
+| Arena-Hard-Auto | A secondary | Pairwise preference (delegates to JudgeBench shape) | Local JSONL from `lmarena/arena-hard-auto` | `daas/benchmarks/arena_hard_auto/` |
+| RewardBench 2 | A secondary | Pairwise reward-model / factuality | HF `allenai/reward-bench-2` | `daas/benchmarks/rewardbench_2/` |
+| PoLL | utility | Panel-of-smaller-judges voting pattern | stdlib only | `daas/benchmarks/poll.py` |
 
-Every candidate must score on at least three:
+## How each lands in the product
 
-1. **Ground-truth scoring** — unit tests, exact-match, AST comparison, not LLM judge
-2. **Public dataset** — downloadable from HuggingFace or GitHub, permissive license
-3. **Subset-runnable** — can run 10–50 tasks in minutes for fast iteration
-4. **Replay-shaped** — input is a task + expected output, matching our trace→replay shape
-5. **Active maintenance** — released or updated in the last 18 months
+- Shell adapters (`swebench_verified`, `terminal_bench_2`, `mcp_atlas`)
+  return `harness_error` with exact install instructions when the
+  required dependency (Docker + pip package) is absent. They never
+  fake a verdict.
+- Pairwise benchmarks (`judgebench`, `if_rewardbench`,
+  `arena_hard_auto`, `rewardbench_2`) all use the judgebench extractor
+  for A / B pick extraction and normalize labels (`"A>B"` comparator,
+  `0`/`1` ints, `"response_A"` prefix all accepted).
+- Deterministic benchmarks (`bfcl_v3`, `mmlu_pro`, `browsecomp`) score
+  exact-match with no LLM in the loop.
+- `tau2_retail` is deterministic via the Sierra simulator but we fail
+  closed (`db_state_match` rejects empty-vs-empty as a non-test).
 
-## The 5 benchmarks to integrate
+## Two-loop architecture
 
-### 1. SWE-bench Verified — real GitHub issues + unit tests
+### Loop A — judge calibration
 
-| Property | Value |
-|----------|-------|
-| **Scoring** | Deterministic — PASS/FAIL from FAIL_TO_PASS + PASS_TO_PASS unit tests in a Docker sandbox |
-| **Size** | 500 human-verified tasks |
-| **License** | MIT / open source |
-| **Source** | [swebench.com/verified](https://www.swebench.com/verified.html) · [openai/introducing-swe-bench-verified](https://openai.com/index/introducing-swe-bench-verified/) |
-| **Harness** | Official Docker harness; Python runner invokes tests against the patch |
-| **Why** | Ground-truth code correctness. Used by Anthropic to measure Opus 4.7 (87.6% Verified). If a DaaS replay can pass SWE-bench with a distilled scaffold, the scaffold is demonstrably useful for real engineering. |
+Primary: `JudgeBench + IF-RewardBench`
 
-**Integration plan** (DaaS-specific):
-- Treat each SWE-bench task as a canonical trace: `query = issue body`, `finalAnswer = golden patch`.
-- Pro distills WorkflowSpec with workers like `BugLocator`, `PatchProposer`, `TestVerifier`.
-- Replay runs workers, emits a unified diff, submits to the Docker harness.
-- Judge reads `harness_result = { passed: [tests], failed: [tests] }` — no LLM needed.
-- **Success metric**: Flash Lite + scaffold pass rate vs Pro solo pass rate, at what cost ratio.
+These are the benchmarks where attrition's own rubric judge is the
+thing under test. A regression on JudgeBench accuracy is a direct
+signal that the rubric needs revision.
 
-**Effort estimate**: 2 days — the Docker harness is the heavy part. Use `princeton-nlp/SWE-bench_Verified` on HuggingFace; invoke Docker via the official runner.
+Secondary: `Arena-Hard-Auto + RewardBench 2 + MT-Bench`
 
----
+Preference-oriented — good sanity checks but not truth-oriented. Never
+the primary gate.
 
-### 2. τ²-Bench Verified — tool-agent-user retail + airline flows
+Canary: `MMLU-Pro` @ n=50, stratified. Quick regression gate for every
+rubric revision — catches obviously-broken judge prompts in <30s.
 
-| Property | Value |
-|----------|-------|
-| **Scoring** | Deterministic — DB state + expected-action match against the Sierra policy engine |
-| **Size** | ~100 tasks per domain (airline, retail, telecom) |
-| **License** | Apache 2.0 |
-| **Source** | [sierra-research/tau2-bench](https://github.com/sierra-research/tau2-bench) · [amazon-agi/tau2-bench-verified](https://github.com/amazon-agi/tau2-bench-verified) (corrected tasks) · [HuggingFaceH4/tau2-bench-data](https://huggingface.co/datasets/HuggingFaceH4/tau2-bench-data) |
-| **Harness** | Python simulator; tasks run against a mocked DB + policy engine; compares end-state and actions |
-| **Why** | **This is the closest public proxy for FloorAI**. Retail customer-service flows, tool-agent-user interaction, measurable outcomes. Uses the same scaffold shape we already distill. |
+### Loop B — scaffold quality
 
-**Integration plan**:
-- Use the retail domain (airline is an easier fit; retail is the clearest FloorAI analog).
-- Each task: user goal + mocked store DB. Canonical trace = expert agent transcript.
-- Distill, replay with Flash Lite, let our scaffold drive the Sierra simulator.
-- Judge checks `final_db_state == expected_state` and `actions == expected_actions`.
-- **Success metric**: per-task pass rate + average cost per resolved ticket.
+Primary by lane:
 
-**Effort estimate**: 3 days — requires running the Sierra simulator as a connector target, which exercises the `connectorMode: "live"` code path we haven't shipped yet.
+| Accepted runtime | Primary Loop B benchmarks |
+|---|---|
+| `tool_first_chain` | `BFCL v4` + `MCP-Atlas` |
+| `orchestrator_worker` | `τ²-bench retail` + `SWE-bench Verified` (coding) |
+| `simple_chain` | field-level schema diff (benchmark-free — internal) |
+| `keep_big_model` | `Terminal-Bench 2.0` for long-horizon if in scope |
 
----
+For retail / support flows specifically: τ²-bench is the default.
+Falsification from FloorAI confirmed τ²-bench is the closest public
+analog to our actual use cases.
 
-### 3. BFCL v3 — function calling (multi-turn, multi-step)
+For research / browsing scaffolds: `BrowseComp`.
 
-| Property | Value |
-|----------|-------|
-| **Scoring** | Deterministic — AST-level comparison of the function calls the agent emits vs the expected calls |
-| **Size** | Thousands of tasks across single/multi/parallel/multi-turn categories |
-| **License** | Apache 2.0 |
-| **Source** | [gorilla.cs.berkeley.edu/leaderboard](https://gorilla.cs.berkeley.edu/leaderboard.html) · [gorilla-llm/Berkeley-Function-Calling-Leaderboard](https://huggingface.co/datasets/gorilla-llm/Berkeley-Function-Calling-Leaderboard) |
-| **Harness** | `pip install bfcl-eval` — invokes a model + compares tool calls via AST |
-| **Why** | Our replay already produces tool-call sequences. BFCL's AST comparator is exactly the `tool-call parity` check the judge computes weakly today. Plug it in and the parity measurement becomes rigorous. |
+## Fidelity trial shape
 
-**Integration plan**:
-- Pull 50 tasks per category (expert-curated, live, multi-turn) = 200 eval points.
-- Feed into our replay harness; each worker emits tool calls which we translate to BFCL's format.
-- BFCL's AST comparator scores `exact call match` / `partial match` / `missed call`.
-- **Success metric**: tool parity score, which directly validates the `covers_main_points` + `internally_consistent` rubric checks.
+All B benchmarks plug into `daas/fidelity/cli.py` which runs the
+3-measurement template:
 
-**Effort estimate**: 1 day — Python package already exists, mostly adapter work.
+```
+baseline   = small_model.solo(task)
+ceiling    = large_model.solo(task)
+distilled  = small_model(task, scaffold=artifact)
+```
 
----
+Verdict via Wilson CI + Newcombe difference — bounded to 5 values
+(`transfers`, `lossy`, `no_gap`, `regression`, `insufficient_data`).
+Minimum n=60 before any non-`insufficient_data` verdict.
 
-### 4. MMLU-Pro — reasoning pass rate (lightweight canary)
+## Never-alone rules
 
-| Property | Value |
-|----------|-------|
-| **Scoring** | Deterministic — single-letter answer match |
-| **Size** | 12,032 test / 70 validation |
-| **License** | MIT |
-| **Source** | [TIGER-Lab/MMLU-Pro](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro) |
-| **Harness** | Simple — pass prompt, extract answer letter |
-| **Why** | Cheap, fast, stable. Use as a **canary** to detect rubric regressions: every rubric-registry change re-runs the same 50 MMLU-Pro questions to confirm the judge still catches wrong answers. Not a product benchmark. |
+1. **A single LLM judge is never the only authority for a shipping
+   decision.** Deterministic oracles first; PoLL panel for residuals.
+2. **BFCL v3 does not drive scaffold-lift claims** — our own
+   falsification run showed it's saturated (Pro ≈ Flash Lite within
+   noise). Use SWE-bench Verified or τ²-bench instead.
+3. **MMLU-Pro is a canary, not a product claim.** Use for regression
+   gates, never as "here's our accuracy number."
+4. **Tier-3 weak signals NEVER update a recommender prior on their
+   own.** Radar enforces this via the `tier3_weak` badge.
 
-**Integration plan**:
-- 50 questions sampled stratified by domain (business, law, psychology, engineering, health).
-- Scaffold is a single `Answerer` worker — no orchestrator needed for MC questions.
-- Judge uses exact-match on the extracted letter.
-- **Success metric**: 0.5% accuracy drift between rubric revisions = no silent regression.
+## Source: Vellum Opus 4.7 analysis framing
 
-**Effort estimate**: 0.5 day — we already have `experiments/scaffolding_wedge/run_v3.py` that does this.
+This stack was selected to satisfy the framing from the Vellum Opus
+4.7 benchmarks analysis (linked as a Radar tier-2 item). Specifically:
 
----
+- Prefer workload-realistic, workflow-shaped benchmarks over broad
+  exam-style evals
+- Pair deterministic oracles (SWE-bench, BFCL AST) with stateful
+  simulators (τ²-bench) for production relevance
+- Treat preference benchmarks as secondary calibration, not primary
+  gates
 
-### 5. ReportBench — deep-research citation quality
+## Ship order from here
 
-| Property | Value |
-|----------|-------|
-| **Scoring** | Semi-deterministic — citation set overlap + factual-claim retrieval against expert survey papers |
-| **Size** | Comprehensive benchmark targeting Deep Research agents |
-| **License** | Permissive (ByteDance-BandAI) |
-| **Source** | [ByteDance-BandAI/ReportBench](https://huggingface.co/datasets/ByteDance-BandAI/ReportBench) |
-| **Harness** | JSONL with ground_truth reference arrays per sample |
-| **Why** | Perfect substrate for the `grounded_in_context` + `no_hallucinated_ids` rubric checks. Our FloorAI showcase failed exactly on these; ReportBench gives us a public dataset where ground-truth citations exist and we can measure our boolean checks against truth, not just LLM verdict. |
+Most adapters are shells with clear integration paths. The real work
+remaining is:
 
-**Integration plan**:
-- Import a sample subset (start with 30 tasks, scale to 300 after validation).
-- Pro distills a `ResearchSynthesizer` + `CitationVerifier` workflow.
-- Replay emits a structured response with citations.
-- Compare citations against the benchmark's `ground_truth` array.
-- **Success metric**: citation precision + recall. Direct validation of `no_hallucinated_ids`.
+1. Run `daas.fidelity.cli` with real trial-count against each
+   benchmark + accumulate verdicts on
+   `daasFidelityVerdicts` so the Builder Eval tab has live data per
+   runtime lane.
+2. Wire the actual Sierra simulator when a retail customer needs τ²
+   scoring.
+3. Provision Docker for SWE-bench Verified + Terminal-Bench 2 when a
+   coding-agent customer needs unit-test scoring.
 
-**Effort estimate**: 2 days — custom citation extractor required.
+Until then, each adapter's `harness_error` messaging keeps the
+product honest about what's installed vs not.
 
----
+## Related
 
-## What we explicitly skip (and why)
-
-| Benchmark | Reason to skip (for now) |
-|-----------|--------------------------|
-| GAIA | [UC Berkeley RDI](https://rdi.berkeley.edu/blog/trustworthy-benchmarks-cont/) found GAIA's scoring is exploitable; wait for a hardened version |
-| HumanEval | Saturated — top models at 90%+, no signal for DaaS cost-vs-quality tradeoff |
-| BrowseComp | Web research is a different product surface than distillation replay |
-| LegalBench / FinanceBench | Narrow domains; revisit if we add a `daas.legal.v1` or `daas.finance.v1` rubric |
-| Artificial Analysis Intelligence Index | Composite score, not something we can score against — useful as a downstream **target** |
-
-## Integration priority
-
-If we can only ship one this quarter, ship **BFCL v3** first — it's lowest-effort, and it directly validates the tool-call parity that the existing judge handles only weakly. After BFCL, **τ²-bench retail** because it's the closest analog to FloorAI and will stress the `connectorMode: "live"` code path we haven't exercised yet.
-
-Ladder:
-
-1. Day 1–2: BFCL v3 — 1 day to integrate, lands the quickest rigor improvement
-2. Day 3–4: MMLU-Pro canary — 0.5 day, becomes a regression gate for every rubric change
-3. Day 5–7: τ²-bench retail — validates the agent-flow shape against a real simulator
-4. Day 8–10: SWE-bench Verified subset (20 tasks) — ground-truth unit-test path
-5. Day 11–12: ReportBench — citation quality, completes the hallucination-catch story
-
-Total: 12 working days to have 5 orthogonal ground-truth benchmarks wired into DaaS replay.
-
-## Schema implication
-
-The judge action currently takes a single replay and produces one judgment. To support benchmark harnesses we need:
-
-- New table: `daasBenchmarkRuns` — records each benchmark-task execution + ground-truth result
-- New action: `runBenchmarkSuite(benchmarkId, subsetSize)` — iterates tasks, dispatches to replay, scores deterministically
-- Existing `daasAuditLog` already supports multi-op timelines
-
-No frontend changes required until we want a benchmark dashboard. Start with CLI readout; add UI once we have 3 benchmark results flowing.
-
-## Honest caveat
-
-Benchmarks train what they measure. If we start judging DaaS solely on SWE-bench + BFCL we'll get scaffolds that optimize for those patterns. Always retain the rubric-based judge as the product surface — benchmarks become a **CI gate** for our rubrics, not a replacement for them.
-
----
-
-## References
-
-- [Vellum: Claude Opus 4.7 Benchmarks Explained](https://www.vellum.ai/blog/claude-opus-4-7-benchmarks-explained) — informed the strategy shift away from MMLU toward SWE-bench Pro / MCP-Atlas / Terminal-Bench
-- [SWE-bench Verified (swebench.com)](https://www.swebench.com/verified.html)
-- [τ²-bench verified (amazon-agi)](https://github.com/amazon-agi/tau2-bench-verified)
-- [BFCL v3 blog](https://gorilla.cs.berkeley.edu/blogs/13_bfcl_v3_multi_turn.html)
-- [TIGER-Lab MMLU-Pro](https://huggingface.co/datasets/TIGER-Lab/MMLU-Pro)
-- [ByteDance-BandAI ReportBench](https://huggingface.co/datasets/ByteDance-BandAI/ReportBench)
-- [UC Berkeley RDI — how benchmarks break](https://rdi.berkeley.edu/blog/trustworthy-benchmarks-cont/) (why we picked ground-truth-scored benchmarks, not LLM-judged ones)
+- `daas/fidelity/` — 3-measurement template + Wilson/Newcombe verdict
+- `docs/FIDELITY_SYSTEM.md` — full fidelity system design
+- `docs/BFCL_FALSIFICATION_FINDINGS.md` — what we learned the hard way
