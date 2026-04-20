@@ -416,6 +416,16 @@ export const architectSessions = defineTable({
   rationale: v.optional(v.string()),
   /** Status: "intake" | "classifying" | "ready" | "accepted" | "dismissed" */
   status: v.string(),
+  /** First 16 chars of sha256(owner_token) — minimal ownership check.
+   *  Owner tokens are generated client-side and stored in localStorage;
+   *  the hash is what the Builder page checks when deciding whether
+   *  to show "owner" controls vs "guest view". Anyone with the slug
+   *  can READ the session (share-link semantics); only the owner
+   *  token holder can append turns / re-classify. */
+  ownerHashPrefix: v.optional(v.string()),
+  /** Cumulative USD spent by this session on classifier / replay calls.
+   *  Enforced cap in architectClassifier when > SESSION_COST_CAP_USD. */
+  totalCostUsd: v.optional(v.number()),
   createdAt: v.number(),
   updatedAt: v.number(),
 })

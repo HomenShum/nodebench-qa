@@ -118,6 +118,19 @@ function shortSlug(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
+function generateOwnerToken(): string {
+  if (typeof window === "undefined") return "";
+  const buf = new Uint8Array(24);
+  window.crypto.getRandomValues(buf);
+  return Array.from(buf)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function ownerTokenStorageKey(slug: string): string {
+  return `attrition:owner:${slug}`;
+}
+
 export function Architect() {
   const [prompt, setPrompt] = useState("");
   const [slug, setSlug] = useState<string | null>(null);
@@ -125,6 +138,7 @@ export function Architect() {
   const navigate = useNavigate();
 
   const createSession = useMutation(api.domains.daas.architect.createSession);
+  const claimOwnership = useMutation(api.domains.daas.ownership.claimOwnership);
   const appendTurn = useMutation(api.domains.daas.architect.appendTurn);
   const classify = useAction(api.domains.daas.architectClassifier.classify);
   const reclassify = useAction(
@@ -138,6 +152,10 @@ export function Architect() {
     api.domains.daas.architect.getSessionBySlug,
     slug ? { sessionSlug: slug } : "skip",
   );
+  const costStatus = useQuery(
+    api.domains.daas.costCap.getSessionCostStatus,
+    slug ? { sessionSlug: slug } : "skip",
+  );
 
   async function submit() {
     if (!prompt.trim() || submitting) return;
@@ -145,6 +163,18 @@ export function Architect() {
     const s = shortSlug();
     try {
       await createSession({ sessionSlug: s, prompt: prompt.trim() });
+      // Claim ownership: generate a token, store it locally, tell the
+      // server the hash. This session is now owned by the holder of
+      // the localStorage token.
+      const token = generateOwnerToken();
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(ownerTokenStorageKey(s), token);
+      }
+      try {
+        await claimOwnership({ sessionSlug: s, ownerToken: token });
+      } catch {
+        // Ownership claim is best-effort — classification still proceeds
+      }
       setSlug(s);
       // Kick off classifier (doesn't await the full run — it writes back
       // to the session via mutations and the query below re-renders).
@@ -483,18 +513,41 @@ export function Architect() {
 
             <div
               style={{
-                fontSize: 11,
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                color: "rgba(255,255,255,0.5)",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
                 marginBottom: 10,
               }}
             >
-              {session?.status === "ready" || session?.status === "accepted"
-                ? "Triage complete"
-                : session?.status === "classifying"
-                  ? "Classifying…"
-                  : "Understanding…"}
+              <div
+                style={{
+                  fontSize: 11,
+                  letterSpacing: "0.2em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.5)",
+                }}
+              >
+                {session?.status === "ready" || session?.status === "accepted"
+                  ? "Triage complete"
+                  : session?.status === "classifying"
+                    ? "Classifying…"
+                    : "Understanding…"}
+              </div>
+              {costStatus ? (
+                <div
+                  style={{
+                    fontSize: 10,
+                    color:
+                      costStatus.remainingUsd < 0.1
+                        ? "#f59e0b"
+                        : "rgba(255,255,255,0.45)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                  title={`$${costStatus.currentUsd.toFixed(4)} of $${costStatus.capUsd.toFixed(2)} session cap`}
+                >
+                  ${costStatus.currentUsd.toFixed(4)} / ${costStatus.capUsd.toFixed(2)}
+                </div>
+              ) : null}
             </div>
 
             <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px" }}>

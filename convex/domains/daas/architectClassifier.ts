@@ -106,6 +106,31 @@ export const classify = action({
     prompt: v.string(),
   },
   handler: async (ctx, args): Promise<{ ok: boolean; reason?: string }> => {
+    // Per-session cost cap — refuse to burn more $ on a session that's
+    // already hit the cap. This protects against runaway refine loops.
+    const costStatus = await ctx.runQuery(
+      api.domains.daas.costCap.getSessionCostStatus,
+      { sessionSlug: args.sessionSlug },
+    );
+    if (!costStatus.allowed) {
+      await ctx.runMutation(api.domains.daas.architect.commitClassification, {
+        sessionSlug: args.sessionSlug,
+        checklistJson: JSON.stringify([
+          {
+            step: "problem_type_identified",
+            status: "missing",
+            detail: `session cost cap reached ($${costStatus.currentUsd.toFixed(4)} of $${costStatus.capUsd.toFixed(2)})`,
+          },
+        ]),
+        classificationJson: "{}",
+        runtimeLane: "keep_big_model",
+        worldModelLane: "lite",
+        intentLane: "unknown",
+        rationale: `Session cost cap reached: $${costStatus.currentUsd.toFixed(4)} of $${costStatus.capUsd.toFixed(2)}. Start a new session to continue.`,
+      });
+      return { ok: false, reason: "cost_capped" };
+    }
+
     // Rate-limit check — bucket by the first 6 chars of sessionSlug so
     // one anonymous client can't spam classifier calls. This is a best-
     // effort protection until we ship real auth.
@@ -240,6 +265,27 @@ export const classify = action({
           "Classifier returned a non-JSON response. Please rephrase or provide more detail.",
       });
       return { ok: false, reason: "unparseable" };
+    }
+
+    // Cost accounting — estimate using Flash Lite pricing since that's
+    // the classifier model. Accumulates into architectSessions.totalCostUsd.
+    try {
+      const usage = (await Promise.resolve(parsed as unknown)) as Record<string, unknown>;
+      // Reach into the raw payload for usage metadata if present
+      // (parsed is the model's JSON body, not the response envelope;
+      // we approximate from prompt length).
+      const promptChars = args.prompt.length;
+      const approxInTokens = Math.max(1, Math.ceil(promptChars / 4));
+      const approxOutTokens = Math.max(256, cleaned.length / 4);
+      const approxCost =
+        approxInTokens * FLASH_LITE_IN_USD + approxOutTokens * FLASH_LITE_OUT_USD;
+      await ctx.runMutation(
+        api.domains.daas.costCap.accumulateSessionCost,
+        { sessionSlug: args.sessionSlug, additionalUsd: approxCost },
+      );
+      void usage; // silence unused
+    } catch {
+      // Cost accounting is best-effort — never fail the classify for it.
     }
 
     // Defensive normalization — enforce bounded enums on the server side too.

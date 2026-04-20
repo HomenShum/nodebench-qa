@@ -16,9 +16,12 @@ import type * as domains_daas_architectClassifier from "../domains/daas/architec
 import type * as domains_daas_architectRate from "../domains/daas/architectRate.js";
 import type * as domains_daas_benchmarks from "../domains/daas/benchmarks.js";
 import type * as domains_daas_compileDown from "../domains/daas/compileDown.js";
+import type * as domains_daas_costCap from "../domains/daas/costCap.js";
 import type * as domains_daas_fidelity from "../domains/daas/fidelity.js";
+import type * as domains_daas_health from "../domains/daas/health.js";
 import type * as domains_daas_http from "../domains/daas/http.js";
 import type * as domains_daas_mutations from "../domains/daas/mutations.js";
+import type * as domains_daas_ownership from "../domains/daas/ownership.js";
 import type * as domains_daas_queries from "../domains/daas/queries.js";
 import type * as domains_daas_radar from "../domains/daas/radar.js";
 import type * as domains_daas_radarHnIngest from "../domains/daas/radarHnIngest.js";
@@ -41,9 +44,12 @@ declare const fullApi: ApiFromModules<{
   "domains/daas/architectRate": typeof domains_daas_architectRate;
   "domains/daas/benchmarks": typeof domains_daas_benchmarks;
   "domains/daas/compileDown": typeof domains_daas_compileDown;
+  "domains/daas/costCap": typeof domains_daas_costCap;
   "domains/daas/fidelity": typeof domains_daas_fidelity;
+  "domains/daas/health": typeof domains_daas_health;
   "domains/daas/http": typeof domains_daas_http;
   "domains/daas/mutations": typeof domains_daas_mutations;
+  "domains/daas/ownership": typeof domains_daas_ownership;
   "domains/daas/queries": typeof domains_daas_queries;
   "domains/daas/radar": typeof domains_daas_radar;
   "domains/daas/radarHnIngest": typeof domains_daas_radarHnIngest;

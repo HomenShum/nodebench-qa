@@ -6,6 +6,7 @@
 
 import { httpRouter } from "convex/server";
 import { ingestHttp as daasIngestHttp } from "./domains/daas/http";
+import { healthHandler } from "./domains/daas/health";
 
 const http = httpRouter();
 
@@ -20,5 +21,10 @@ http.route({
   method: "OPTIONS",
   handler: daasIngestHttp,
 });
+
+// Liveness + shallow ingest-health probe. Used by external monitoring
+// and by the deploy verifier.
+http.route({ path: "/health", method: "GET", handler: healthHandler });
+http.route({ path: "/health", method: "OPTIONS", handler: healthHandler });
 
 export default http;
