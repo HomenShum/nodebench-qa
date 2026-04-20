@@ -1,0 +1,22 @@
+# Policies enforced at every action emission.
+# severity: blocking | warning | informational
+# boundary: act_on | interpret_first
+
+- id: policy_base_001
+  trigger: on_tool_emit
+  rule: Every tool call must carry a verifiable source reference.
+  severity: blocking
+  boundary: act_on
+
+- id: policy_base_002
+  trigger: on_output_emit
+  rule: "If output contains a trend claim, it must be labeled 'interpret_first'."
+  severity: warning
+  boundary: interpret_first
+
+- id: policy_base_003
+  trigger: on_session_end
+  rule: "Record an outcome row for every session (success | partial | fail) with evidence refs."
+  severity: blocking
+  boundary: act_on
+

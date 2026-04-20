@@ -22,6 +22,7 @@ from pathlib import Path
 from typing import Any
 
 from daas.compile_down import emit
+from daas.compile_down.world_model import emit_world_model, WORLD_MODEL_LANES
 from daas.schemas import CanonicalTrace, WorkflowSpec
 
 CONVEX_PROD_URL = "https://joyous-walrus-428.convex.cloud"
@@ -127,6 +128,12 @@ def main(argv: list[str] | None = None) -> int:
         choices=["simple_chain", "tool_first_chain"],
         default="tool_first_chain",
     )
+    p.add_argument(
+        "--world-model-lane",
+        choices=list(WORLD_MODEL_LANES) + ["none"],
+        default="none",
+        help="Also emit a world-model substrate bundle; lite or full",
+    )
     p.add_argument("--target-model", default="gemini-3.1-flash-lite-preview")
     p.add_argument("--record", action="store_true")
     p.add_argument("--convex-url", default=CONVEX_PROD_URL)
@@ -151,6 +158,20 @@ def main(argv: list[str] | None = None) -> int:
     bundle_path.write_text(bundle.to_json(), encoding="utf-8")
     print(f"Emitted {len(bundle.files)} files ({bundle.total_bytes} bytes) -> {out_dir}")
 
+    # World-model emission (optional second bundle)
+    wm_bundle = None
+    if args.world_model_lane != "none":
+        wm_bundle = emit_world_model(args.world_model_lane, spec)
+        wm_out = args.output_dir / args.session_slug / wm_bundle.runtime_lane
+        wm_out.mkdir(parents=True, exist_ok=True)
+        for f in wm_bundle.files:
+            (wm_out / f.path).parent.mkdir(parents=True, exist_ok=True)
+            (wm_out / f.path).write_text(f.content, encoding="utf-8")
+        (wm_out / "_bundle.json").write_text(wm_bundle.to_json(), encoding="utf-8")
+        print(
+            f"Emitted {len(wm_bundle.files)} world-model files ({wm_bundle.total_bytes} bytes) -> {wm_out}"
+        )
+
     if args.record:
         try:
             from convex import ConvexClient  # type: ignore
@@ -173,6 +194,21 @@ def main(argv: list[str] | None = None) -> int:
             f"Recorded artifact for session={args.session_slug} lane={args.runtime_lane} "
             f"({bundle.total_bytes} bytes)"
         )
+        if wm_bundle is not None:
+            wm_kwargs = {
+                "sessionSlug": args.session_slug,
+                "runtimeLane": wm_bundle.runtime_lane,
+                "targetModel": args.target_model,
+                "artifactBundleJson": wm_bundle.to_json(),
+                "filesCount": len(wm_bundle.files),
+                "totalBytes": wm_bundle.total_bytes,
+                "emitterVersion": EMITTER_VERSION,
+            }
+            c.mutation("domains/daas/compileDown:upsertArtifact", wm_kwargs)
+            print(
+                f"Recorded world-model artifact lane={wm_bundle.runtime_lane} "
+                f"({wm_bundle.total_bytes} bytes)"
+            )
 
     return 0
 

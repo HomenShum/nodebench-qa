@@ -301,7 +301,7 @@ function LabelRow({ label, value }: { label: string; value: string }) {
 function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
   const { slug } = useParams<{ slug: string }>();
   const artifact = useQuery(
-    api.domains.daas.compileDown.getArtifactForSession,
+    api.domains.daas.compileDown.getScaffoldArtifact,
     slug ? { sessionSlug: slug } : "skip",
   );
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -638,16 +638,125 @@ function BenchmarkVerdictRow({ benchmarkId }: { benchmarkId: string }) {
 }
 
 function WorldModelTab({ worldModelLane }: { worldModelLane: string }) {
+  const { slug } = useParams<{ slug: string }>();
+  const artifact = useQuery(
+    api.domains.daas.compileDown.getWorldModelArtifact,
+    slug ? { sessionSlug: slug } : "skip",
+  );
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+
+  // Real artifact -> render live file tree
+  if (artifact) {
+    let bundle: { files?: Array<{ path: string; content: string; language: string }> } = {};
+    try {
+      bundle = JSON.parse(artifact.artifactBundleJson);
+    } catch {
+      bundle = {};
+    }
+    const files = bundle.files ?? [];
+    const active = selectedFile ?? files[0]?.path ?? null;
+    const activeFile = files.find((f) => f.path === active);
+    const isFull = artifact.runtimeLane === "world_model_full";
+    return (
+      <div>
+        <h3 style={{ fontSize: 14, fontWeight: 500, margin: "0 0 4px" }}>
+          World model — {isFull ? "full" : "lite"} (generated)
+        </h3>
+        <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: "0 0 20px" }}>
+          {artifact.filesCount} files · {artifact.totalBytes} bytes · emitter{" "}
+          <code style={{ fontSize: 11 }}>{artifact.emitterVersion}</code>
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
+          <ul
+            style={{
+              listStyle: "none",
+              margin: 0,
+              padding: 0,
+              background: "rgba(0,0,0,0.3)",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.06)",
+              overflow: "auto",
+            }}
+          >
+            {files.map((f) => (
+              <li key={f.path}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedFile(f.path)}
+                  style={{
+                    width: "100%",
+                    textAlign: "left",
+                    padding: "8px 12px",
+                    background: active === f.path ? "rgba(6,182,212,0.12)" : "transparent",
+                    border: "none",
+                    borderLeft: active === f.path ? "2px solid #06b6d4" : "2px solid transparent",
+                    color: active === f.path ? "#fff" : "rgba(255,255,255,0.75)",
+                    fontSize: 12,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    cursor: "pointer",
+                  }}
+                >
+                  {f.path}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <pre
+            style={{
+              margin: 0,
+              padding: 14,
+              background: "rgba(0,0,0,0.4)",
+              borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.06)",
+              fontSize: 12,
+              lineHeight: 1.55,
+              color: "rgba(255,255,255,0.88)",
+              fontFamily: "'JetBrains Mono', monospace",
+              overflow: "auto",
+              whiteSpace: "pre-wrap",
+              minHeight: 360,
+              maxHeight: 480,
+            }}
+          >
+            <code>{activeFile?.content ?? "(select a file)"}</code>
+          </pre>
+        </div>
+        <div
+          style={{
+            marginTop: 16,
+            padding: 12,
+            background: "rgba(217,119,87,0.08)",
+            border: "1px solid rgba(217,119,87,0.3)",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "rgba(255,255,255,0.85)",
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: "#d97757" }}>Interpretive boundary lives in{" "}
+          <code style={{ fontSize: 11 }}>interpretive_boundary.md</code>.</strong>{" "}
+          Every field carries an <em>act_on</em> or <em>interpret_first</em> label.
+          Prevents the quiet-failure mode where plausible interpretations
+          masquerade as settled operational truth.
+        </div>
+      </div>
+    );
+  }
+
+  // Plan fallback (no artifact yet)
   const panels = worldModelLane === "full" ? FULL_WORLD_MODEL : LITE_WORLD_MODEL;
   return (
     <div>
       <h3 style={{ fontSize: 14, fontWeight: 500, margin: "0 0 4px" }}>
-        World model — {worldModelLane === "full" ? "full" : "lite"}
+        World model — {worldModelLane === "full" ? "full" : "lite"} (plan)
       </h3>
       <p style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", margin: "0 0 20px" }}>
-        {worldModelLane === "full"
-          ? "Full substrate: entities + state + events + policies + actions + outcomes + evidence + interpretive boundary labels."
-          : "Lite substrate: entities + schema only. No live state or outcome loop."}
+        Nothing generated yet. Run{" "}
+        <code style={{ fontSize: 11 }}>
+          python -m daas.compile_down.cli --session-slug {slug ?? "<slug>"} --world-model-lane{" "}
+          {worldModelLane} --trace ... --record
+        </code>{" "}
+        to emit real world-model files.
       </p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 10 }}>

@@ -1,0 +1,5 @@
+{
+  "source_trace_id": "floorai_attrition_cooler_1776648428",
+  "refs": [],
+  "_note": "Populated at runtime. Every factual claim in the agent's output must reference an id here; entries carry {id, source_url_or_handle, retrieved_at, boundary}."
+}

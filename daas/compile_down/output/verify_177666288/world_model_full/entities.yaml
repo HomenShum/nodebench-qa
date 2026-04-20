@@ -1,0 +1,28 @@
+# Canonical entities for this workflow's world model.
+
+- name: agent_session
+  purpose: One orchestrator run; groups all tool calls + outputs.
+  fields:
+    - name: session_id
+      type: string
+      boundary: act_on
+    - name: started_at
+      type: datetime
+      boundary: act_on
+    - name: status
+      type: enum[running, done, failed]
+      boundary: act_on
+
+- name: user_query
+  purpose: "The user's input that triggered this workflow."
+  fields:
+    - name: query_id
+      type: string
+      boundary: act_on
+    - name: text
+      type: string
+      boundary: act_on
+    - name: intent
+      type: string
+      boundary: interpret_first
+

@@ -96,6 +96,51 @@ export const getArtifactForSession = query({
 });
 
 /**
+ * World-model artifact specifically — queried by the Builder World Model
+ * tab. Looks up ``world_model_lite`` or ``world_model_full`` (whichever
+ * was last emitted for this session).
+ */
+export const getWorldModelArtifact = query({
+  args: { sessionSlug: v.string() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("daasGeneratedArtifacts")
+      .withIndex("by_sessionSlug", (q) => q.eq("sessionSlug", args.sessionSlug))
+      .order("desc")
+      .take(10);
+    for (const r of rows) {
+      if (r.runtimeLane === "world_model_lite" || r.runtimeLane === "world_model_full") {
+        return r;
+      }
+    }
+    return null;
+  },
+});
+
+/**
+ * Runtime-scaffold artifact specifically — the Builder Scaffold tab
+ * needs this rather than "most recent of any kind" so world-model
+ * emissions don't shadow the scaffold.
+ */
+export const getScaffoldArtifact = query({
+  args: { sessionSlug: v.string() },
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("daasGeneratedArtifacts")
+      .withIndex("by_sessionSlug", (q) => q.eq("sessionSlug", args.sessionSlug))
+      .order("desc")
+      .take(10);
+    for (const r of rows) {
+      if (r.runtimeLane === "world_model_lite" || r.runtimeLane === "world_model_full") {
+        continue;
+      }
+      return r;
+    }
+    return null;
+  },
+});
+
+/**
  * All artifacts for a session — useful for comparing "tool_first_chain"
  * vs "orchestrator_worker" emissions of the same workflow.
  */
