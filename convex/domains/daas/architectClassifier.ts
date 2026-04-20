@@ -18,6 +18,11 @@ import { api } from "../../_generated/api";
 const CLASSIFIER_MODEL = "gemini-3.1-flash-lite-preview";
 const CLASSIFIER_TIMEOUT_MS = 25_000;
 
+// Token-cost basis for Flash Lite — informational only; classifier never
+// gates output based on cost.
+const FLASH_LITE_IN_USD = 0.10 / 1_000_000;
+const FLASH_LITE_OUT_USD = 0.40 / 1_000_000;
+
 const SYSTEM_PROMPT = `You are attrition.sh's architecture triage classifier.
 
 Given a user's problem description, classify it onto three bounded axes:
@@ -65,12 +70,42 @@ Be strict. If the user's prompt is too vague to confidently pick a lane, set
 intent_lane to "unknown" and mark the classifier's confidence in the rationale.
 Never claim to have detected something you didn't.`;
 
+/**
+ * Re-classify using the full accumulated transcript. Called after a
+ * follow-up turn so the verdict reflects the cumulative intake.
+ */
+export const reclassifyFromTranscript = action({
+  args: { sessionSlug: v.string() },
+  handler: async (ctx, args): Promise<{ ok: boolean; reason?: string }> => {
+    const session = await ctx.runQuery(api.domains.daas.architect.getSessionBySlug, {
+      sessionSlug: args.sessionSlug,
+    });
+    if (!session) {
+      return { ok: false, reason: "session_not_found" };
+    }
+    let transcript: Array<{ role: string; content: string }> = [];
+    try {
+      transcript = JSON.parse(session.transcriptJson);
+    } catch {
+      transcript = [];
+    }
+    const userTurns = transcript
+      .filter((t) => t.role === "user")
+      .map((t) => t.content);
+    const prompt = userTurns.join("\n\n---\n\n") || session.prompt;
+    return await ctx.runAction(api.domains.daas.architectClassifier.classify, {
+      sessionSlug: args.sessionSlug,
+      prompt,
+    });
+  },
+});
+
 export const classify = action({
   args: {
     sessionSlug: v.string(),
     prompt: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ ok: boolean; reason?: string }> => {
     await ctx.runMutation(api.domains.daas.architect.markClassifying, {
       sessionSlug: args.sessionSlug,
     });

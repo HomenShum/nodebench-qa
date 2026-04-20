@@ -9,11 +9,13 @@
  * "classifying", "recommending" until the user explicitly accepts.
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useAction, useQuery } from "convex/react";
 import { api } from "../_convex/api";
 import { Nav } from "../components/Nav";
+
+type TranscriptTurn = { ts: number; role: "user" | "assistant"; content: string };
 
 const STARTER_CHIPS = [
   "Make my expensive agent cheaper",
@@ -85,8 +87,14 @@ export function Architect() {
   const navigate = useNavigate();
 
   const createSession = useMutation(api.domains.daas.architect.createSession);
+  const appendTurn = useMutation(api.domains.daas.architect.appendTurn);
   const classify = useAction(api.domains.daas.architectClassifier.classify);
+  const reclassify = useAction(
+    api.domains.daas.architectClassifier.reclassifyFromTranscript,
+  );
   const markAccepted = useMutation(api.domains.daas.architect.markAccepted);
+  const [followUp, setFollowUp] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
 
   const session = useQuery(
     api.domains.daas.architect.getSessionBySlug,
@@ -117,7 +125,44 @@ export function Architect() {
   function reset() {
     setSlug(null);
     setPrompt("");
+    setFollowUp("");
   }
+
+  async function submitFollowUp() {
+    if (!slug || !followUp.trim() || isRefining) return;
+    setIsRefining(true);
+    try {
+      await appendTurn({ sessionSlug: slug, role: "user", content: followUp.trim() });
+      // Fire-and-forget: classifier re-runs and overwrites verdict
+      void reclassify({ sessionSlug: slug });
+      setFollowUp("");
+    } finally {
+      setIsRefining(false);
+    }
+  }
+
+  // Parse transcript for multi-turn display
+  const transcript = useMemo<TranscriptTurn[]>(() => {
+    if (!session?.transcriptJson) return [];
+    try {
+      return JSON.parse(session.transcriptJson);
+    } catch {
+      return [];
+    }
+  }, [session?.transcriptJson]);
+
+  // Parse classification for missing_inputs surfacing
+  const classification = useMemo<{
+    missing_inputs?: string[];
+    eval_plan?: string;
+  } | null>(() => {
+    if (!session?.classificationJson) return null;
+    try {
+      return JSON.parse(session.classificationJson);
+    } catch {
+      return null;
+    }
+  }, [session?.classificationJson]);
 
   // Merge expected steps with backend checklist (backend fills what it completed)
   const mergedChecklist = useMemo<ChecklistStep[]>(() => {
@@ -130,6 +175,26 @@ export function Architect() {
       return EXPECTED_STEPS;
     }
   }, [session?.checklistJson]);
+
+  // Staggered reveal — when the backend commits the checklist, animate
+  // items in one-by-one to make it feel streamed rather than batch-flipped.
+  const [revealCount, setRevealCount] = useState(0);
+  const hasChecklist = Boolean(session?.checklistJson);
+  const totalSteps = mergedChecklist.length;
+  useEffect(() => {
+    if (!hasChecklist) {
+      setRevealCount(0);
+      return;
+    }
+    setRevealCount(0);
+    let i = 0;
+    const handle = setInterval(() => {
+      i += 1;
+      setRevealCount(i);
+      if (i >= totalSteps) clearInterval(handle);
+    }, 110);
+    return () => clearInterval(handle);
+  }, [hasChecklist, totalSteps, session?.sessionSlug]);
 
   return (
     <div
@@ -250,21 +315,55 @@ export function Architect() {
           </section>
         ) : (
           <section>
+            {/* Multi-turn transcript */}
             <div
               style={{
-                padding: 16,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
-                borderRadius: 10,
                 marginBottom: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
               }}
             >
-              <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>
-                Your prompt
-              </div>
-              <p style={{ margin: 0, fontSize: 14, lineHeight: 1.5, color: "rgba(255,255,255,0.85)" }}>
-                {session?.prompt}
-              </p>
+              {transcript.map((turn, i) => (
+                <div
+                  key={i}
+                  style={{
+                    padding: 12,
+                    background:
+                      turn.role === "user"
+                        ? "rgba(217,119,87,0.06)"
+                        : "rgba(255,255,255,0.02)",
+                    border:
+                      turn.role === "user"
+                        ? "1px solid rgba(217,119,87,0.25)"
+                        : "1px solid rgba(255,255,255,0.06)",
+                    borderRadius: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 10,
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      color: turn.role === "user" ? "#d97757" : "rgba(255,255,255,0.5)",
+                      marginBottom: 4,
+                    }}
+                  >
+                    {turn.role}
+                  </div>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      lineHeight: 1.5,
+                      color: "rgba(255,255,255,0.85)",
+                      whiteSpace: "pre-wrap",
+                    }}
+                  >
+                    {turn.content}
+                  </p>
+                </div>
+              ))}
             </div>
 
             <div
@@ -299,6 +398,8 @@ export function Architect() {
                         : step.status === "missing"
                           ? "rgba(245,158,11,0.85)"
                           : "rgba(255,255,255,0.35)",
+                    opacity: hasChecklist && i >= revealCount ? 0.15 : 1,
+                    transition: "opacity 0.25s ease-in",
                     animationDelay: `${i * 60}ms`,
                   }}
                 >
@@ -388,7 +489,7 @@ export function Architect() {
                       background: "rgba(255,255,255,0.02)",
                       border: "1px solid rgba(255,255,255,0.06)",
                       borderRadius: 10,
-                      marginBottom: 24,
+                      marginBottom: 16,
                     }}
                   >
                     <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 6 }}>
@@ -399,6 +500,132 @@ export function Architect() {
                     </p>
                   </div>
                 ) : null}
+
+                {classification?.missing_inputs && classification.missing_inputs.length > 0 ? (
+                  <div
+                    style={{
+                      padding: 16,
+                      background: "rgba(245,158,11,0.06)",
+                      border: "1px solid rgba(245,158,11,0.3)",
+                      borderRadius: 10,
+                      marginBottom: 16,
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: 11,
+                        letterSpacing: "0.15em",
+                        textTransform: "uppercase",
+                        color: "#f59e0b",
+                        marginBottom: 8,
+                      }}
+                    >
+                      Missing inputs
+                    </div>
+                    <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, lineHeight: 1.55, color: "rgba(255,255,255,0.85)" }}>
+                      {classification.missing_inputs.map((item, i) => (
+                        <li key={i} style={{ marginBottom: 4 }}>{item}</li>
+                      ))}
+                    </ul>
+                    <p style={{ margin: "10px 0 0", fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
+                      Paste them into the refine box below and the classifier re-runs with the added context.
+                    </p>
+                  </div>
+                ) : null}
+
+                {classification?.eval_plan ? (
+                  <div
+                    style={{
+                      padding: 12,
+                      background: "rgba(139,92,246,0.06)",
+                      border: "1px solid rgba(139,92,246,0.3)",
+                      borderRadius: 8,
+                      marginBottom: 16,
+                      fontSize: 12,
+                      color: "rgba(255,255,255,0.8)",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <strong style={{ color: "#8b5cf6" }}>Eval plan: </strong>
+                    {classification.eval_plan}
+                  </div>
+                ) : null}
+
+                {/* Refine / follow-up box */}
+                <div
+                  style={{
+                    padding: 14,
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 10,
+                    marginBottom: 20,
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 11,
+                      letterSpacing: "0.15em",
+                      textTransform: "uppercase",
+                      color: "rgba(255,255,255,0.55)",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Refine
+                  </div>
+                  <textarea
+                    value={followUp}
+                    onChange={(e) => setFollowUp(e.target.value)}
+                    rows={3}
+                    placeholder="Add context, correct an assumption, or answer the missing-inputs list above…"
+                    style={{
+                      width: "100%",
+                      padding: 10,
+                      background: "rgba(0,0,0,0.25)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 6,
+                      color: "rgba(255,255,255,0.92)",
+                      fontSize: 13,
+                      fontFamily: "inherit",
+                      resize: "vertical",
+                      lineHeight: 1.5,
+                    }}
+                    onKeyDown={(e) => {
+                      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                        e.preventDefault();
+                        void submitFollowUp();
+                      }
+                    }}
+                  />
+                  <div
+                    style={{
+                      marginTop: 8,
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
+                      {isRefining ? "Re-classifying…" : "Cmd/Ctrl + Enter to submit"}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={!followUp.trim() || isRefining}
+                      onClick={submitFollowUp}
+                      style={{
+                        padding: "6px 14px",
+                        background: followUp.trim() ? "rgba(217,119,87,0.2)" : "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(217,119,87,0.35)",
+                        borderRadius: 6,
+                        color: followUp.trim() ? "#fff" : "rgba(255,255,255,0.4)",
+                        fontSize: 12,
+                        fontWeight: 500,
+                        cursor: followUp.trim() ? "pointer" : "not-allowed",
+                      }}
+                    >
+                      Re-classify
+                    </button>
+                  </div>
+                </div>
 
                 <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
                   <button
