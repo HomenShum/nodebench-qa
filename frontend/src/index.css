@@ -9,6 +9,8 @@
   --accent-hover: #e08a6a;
   --border: rgba(255, 255, 255, 0.06);
   --border-hover: rgba(255, 255, 255, 0.12);
+
+  color-scheme: dark;
 }
 
 * {
@@ -36,4 +38,195 @@ body {
 
 code, pre, .mono {
   font-family: "JetBrains Mono", "Fira Code", monospace;
+}
+
+/* ===========================================================================
+ * Cycle 17 polish: responsive + a11y + keyboard + motion + skeletons
+ * =========================================================================== */
+
+/* Visible focus rings on every interactive element. Browsers default to
+ * invisible focus when :focus-visible is supported; we explicitly opt in
+ * to ensure keyboard users always see where they are. */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Never show ugly outlines on mouse click — only on keyboard focus */
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Disabled state — unambiguous + keyboard-accessible */
+:where(button, input, select, textarea):disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* Selection color — attrition accent */
+::selection {
+  background: color-mix(in srgb, var(--accent) 35%, transparent);
+  color: var(--text-primary);
+}
+
+/* Scrollbar sizing (webkit only — Firefox uses its own) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Skip-to-content target — jumps past nav for keyboard / SR users. Pages
+ * that want this add <a class="skip-link" href="#main">Skip to content</a>
+ * and a matching id="main" landmark. */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 8px;
+  padding: 8px 12px;
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  z-index: 9999;
+  transition: top 0.15s;
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+/* ===========================================================================
+ * Loading skeletons — shimmer animation that respects reduced-motion
+ * =========================================================================== */
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ===========================================================================
+ * Keyboard shortcut visual — renders a <kbd>
+ * =========================================================================== */
+
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.3;
+  letter-spacing: 0.05em;
+}
+
+/* ===========================================================================
+ * Responsive breakpoints
+ * =========================================================================== */
+
+/* Mobile <= 720px: collapse the Builder split view to a single column */
+@media (max-width: 720px) {
+  body {
+    max-width: 100%;
+  }
+
+  main {
+    padding: 24px 16px !important;
+  }
+
+  /* The Builder uses a grid-template-columns definition inline; media
+   * override only affects elements we tag with data-builder-split. */
+  [data-builder-split] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* The Builder left-rail loses its sticky position on mobile */
+  [data-builder-rail] {
+    position: static !important;
+    max-height: none !important;
+  }
+
+  /* Scaffold file tree splits top/bottom on mobile instead of side-by-side */
+  [data-file-tree] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Large headings shrink a bit */
+  h1 {
+    font-size: 24px !important;
+  }
+
+  /* Radar filter bar collapses to a tight vertical stack */
+  [data-radar-filters] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+
+/* Very small screens <= 420px: even tighter padding */
+@media (max-width: 420px) {
+  main {
+    padding: 16px 12px !important;
+  }
+}
+
+/* ===========================================================================
+ * Reduced-motion preference
+ * =========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .skeleton {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+/* ===========================================================================
+ * Print stylesheet — Builder's file previews are the print target
+ * =========================================================================== */
+
+@media print {
+  body {
+    max-width: none;
+    background: white;
+    color: black;
+  }
+  nav, [data-builder-rail], button, .skip-link {
+    display: none !important;
+  }
+  pre, code {
+    color: black;
+    background: #f5f5f5;
+    page-break-inside: avoid;
+  }
 }

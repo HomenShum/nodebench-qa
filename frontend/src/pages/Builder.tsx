@@ -123,7 +123,11 @@ export function Builder() {
       }}
     >
       <Nav />
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
       <div
+        data-builder-split
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(320px, 420px) 1fr",
@@ -135,6 +139,7 @@ export function Builder() {
       >
         {/* LEFT — chat / intake recap / clarification input */}
         <aside
+          data-builder-rail
           style={{
             background: "rgba(255,255,255,0.02)",
             border: "1px solid rgba(255,255,255,0.06)",
@@ -320,6 +325,8 @@ export function Builder() {
 
         {/* RIGHT — tabbed workspace */}
         <section
+          id="main"
+          aria-label="Generated workspace"
           style={{
             background: "rgba(255,255,255,0.02)",
             border: "1px solid rgba(255,255,255,0.06)",
@@ -553,7 +560,7 @@ function ScaffoldTab({ runtimeLane }: { runtimeLane: string }) {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
+        <div data-file-tree style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
           <ul
             style={{
               listStyle: "none",
@@ -934,7 +941,7 @@ function WorldModelTab({ worldModelLane }: { worldModelLane: string }) {
           {artifact.filesCount} files · {artifact.totalBytes} bytes · emitter{" "}
           <code style={{ fontSize: 11 }}>{artifact.emitterVersion}</code>
         </p>
-        <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
+        <div data-file-tree style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 12, minHeight: 360 }}>
           <ul
             style={{
               listStyle: "none",

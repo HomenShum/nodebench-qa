@@ -94,7 +94,10 @@ export function Radar() {
       }}
     >
       <Nav />
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 32px 80px" }}>
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+      <main id="main" style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 32px 80px" }}>
         <header style={{ marginBottom: 24 }}>
           <div
             style={{
@@ -203,7 +206,10 @@ export function Radar() {
         ) : null}
 
         {/* Filter bar: category pills + stack dropdown + delta toggle + search */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+        <div
+          data-radar-filters
+          style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}
+        >
           <input
             type="search"
             value={search}
@@ -299,7 +305,18 @@ export function Radar() {
         </div>
 
         {filtered === undefined ? (
-          <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 13 }}>Loading…</div>
+          <div style={{ display: "grid", gap: 12 }} aria-busy="true" aria-label="Loading Radar items">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="skeleton"
+                style={{
+                  height: 96,
+                  borderRadius: 10,
+                }}
+              />
+            ))}
+          </div>
         ) : filtered.length === 0 ? (
           <div
             style={{

@@ -275,7 +275,10 @@ export function Architect() {
       }}
     >
       <Nav />
-      <main style={{ maxWidth: 960, margin: "0 auto", padding: "40px 32px 80px" }}>
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+      <main id="main" style={{ maxWidth: 960, margin: "0 auto", padding: "40px 32px 80px" }}>
         <header style={{ marginBottom: 32 }}>
           <div
             style={{
@@ -308,29 +311,10 @@ export function Architect() {
 
         {!slug ? (
           <section>
-            <textarea
+            <PromptTextarea
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g. I need a retail inventory decision agent that reads live store data, applies pricing and restock policy, and writes actions back to our ERP..."
-              rows={6}
-              style={{
-                width: "100%",
-                padding: 16,
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 10,
-                color: "rgba(255,255,255,0.92)",
-                fontSize: 15,
-                fontFamily: "inherit",
-                resize: "vertical",
-                lineHeight: 1.5,
-              }}
-              onKeyDown={(e) => {
-                if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-                  e.preventDefault();
-                  void submit();
-                }
-              }}
+              onChange={setPrompt}
+              onSubmit={() => void submit()}
             />
             <div
               style={{
@@ -858,6 +842,85 @@ export function Architect() {
           </section>
         )}
       </main>
+    </div>
+  );
+}
+
+function PromptTextarea({
+  value,
+  onChange,
+  onSubmit,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+
+  // Global "/" shortcut — focus the intake box from anywhere on the page.
+  useEffect(() => {
+    function handler(e: KeyboardEvent) {
+      if (e.key !== "/") return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      e.preventDefault();
+      ref.current?.focus();
+    }
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  return (
+    <div style={{ position: "relative" }}>
+      <textarea
+        ref={ref}
+        aria-label="Describe your workflow"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="e.g. I need a retail inventory decision agent that reads live store data, applies pricing and restock policy, and writes actions back to our ERP..."
+        rows={6}
+        style={{
+          width: "100%",
+          padding: 16,
+          background: "rgba(255,255,255,0.03)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 10,
+          color: "rgba(255,255,255,0.92)",
+          fontSize: 15,
+          fontFamily: "inherit",
+          resize: "vertical",
+          lineHeight: 1.5,
+        }}
+        onKeyDown={(e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 14,
+          display: "flex",
+          gap: 4,
+          fontSize: 10,
+          color: "rgba(255,255,255,0.35)",
+          pointerEvents: "none",
+        }}
+        aria-hidden="true"
+      >
+        <kbd>/</kbd>
+        <span>focus</span>
+      </div>
     </div>
   );
 }
