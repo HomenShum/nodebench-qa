@@ -266,6 +266,7 @@ def _exec_scaffold(
     workdir: Path,
     run_id: str,
     user_prompt: str,
+    lane: str,
     env_overrides: dict[str, str],
 ) -> dict[str, Any]:
     """Run the scaffold's runner.py (or server.py) as a subprocess.
@@ -364,51 +365,203 @@ def main():
         return
 
     client = Anthropic()
-    t_llm_start = int(time.time() * 1000)
 
-    system_prompt = {
-        "simple_chain": "You are a concise analyst. Answer in <=5 bullets.",
-        "tool_first_chain": "You are a customer support agent. Be concise.",
-        "orchestrator_worker": "You are an ops orchestrator. Be decisive.",
-    }.get(lane, "You are a helpful assistant. Be concise.")
+    # Lane-specific mock tools. Real scaffolds wire real MCP tools; for
+    # the executor sandbox we register mocks so Claude can exercise a
+    # genuine tool-use loop without needing your retail / CRM / Slack
+    # stack. This is what makes the tier-2 run actually look like an
+    # orchestrator-worker — a simple_chain still calls once, a
+    # tool_first_chain calls tools before answering, an
+    # orchestrator_worker plans + calls multiple tools.
+    LANE_KIT = {
+        "simple_chain": {
+            "system": "You are a concise analyst. Answer in <=5 bullets.",
+            "tools": [],
+        },
+        "tool_first_chain": {
+            "system": "You are a customer support agent. Use the tools before you answer.",
+            "tools": [
+                {
+                    "name": "search_knowledge_base",
+                    "description": "Search help-center articles for a query. Returns up to 3 snippets.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {"query": {"type": "string"}},
+                        "required": ["query"],
+                    },
+                },
+                {
+                    "name": "lookup_order",
+                    "description": "Look up an order by id. Returns status, shipped_at, carrier.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {"order_id": {"type": "string"}},
+                        "required": ["order_id"],
+                    },
+                },
+            ],
+        },
+        "orchestrator_worker": {
+            "system": "You are an ops orchestrator. Use the tools before you answer — do not refuse because you lack data, call the tools. Be decisive.",
+            "tools": [
+                {
+                    "name": "lookup_stock",
+                    "description": "Get current on-hand stock level for a SKU.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {"sku": {"type": "string"}},
+                        "required": ["sku"],
+                    },
+                },
+                {
+                    "name": "place_order",
+                    "description": "Place a purchase order for N units of a SKU.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "sku": {"type": "string"},
+                            "quantity": {"type": "integer"},
+                        },
+                        "required": ["sku", "quantity"],
+                    },
+                },
+                {
+                    "name": "eod_summary",
+                    "description": "Generate today's end-of-day ops summary (orders, revenue, stockouts).",
+                    "input_schema": {"type": "object", "properties": {}},
+                },
+            ],
+        },
+    }
+    kit = LANE_KIT.get(lane, {"system": "You are a helpful assistant. Be concise.", "tools": []})
+    system_prompt = kit["system"]
+    tools = kit["tools"]
 
-    try:
-        resp = client.messages.create(
-            model="claude-haiku-4-5",
-            max_tokens=1024,
-            system=system_prompt,
-            messages=[{"role": "user", "content": prompt}],
+    def _mock_tool_result(name, inp):
+        inp = inp or {}
+        if name == "lookup_stock":
+            return {"sku": inp.get("sku", "UNKNOWN"), "on_hand": 142, "reorder_point": 100, "unit": "each"}
+        if name == "place_order":
+            return {"ok": True, "po_id": "PO-" + str(uuid.uuid4())[:8], "sku": inp.get("sku"), "quantity": inp.get("quantity"), "eta_days": 3}
+        if name == "eod_summary":
+            return {"date": time.strftime("%Y-%m-%d"), "orders_placed": 1, "revenue_usd": 8420.55, "stockouts": 0, "alerts": []}
+        if name == "search_knowledge_base":
+            return {"results": [{"title": "Return policy", "snippet": "30-day returns on unopened items."}, {"title": "Shipping times", "snippet": "Standard ship is 3-5 business days."}]}
+        if name == "lookup_order":
+            return {"order_id": inp.get("order_id", "UNKNOWN"), "status": "shipped", "shipped_at": "2026-04-20T14:22Z", "carrier": "ups"}
+        return {"note": f"no mock for {name}"}
+
+    # Tool-use loop. Each turn = one LLM call; its tool_use children
+    # become nested spans with parent_span_id = that turn's llm span id.
+    messages = [{"role": "user", "content": prompt}]
+    total_input_tokens = 0
+    total_output_tokens = 0
+    total_cost = 0.0
+    answer = ""
+    final_stop_reason = None
+    MAX_TURNS = 6
+    turn_text = ""
+
+    for turn_idx in range(MAX_TURNS):
+        t_turn_start = int(time.time() * 1000)
+        try:
+            kwargs = dict(
+                model="claude-haiku-4-5",
+                max_tokens=1024,
+                system=system_prompt,
+                messages=messages,
+            )
+            if tools:
+                kwargs["tools"] = tools
+            resp = client.messages.create(**kwargs)
+        except Exception as e:
+            span(
+                kind="meta",
+                name="python.llm_error",
+                started_at=t_turn_start,
+                finished_at=int(time.time() * 1000),
+                input_json=json.dumps({"turn": turn_idx}),
+                output_json=json.dumps({"error": str(e)[:500]}),
+                error_message=str(e)[:500],
+            )
+            print(json.dumps({"final_output": f"LLM error: {e}", "ok": False}))
+            return
+
+        t_turn_end = int(time.time() * 1000)
+        turn_input_tokens = resp.usage.input_tokens
+        turn_output_tokens = resp.usage.output_tokens
+        turn_cost = (turn_input_tokens * 1.0 + turn_output_tokens * 5.0) / 1_000_000
+        total_input_tokens += turn_input_tokens
+        total_output_tokens += turn_output_tokens
+        total_cost += turn_cost
+        final_stop_reason = resp.stop_reason
+
+        text_blocks = [b.text for b in resp.content if b.type == "text"]
+        tool_use_blocks = [b for b in resp.content if b.type == "tool_use"]
+        turn_text = "\\n".join(text_blocks)
+
+        # Unique span id for this turn's LLM call (so children can reference it)
+        span_idx += 1
+        llm_span_id = f"py-{span_idx:04d}"
+        emit_span(
+            span_id=llm_span_id,
+            run_id=run_id,
+            kind="llm",
+            name=f"claude.turn_{turn_idx}",
+            started_at=t_turn_start,
+            finished_at=t_turn_end,
+            input_json=json.dumps({"system": system_prompt[:300], "turn": turn_idx, "msg_count": len(messages)}),
+            output_json=json.dumps({"text": turn_text[:1500], "stop_reason": resp.stop_reason, "tool_uses": [b.name for b in tool_use_blocks]}),
+            input_tokens=turn_input_tokens,
+            output_tokens=turn_output_tokens,
+            cost_usd=turn_cost,
+            model_label="claude-haiku-4-5",
         )
-    except Exception as e:
-        span(
-            kind="meta",
-            name="python.llm_error",
-            started_at=t_llm_start,
-            finished_at=int(time.time() * 1000),
-            input_json=json.dumps({}),
-            output_json=json.dumps({"error": str(e)[:500]}),
-            error_message=str(e)[:500],
-        )
-        print(json.dumps({"final_output": f"LLM error: {e}", "ok": False}))
-        return
 
-    t_llm_end = int(time.time() * 1000)
-    text_blocks = [b.text for b in resp.content if b.type == "text"]
-    answer = "\\n".join(text_blocks)
-    cost = (resp.usage.input_tokens * 1.0 + resp.usage.output_tokens * 5.0) / 1_000_000
+        if not tool_use_blocks:
+            answer = turn_text
+            break
 
-    span(
-        kind="llm",
-        name="claude.call",
-        started_at=t_llm_start,
-        finished_at=t_llm_end,
-        input_json=json.dumps({"system": system_prompt[:300], "user": prompt[:800]}),
-        output_json=json.dumps({"answer": answer[:1500], "stop_reason": resp.stop_reason}),
-        input_tokens=resp.usage.input_tokens,
-        output_tokens=resp.usage.output_tokens,
-        cost_usd=cost,
-        model_label="claude-haiku-4-5",
-    )
+        # Re-serialize assistant content blocks for the next turn.
+        assistant_content = []
+        for b in resp.content:
+            if b.type == "text":
+                assistant_content.append({"type": "text", "text": b.text})
+            elif b.type == "tool_use":
+                assistant_content.append({"type": "tool_use", "id": b.id, "name": b.name, "input": b.input})
+        messages.append({"role": "assistant", "content": assistant_content})
+
+        # Execute each tool and emit child spans
+        tool_results_content = []
+        for block in tool_use_blocks:
+            t_tool_start = int(time.time() * 1000)
+            result = _mock_tool_result(block.name, block.input or {})
+            t_tool_end = int(time.time() * 1000)
+            span_idx += 1
+            tool_span_id = f"py-{span_idx:04d}"
+            emit_span(
+                span_id=tool_span_id,
+                run_id=run_id,
+                kind="tool",
+                name=block.name,
+                started_at=t_tool_start,
+                finished_at=t_tool_end,
+                input_json=json.dumps(block.input or {}),
+                output_json=json.dumps(result),
+                parent_span_id=llm_span_id,
+            )
+            tool_results_content.append({
+                "type": "tool_result",
+                "tool_use_id": block.id,
+                "content": json.dumps(result),
+            })
+
+        messages.append({"role": "user", "content": tool_results_content})
+    else:
+        # Loop exhausted MAX_TURNS without breaking
+        answer = turn_text + "\\n\\n[executor hit max turns without final answer]"
+
+    cost = total_cost
 
     # Observability hook proof
     try:
@@ -448,7 +601,7 @@ if __name__ == "__main__":
     result = subprocess.run(
         ["python3", str(runner_py)],
         cwd=str(workdir),
-        input=json.dumps({"run_id": run_id, "user_prompt": user_prompt, "lane": ""}),
+        input=json.dumps({"run_id": run_id, "user_prompt": user_prompt, "lane": lane}),
         capture_output=True,
         text=True,
         timeout=EXEC_TIMEOUT_S,
@@ -517,7 +670,7 @@ def execute(req: ExecuteRequest) -> JSONResponse:
         raise HTTPException(status_code=500, detail=f"scaffold emit failed: {e}")
 
     try:
-        result = _exec_scaffold(workdir, req.run_id, req.user_prompt, env_overrides)
+        result = _exec_scaffold(workdir, req.run_id, req.user_prompt, req.lane, env_overrides)
     except subprocess.TimeoutExpired:
         _post_span(
             run_id=req.run_id,
