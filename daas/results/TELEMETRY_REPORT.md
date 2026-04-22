@@ -1,16 +1,16 @@
 # attrition eval telemetry — publication snapshot
 
-Generated from 5 baselines spanning 
-**300 row-dispatches** and 
-**$1.1091** of LLM spend.
+Generated from 6 baselines spanning 
+**360 row-dispatches** and 
+**$1.3351** of LLM spend.
 
 ## 1. Headline numbers
 
-- **Latest baseline**: v5 — **43/60** pass (72%)
-- **Pass-rate lift vs v1**: 5/60 (8%) → 43/60 (72%) — **+38 rows**
-- **Total $ spent** (cumulative, all baselines): $1.1091
-- **Total wall clock** (cumulative): 7633s = 127.2 min
-- **Total row-dispatches** across all baselines: 300
+- **Latest baseline**: v6 — **50/60** pass (83%)
+- **Pass-rate lift vs v1**: 5/60 (8%) → 50/60 (83%) — **+45 rows**
+- **Total $ spent** (cumulative, all baselines): $1.3351
+- **Total wall clock** (cumulative): 9813s = 163.6 min
+- **Total row-dispatches** across all baselines: 360
 
 ## 2. Baseline-over-time
 
@@ -21,34 +21,35 @@ Generated from 5 baselines spanning
 | v3 | 14 | 46 | 0 | 23% | 1806 | 0.2175 | REGRESSION: runner→server rename overwrote canonical; reverted |
 | v4 | 37 | 23 | 0 | 62% | 1712 | 0.2272 | SDK installs + openrouter slug + deep_research fallback |
 | v5 | 43 | 17 | 0 | 72% | 1884 | 0.2165 | TS-lane excludes + gate awareness + FORCED_CANONICAL |
+| v6 | 50 | 10 | 0 | 83% | 2180 | 0.2260 | deep_research payload + per-runtime max_turns + lane deps |
 
 ## 3. Latest baseline — by emit lane
 
 | Lane | Pass/Total | Rate | Cost ($) | p50 (s) | p90 (s) |
 |---|---|---|---|---|---|
-| orchestrator_worker | 15/19 | 78.9% | 0.0816 | 23.31 | 53.37 |
-| tool_first_chain | 8/11 | 72.7% | 0.0471 | 24.92 | 75.85 |
-| langgraph_python | 3/5 | 60.0% | 0.0055 | 38.34 | 57.22 |
-| claude_agent_sdk | 2/4 | 50.0% | 0.0093 | 34.04 | 47.3 |
-| gemini_deep_research | 0/4 | 0.0% | 0.0000 | 0.47 | 0.51 |
-| openai_agents_sdk | 2/4 | 50.0% | 0.0054 | 46.14 | 51.84 |
-| simple_chain | 4/4 | 100.0% | 0.0189 | 21.43 | 23.52 |
-| convex_functions | 3/3 | 100.0% | 0.0133 | 16.54 | 19.04 |
-| deerflow | 2/2 | 100.0% | 0.0109 | 24.58 | 26.72 |
-| vercel_ai_sdk | 2/2 | 100.0% | 0.0132 | 22.8 | 24.82 |
-| hermes | 1/1 | 100.0% | 0.0059 | 23.26 | 23.26 |
-| manus | 1/1 | 100.0% | 0.0055 | 22.42 | 22.42 |
+| orchestrator_worker | 18/19 | 94.7% | 0.0895 | 24.95 | 52.1 |
+| tool_first_chain | 9/11 | 81.8% | 0.0473 | 25.19 | 72.63 |
+| langgraph_python | 0/5 | 0.0% | 0.0055 | 72.09 | 97.02 |
+| claude_agent_sdk | 4/4 | 100.0% | 0.0093 | 34.09 | 47.94 |
+| gemini_deep_research | 3/4 | 75.0% | 0.0000 | 18.79 | 51.71 |
+| openai_agents_sdk | 3/4 | 75.0% | 0.0057 | 55.7 | 77.8 |
+| simple_chain | 4/4 | 100.0% | 0.0202 | 22.52 | 25.74 |
+| convex_functions | 3/3 | 100.0% | 0.0136 | 17.3 | 17.33 |
+| deerflow | 2/2 | 100.0% | 0.0110 | 27.57 | 27.91 |
+| vercel_ai_sdk | 2/2 | 100.0% | 0.0128 | 22.49 | 22.77 |
+| hermes | 1/1 | 100.0% | 0.0056 | 23.44 | 23.44 |
+| manus | 1/1 | 100.0% | 0.0057 | 26.85 | 26.85 |
 
 ## 4. Latest baseline — by driver runtime
 
 | Driver | Pass/Total | Rate | Cost ($) | p50 (s) | p90 (s) | Dispatch errors |
 |---|---|---|---|---|---|---|
-| gemini_agent | 39/40 | 97.5% | 0.2166 | 22.42 | 26.98 | 1 |
-| openai_agents_sdk | 0/6 | 0.0% | 0.0000 | 67.06 | 82.72 | 3 |
-| gemini_deep_research | 0/5 | 0.0% | 0.0000 | 0.48 | 0.51 | 5 |
-| claude_agent_sdk | 1/4 | 25.0% | 0.0000 | 46.66 | 47.41 | 0 |
-| langgraph | 2/3 | 66.7% | 0.0000 | 38.34 | 40.71 | 0 |
-| openrouter | 1/2 | 50.0% | 0.0000 | 83.65 | 86.99 | 1 |
+| gemini_agent | 39/40 | 97.5% | 0.2262 | 22.95 | 27.16 | 0 |
+| openai_agents_sdk | 2/6 | 33.3% | 0.0000 | 78.34 | 102.58 | 1 |
+| gemini_deep_research | 4/5 | 80.0% | 0.0000 | 13.79 | 47.72 | 0 |
+| claude_agent_sdk | 3/4 | 75.0% | 0.0000 | 48.18 | 48.28 | 0 |
+| langgraph | 0/3 | 0.0% | 0.0000 | 72.09 | 72.51 | 0 |
+| openrouter | 2/2 | 100.0% | 0.0000 | 70.21 | 72.57 | 0 |
 
 ## 5. Latest baseline — gate-level frequencies
 
@@ -57,17 +58,17 @@ Each row is dispatched once per baseline; gates are evaluated on the emitted bun
 
 | Gate | Pass | Fail | Skip | Pass rate |
 |---|---|---|---|---|
-| `baseline_parity` | 0 | 10 | 50 | 0% |
-| `connector_resolver_working` | 47 | 10 | 3 | 82% |
-| `correct_lane_picked` | 46 | 14 | 0 | 77% |
-| `cost_under_budget` | 50 | 10 | 0 | 83% |
-| `latency_under_budget` | 47 | 13 | 0 | 78% |
-| `mcp_server_importable` | 41 | 10 | 9 | 80% |
-| `nine_layers_present` | 50 | 10 | 0 | 83% |
-| `runtime_used_correctly` | 50 | 10 | 0 | 83% |
-| `scaffold_compiles` | 50 | 10 | 0 | 83% |
-| `scaffold_runs_mock` | 45 | 10 | 5 | 82% |
-| `workflow_spec_roundtrip` | 50 | 10 | 0 | 83% |
+| `baseline_parity` | 0 | 1 | 59 | 0% |
+| `connector_resolver_working` | 56 | 1 | 3 | 98% |
+| `correct_lane_picked` | 57 | 3 | 0 | 95% |
+| `cost_under_budget` | 59 | 1 | 0 | 98% |
+| `latency_under_budget` | 58 | 2 | 0 | 97% |
+| `mcp_server_importable` | 50 | 1 | 9 | 98% |
+| `nine_layers_present` | 54 | 6 | 0 | 90% |
+| `runtime_used_correctly` | 59 | 1 | 0 | 98% |
+| `scaffold_compiles` | 58 | 2 | 0 | 97% |
+| `scaffold_runs_mock` | 54 | 1 | 5 | 98% |
+| `workflow_spec_roundtrip` | 59 | 1 | 0 | 98% |
 
 ## 6. Dispatch-error taxonomy (latest)
 
@@ -77,9 +78,6 @@ gaps, not scaffold bugs.
 
 | Count | Error head |
 |---|---|
-| 5 | `deep_research fallback HTTP 400: {` |
-| 3 | `openai-agents run failed: Max turns (15) exceeded` |
-| 1 | `<urlopen error [WinError 10054] An existing connection was forcibly closed by th` |
 | 1 | `'utf-8' codec can't decode byte 0xa7 in position 0: invalid start byte` |
 
 ## 7. Bugs the flywheel surfaced and fixed
@@ -147,11 +145,11 @@ _the current harness to populate these fields._
 
 ## 10. Cost efficiency
 
-At **$1.1091** cumulative spend across 
-300 row-dispatches, average cost-per-dispatch is 
+At **$1.3351** cumulative spend across 
+360 row-dispatches, average cost-per-dispatch is 
 **$0.0037**.
 
-For the latest baseline (v5): **$0.2165** for 60 rows = **$0.0036/row**.
+For the latest baseline (v6): **$0.2260** for 60 rows = **$0.0038/row**.
 
 ## 11. Reproduction
 

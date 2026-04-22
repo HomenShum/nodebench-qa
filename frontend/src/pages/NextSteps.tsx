@@ -50,32 +50,32 @@ type Milestone = {
 const MILESTONES: Milestone[] = [
   {
     id: "downloaded",
-    title: "Downloaded ZIP",
-    hint: "You clicked Download on the Builder. Next: unzip and cd into it.",
+    title: "You downloaded the folder",
+    hint: "You hit Download on the Builder page. Now unzip it and move into the folder.",
     command: "unzip attrition-scaffold.zip -d my-project/agent/",
   },
   {
     id: "mock_exec_pass",
-    title: "Mock exec passed",
-    hint: "Run it once in mock mode to verify nothing broke in transit.",
+    title: "It runs on your machine (test mode)",
+    hint: "Run it once in safe test mode to make sure nothing broke in transit.",
     command: "cd my-project/agent && ./run.sh --mock",
   },
   {
     id: "live_smoke_pass",
-    title: "Live smoke passed",
-    hint: "Replace _live_*.py stubs with your real handlers, flip mode, run one real request.",
+    title: "It runs with your real services",
+    hint: "Replace the placeholder tool calls with your real services, flip to live mode, and run one real request.",
     command: "CONNECTOR_MODE=live ./run.sh --smoke",
   },
   {
     id: "first_prod_request",
-    title: "First prod request responded",
-    hint: "Deploy to your runtime of choice and wait for the first real user request.",
-    command: "# lane-specific deploy recipe below",
+    title: "A real user reached it",
+    hint: "Deploy however you normally deploy, then wait for the first actual user request.",
+    command: "# deploy recipe for your setup is below",
   },
   {
     id: "deployed",
-    title: "Live in production",
-    hint: "Health check returns 200. You're shipped.",
+    title: "It's up and answering",
+    hint: "Your health check returns 200. You're shipped.",
   },
 ];
 
@@ -221,7 +221,7 @@ export function NextSteps() {
               marginBottom: 6,
             }}
           >
-            60-min checkpoint · post-download
+            Step 5 of 5 · after you've downloaded the folder
           </div>
           <h1
             style={{
@@ -233,21 +233,21 @@ export function NextSteps() {
             }}
           >
             {allGreen
-              ? "🎉 You're live in production."
-              : "Watch your scaffold go live."}
+              ? "🎉 Your agent is live in production."
+              : "Watch it go live, step by step."}
           </h1>
           <p
             style={{
               fontSize: 14,
-              color: "rgba(255,255,255,0.7)",
+              color: "rgba(255,255,255,0.75)",
               margin: "10px 0 0",
-              lineHeight: 1.55,
+              lineHeight: 1.6,
               maxWidth: 680,
             }}
           >
             {allGreen
-              ? "All milestones passed. The scaffold is answering real requests. Come back if the workflow fundamentally changes."
-              : "This checklist ticks in real time as your local scaffold pings the attrition webhook. Opted out of telemetry? Click the checkboxes manually below."}
+              ? "Every step passed. Your agent is answering real users. Come back only if your workflow fundamentally changes — we'll regenerate the code from a new starting point."
+              : "This checklist ticks green in real time as your code runs each step on your machine. If you turned off the usage reports, just click the boxes yourself as you go."}
           </p>
           {slug ? (
             <div
@@ -445,19 +445,20 @@ export function NextSteps() {
               marginBottom: 8,
             }}
           >
-            How the ticks get filled in
+            How these boxes tick themselves
           </div>
           <p
             style={{
               margin: 0,
               fontSize: 12,
-              color: "rgba(255,255,255,0.7)",
+              color: "rgba(255,255,255,0.75)",
               lineHeight: 1.6,
             }}
           >
-            Your scaffold ships with{" "}
+            Your downloaded folder includes a tiny file called{" "}
             <code style={{ fontSize: 11, color: "#d97757" }}>.attrition/provenance.json</code>{" "}
-            and an opt-in telemetry hook. To watch this page tick in real time:
+            and a simple ping-back function (both opt-in). To let this page
+            tick itself as you run each step:
           </p>
           <pre
             style={{
@@ -478,14 +479,15 @@ export function NextSteps() {
             style={{
               margin: "10px 0 0",
               fontSize: 11,
-              color: "rgba(255,255,255,0.5)",
-              lineHeight: 1.55,
+              color: "rgba(255,255,255,0.55)",
+              lineHeight: 1.6,
             }}
           >
-            The webhook only sees{" "}
-            <code>{"{event, provenance_id, timestamp}"}</code> — no prompts, no code,
-            no credentials. Auditable in{" "}
-            <code style={{ fontSize: 11 }}>connectors/_telemetry.py</code>.
+            We only see three things when you ping:{" "}
+            <code>{"{which step, a session id, when}"}</code>. No prompts, no
+            code, no keys. You can read every line of the ping code in{" "}
+            <code style={{ fontSize: 11 }}>connectors/_telemetry.py</code>{" "}
+            before you run it.
           </p>
         </section>
 
@@ -524,7 +526,7 @@ export function NextSteps() {
               textDecoration: "none",
             }}
           >
-            Start a new scaffold →
+            Build another agent →
           </Link>
         </div>
       </main>

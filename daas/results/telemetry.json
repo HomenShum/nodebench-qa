@@ -50,118 +50,128 @@
       "pass_rate_pct": 71.7,
       "elapsed_s": 1884.25,
       "total_cost_usd": 0.2165
+    },
+    {
+      "version": "v6",
+      "pass": 50,
+      "fail": 10,
+      "skip": 0,
+      "rows_total": 60,
+      "pass_rate_pct": 83.3,
+      "elapsed_s": 2180.31,
+      "total_cost_usd": 0.226
     }
   ],
   "latest": {
-    "version": "v5",
+    "version": "v6",
     "lane_breakdown": [
       {
         "lane": "orchestrator_worker",
-        "pass": 15,
+        "pass": 18,
         "total": 19,
-        "pass_rate_pct": 78.9,
-        "cost_usd_sum": 0.0816,
-        "p50_elapsed_s": 23.31,
-        "p90_elapsed_s": 53.37
+        "pass_rate_pct": 94.7,
+        "cost_usd_sum": 0.0895,
+        "p50_elapsed_s": 24.95,
+        "p90_elapsed_s": 52.1
       },
       {
         "lane": "tool_first_chain",
-        "pass": 8,
+        "pass": 9,
         "total": 11,
-        "pass_rate_pct": 72.7,
-        "cost_usd_sum": 0.0471,
-        "p50_elapsed_s": 24.92,
-        "p90_elapsed_s": 75.85
+        "pass_rate_pct": 81.8,
+        "cost_usd_sum": 0.0473,
+        "p50_elapsed_s": 25.19,
+        "p90_elapsed_s": 72.63
       },
       {
         "lane": "langgraph_python",
-        "pass": 3,
+        "pass": 0,
         "total": 5,
-        "pass_rate_pct": 60.0,
+        "pass_rate_pct": 0.0,
         "cost_usd_sum": 0.0055,
-        "p50_elapsed_s": 38.34,
-        "p90_elapsed_s": 57.22
+        "p50_elapsed_s": 72.09,
+        "p90_elapsed_s": 97.02
       },
       {
         "lane": "claude_agent_sdk",
-        "pass": 2,
+        "pass": 4,
         "total": 4,
-        "pass_rate_pct": 50.0,
+        "pass_rate_pct": 100.0,
         "cost_usd_sum": 0.0093,
-        "p50_elapsed_s": 34.04,
-        "p90_elapsed_s": 47.3
+        "p50_elapsed_s": 34.09,
+        "p90_elapsed_s": 47.94
       },
       {
         "lane": "gemini_deep_research",
-        "pass": 0,
+        "pass": 3,
         "total": 4,
-        "pass_rate_pct": 0.0,
+        "pass_rate_pct": 75.0,
         "cost_usd_sum": 0.0,
-        "p50_elapsed_s": 0.47,
-        "p90_elapsed_s": 0.51
+        "p50_elapsed_s": 18.79,
+        "p90_elapsed_s": 51.71
       },
       {
         "lane": "openai_agents_sdk",
-        "pass": 2,
+        "pass": 3,
         "total": 4,
-        "pass_rate_pct": 50.0,
-        "cost_usd_sum": 0.0054,
-        "p50_elapsed_s": 46.14,
-        "p90_elapsed_s": 51.84
+        "pass_rate_pct": 75.0,
+        "cost_usd_sum": 0.0057,
+        "p50_elapsed_s": 55.7,
+        "p90_elapsed_s": 77.8
       },
       {
         "lane": "simple_chain",
         "pass": 4,
         "total": 4,
         "pass_rate_pct": 100.0,
-        "cost_usd_sum": 0.0189,
-        "p50_elapsed_s": 21.43,
-        "p90_elapsed_s": 23.52
+        "cost_usd_sum": 0.0202,
+        "p50_elapsed_s": 22.52,
+        "p90_elapsed_s": 25.74
       },
       {
         "lane": "convex_functions",
         "pass": 3,
         "total": 3,
         "pass_rate_pct": 100.0,
-        "cost_usd_sum": 0.0133,
-        "p50_elapsed_s": 16.54,
-        "p90_elapsed_s": 19.04
+        "cost_usd_sum": 0.0136,
+        "p50_elapsed_s": 17.3,
+        "p90_elapsed_s": 17.33
       },
       {
         "lane": "deerflow",
         "pass": 2,
         "total": 2,
         "pass_rate_pct": 100.0,
-        "cost_usd_sum": 0.0109,
-        "p50_elapsed_s": 24.58,
-        "p90_elapsed_s": 26.72
+        "cost_usd_sum": 0.011,
+        "p50_elapsed_s": 27.57,
+        "p90_elapsed_s": 27.91
       },
       {
         "lane": "vercel_ai_sdk",
         "pass": 2,
         "total": 2,
         "pass_rate_pct": 100.0,
-        "cost_usd_sum": 0.0132,
-        "p50_elapsed_s": 22.8,
-        "p90_elapsed_s": 24.82
+        "cost_usd_sum": 0.0128,
+        "p50_elapsed_s": 22.49,
+        "p90_elapsed_s": 22.77
       },
       {
         "lane": "hermes",
         "pass": 1,
         "total": 1,
         "pass_rate_pct": 100.0,
-        "cost_usd_sum": 0.0059,
-        "p50_elapsed_s": 23.26,
-        "p90_elapsed_s": 23.26
+        "cost_usd_sum": 0.0056,
+        "p50_elapsed_s": 23.44,
+        "p90_elapsed_s": 23.44
       },
       {
         "lane": "manus",
         "pass": 1,
         "total": 1,
         "pass_rate_pct": 100.0,
-        "cost_usd_sum": 0.0055,
-        "p50_elapsed_s": 22.42,
-        "p90_elapsed_s": 22.42
+        "cost_usd_sum": 0.0057,
+        "p50_elapsed_s": 26.85,
+        "p90_elapsed_s": 26.85
       }
     ],
     "driver_breakdown": [
@@ -170,143 +180,131 @@
         "pass": 39,
         "total": 40,
         "pass_rate_pct": 97.5,
-        "cost_usd_sum": 0.2166,
-        "p50_elapsed_s": 22.42,
-        "p90_elapsed_s": 26.98,
-        "dispatch_err_count": 1
+        "cost_usd_sum": 0.2262,
+        "p50_elapsed_s": 22.95,
+        "p90_elapsed_s": 27.16,
+        "dispatch_err_count": 0
       },
       {
         "driver": "openai_agents_sdk",
-        "pass": 0,
+        "pass": 2,
         "total": 6,
-        "pass_rate_pct": 0.0,
+        "pass_rate_pct": 33.3,
         "cost_usd_sum": 0.0,
-        "p50_elapsed_s": 67.06,
-        "p90_elapsed_s": 82.72,
-        "dispatch_err_count": 3
+        "p50_elapsed_s": 78.34,
+        "p90_elapsed_s": 102.58,
+        "dispatch_err_count": 1
       },
       {
         "driver": "gemini_deep_research",
-        "pass": 0,
+        "pass": 4,
         "total": 5,
-        "pass_rate_pct": 0.0,
+        "pass_rate_pct": 80.0,
         "cost_usd_sum": 0.0,
-        "p50_elapsed_s": 0.48,
-        "p90_elapsed_s": 0.51,
-        "dispatch_err_count": 5
+        "p50_elapsed_s": 13.79,
+        "p90_elapsed_s": 47.72,
+        "dispatch_err_count": 0
       },
       {
         "driver": "claude_agent_sdk",
-        "pass": 1,
+        "pass": 3,
         "total": 4,
-        "pass_rate_pct": 25.0,
+        "pass_rate_pct": 75.0,
         "cost_usd_sum": 0.0,
-        "p50_elapsed_s": 46.66,
-        "p90_elapsed_s": 47.41,
+        "p50_elapsed_s": 48.18,
+        "p90_elapsed_s": 48.28,
         "dispatch_err_count": 0
       },
       {
         "driver": "langgraph",
-        "pass": 2,
+        "pass": 0,
         "total": 3,
-        "pass_rate_pct": 66.7,
+        "pass_rate_pct": 0.0,
         "cost_usd_sum": 0.0,
-        "p50_elapsed_s": 38.34,
-        "p90_elapsed_s": 40.71,
+        "p50_elapsed_s": 72.09,
+        "p90_elapsed_s": 72.51,
         "dispatch_err_count": 0
       },
       {
         "driver": "openrouter",
-        "pass": 1,
+        "pass": 2,
         "total": 2,
-        "pass_rate_pct": 50.0,
+        "pass_rate_pct": 100.0,
         "cost_usd_sum": 0.0,
-        "p50_elapsed_s": 83.65,
-        "p90_elapsed_s": 86.99,
-        "dispatch_err_count": 1
+        "p50_elapsed_s": 70.21,
+        "p90_elapsed_s": 72.57,
+        "dispatch_err_count": 0
       }
     ],
     "gate_stats": [
       {
         "gate": "baseline_parity",
         "pass": 0,
-        "fail": 10,
-        "skip": 50
+        "fail": 1,
+        "skip": 59
       },
       {
         "gate": "connector_resolver_working",
-        "pass": 47,
-        "fail": 10,
+        "pass": 56,
+        "fail": 1,
         "skip": 3
       },
       {
         "gate": "correct_lane_picked",
-        "pass": 46,
-        "fail": 14,
+        "pass": 57,
+        "fail": 3,
         "skip": 0
       },
       {
         "gate": "cost_under_budget",
-        "pass": 50,
-        "fail": 10,
+        "pass": 59,
+        "fail": 1,
         "skip": 0
       },
       {
         "gate": "latency_under_budget",
-        "pass": 47,
-        "fail": 13,
+        "pass": 58,
+        "fail": 2,
         "skip": 0
       },
       {
         "gate": "mcp_server_importable",
-        "pass": 41,
-        "fail": 10,
+        "pass": 50,
+        "fail": 1,
         "skip": 9
       },
       {
         "gate": "nine_layers_present",
-        "pass": 50,
-        "fail": 10,
+        "pass": 54,
+        "fail": 6,
         "skip": 0
       },
       {
         "gate": "runtime_used_correctly",
-        "pass": 50,
-        "fail": 10,
+        "pass": 59,
+        "fail": 1,
         "skip": 0
       },
       {
         "gate": "scaffold_compiles",
-        "pass": 50,
-        "fail": 10,
+        "pass": 58,
+        "fail": 2,
         "skip": 0
       },
       {
         "gate": "scaffold_runs_mock",
-        "pass": 45,
-        "fail": 10,
+        "pass": 54,
+        "fail": 1,
         "skip": 5
       },
       {
         "gate": "workflow_spec_roundtrip",
-        "pass": 50,
-        "fail": 10,
+        "pass": 59,
+        "fail": 1,
         "skip": 0
       }
     ],
     "dispatch_error_taxonomy": [
-      {
-        "error": "deep_research fallback HTTP 400: {",
-        "count": 5
-      },
-      {
-        "error": "openai-agents run failed: Max turns (15) exceeded",
-        "count": 3
-      },
-      {
-        "error": "<urlopen error [WinError 10054] An existing connection was forcibly closed by th",
-        "count": 1
-      },
       {
         "error": "'utf-8' codec can't decode byte 0xa7 in position 0: invalid start byte",
         "count": 1
@@ -325,8 +323,8 @@
     }
   },
   "cumulative": {
-    "total_rows": 300,
-    "total_cost_usd": 1.1091,
-    "total_elapsed_s": 7633.070000000001
+    "total_rows": 360,
+    "total_cost_usd": 1.3351,
+    "total_elapsed_s": 9813.380000000001
   }
 }

@@ -24,9 +24,9 @@ type TranscriptTurn = { ts: number; role: "user" | "assistant"; content: string 
 
 const STARTER_CHIPS = [
   "Make my expensive agent cheaper",
-  "Migrate my legacy chain to a stronger scaffold",
-  "Turn my Claude Code workflow into a production runtime",
-  "Show me what this would look like as an orchestrator-worker system",
+  "Turn my LangChain prototype into real production code",
+  "Take my Claude Code workflow to production",
+  "Show me what a multi-agent setup would look like for this",
 ] as const;
 
 // Hand-picked examples with frozen gold verdicts. Showing these on the
@@ -460,7 +460,7 @@ export function Architect() {
               marginBottom: 8,
             }}
           >
-            attrition.sh · agent scaffold compiler + verification layer
+            attrition.sh · we turn AI agents into production code
           </div>
           <h1
             style={{
@@ -472,28 +472,33 @@ export function Architect() {
               maxWidth: 820,
             }}
           >
-            Ship your agent workflow to prod in 60 minutes.
+            Turn your AI agent into production code.
             <br />
-            <span style={{ color: "#d97757" }}>Clone once. Own forever.</span>
+            <span style={{ color: "#d97757" }}>
+              In one hour. You own every line.
+            </span>
           </h1>
           <p
             style={{
               fontSize: 15,
-              color: "rgba(255,255,255,0.78)",
+              color: "rgba(255,255,255,0.82)",
               margin: "12px 0 0",
               maxWidth: 760,
               lineHeight: 1.6,
             }}
           >
-            Paste your Claude Code / Cursor / LangChain workflow.{" "}
-            <strong style={{ color: "#fff" }}>60 seconds</strong> to a
-            classified plan.{" "}
-            <strong style={{ color: "#fff" }}>15 minutes</strong> to a
-            10-layer scaffold with live mock preview.{" "}
-            <strong style={{ color: "#fff" }}>30 minutes</strong> to refine
-            via chat and download the ZIP — once.{" "}
-            <strong style={{ color: "#fff" }}>60 minutes</strong> running
-            real traffic in your prod.
+            Built something in Claude Code, Cursor, or LangChain that works
+            in chat but falls apart when you try to ship it? Paste what it
+            does. In{" "}
+            <strong style={{ color: "#fff" }}>60 seconds</strong> we sketch
+            the right architecture. In{" "}
+            <strong style={{ color: "#fff" }}>15 minutes</strong> we
+            generate every file — with a live test run you can watch. In{" "}
+            <strong style={{ color: "#fff" }}>30</strong> you chat to fix
+            anything wrong and download the folder. In{" "}
+            <strong style={{ color: "#fff" }}>60</strong> it's answering
+            real users in your production system. One download. You own
+            the code from there.
           </p>
           {!slug ? (
             <>
@@ -679,27 +684,31 @@ export function Architect() {
                 style={{
                   margin: 0,
                   fontSize: 13,
-                  lineHeight: 1.6,
-                  color: "rgba(255,255,255,0.82)",
+                  lineHeight: 1.65,
+                  color: "rgba(255,255,255,0.85)",
                   maxWidth: 760,
                 }}
               >
-                Every agent demo that works in Claude Code or Cursor hits the
-                same cliff when you try to ship it: two weeks of manual wiring,
-                a dozen files you only half-understand, tests that can't tell
-                you if your refactor broke something real. attrition is the
-                one-command bridge from prototype to production — across any
-                SDK, any provider, any deploy target. We generate the
-                scaffold. You own the code. The whole point of the five
-                checkpoints above is to make the ONE clone moment land
-                correctly, so you never come back unless your workflow has
-                fundamentally changed.
+                Here's the pattern we kept seeing. Someone builds an agent
+                in Claude Code or Cursor. It feels magic in the chat. Then
+                they try to deploy it — and the next two weeks are spent
+                wiring twelve files they only half understand, running
+                tests that don't really tell them if they broke anything.
+                The gap between &ldquo;works in chat&rdquo; and
+                &ldquo;works in production&rdquo; is the hardest part of
+                shipping AI agents right now. attrition is the bridge. One
+                command: starter code for any AI provider, ready for
+                wherever you deploy. We write the first version. You own
+                every line after that. The reason we split the experience
+                into five steps is simple: we want that one download to
+                be right, so you never have to come back to us unless
+                your workflow genuinely changes.
               </p>
             </section>
 
             <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-                Nothing's built yet. We decide with you first.
+              <span style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
+                No code yet. We decide the shape with you first.
               </span>
               <button
                 type="button"
@@ -735,8 +744,8 @@ export function Architect() {
               }}
             >
               {session?.status === "ready" || session?.status === "accepted"
-                ? "5-min checkpoint · architecture blueprint"
-                : "1-min checkpoint · classifier streaming"}
+                ? "Step 2 of 5 · here's what we'll build"
+                : "Step 1 of 5 · we're reading your request"}
             </div>
             {/* Multi-turn transcript */}
             <div
@@ -1294,14 +1303,14 @@ export function Architect() {
 // high in signal — it tells investors/builders "these are measured, not
 // aspirational."
 const EVAL_NUMBERS = {
-  passes: 43,
+  passes: 50,
   total: 60,
-  passPct: 72,
+  passPct: 83,
   gates: 11,
   costPerScaffoldUsd: 0.005,
-  lanesAt100: 6,
-  iterations: 5,
-  cumulativeSpendUsd: 1.11,
+  lanesAt100: 7,
+  iterations: 6,
+  cumulativeSpendUsd: 1.34,
 } as const;
 
 function EvalCredibilityStrip() {
@@ -1331,41 +1340,41 @@ function EvalCredibilityStrip() {
           fontWeight: 600,
         }}
       >
-        Measured
+        Tested
       </span>
       <span>
         <strong style={{ color: "#fff" }}>
-          {EVAL_NUMBERS.passes}/{EVAL_NUMBERS.total}
+          {EVAL_NUMBERS.passes} of {EVAL_NUMBERS.total}
         </strong>{" "}
-        workflows pass
-      </span>
-      <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
-      <span>
-        <strong style={{ color: "#fff" }}>
-          {EVAL_NUMBERS.gates}-gate
-        </strong>{" "}
-        eval
+        real workflows pass
       </span>
       <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
       <span>
+        checked against{" "}
         <strong style={{ color: "#fff" }}>
-          ${EVAL_NUMBERS.costPerScaffoldUsd.toFixed(3)}
-        </strong>{" "}
-        per scaffold
+          {EVAL_NUMBERS.gates} quality checks
+        </strong>
+      </span>
+      <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
+      <span>
+        costs{" "}
+        <strong style={{ color: "#fff" }}>about half a cent</strong> to
+        generate
       </span>
       <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
       <span>
         <strong style={{ color: "#fff" }}>
           {EVAL_NUMBERS.lanesAt100}
         </strong>{" "}
-        lanes at 100%
+        architecture styles pass every check
       </span>
       <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
       <span>
+        improved{" "}
         <strong style={{ color: "#fff" }}>
-          {EVAL_NUMBERS.iterations}
+          {EVAL_NUMBERS.iterations} times
         </strong>{" "}
-        self-improvement cycles
+        from its own test failures
       </span>
       <span style={{ color: "rgba(255,255,255,0.3)" }}>·</span>
       <a
@@ -1402,41 +1411,41 @@ const CHECKPOINTS: Checkpoint[] = [
   {
     minute: "1 min",
     icon: "●",
-    title: "It's alive",
-    subtitle: "Classifier streams",
-    body: "Your input stays pinned. Gemini Flash Lite tokens render in <2s. The engine is running against YOUR workflow, not a canned demo.",
+    title: "Something's happening",
+    subtitle: "We start reading your request",
+    body: "You paste what your agent does. Within two seconds, text starts streaming back — that's us reading your description and planning. Your original words stay visible the whole time, so you know this is about YOUR workflow, not a rehearsed demo.",
     accent: "#22c55e",
   },
   {
     minute: "5 min",
     icon: "◆",
-    title: "It gets me",
-    subtitle: "Architecture blueprint",
-    body: "Lane + SDK fit + component layers + Interpretive Boundary (what we're confident about vs inferring). Correct it with one chip.",
+    title: "That's actually my workflow",
+    subtitle: "Here's what we're about to build",
+    body: "We show you the shape of the agent: what kind it is, which tools it'll use, which pieces it'll have. Right next to that — what we're sure about vs what we're guessing. Click one button to correct us if we got it wrong.",
     accent: "#d97757",
   },
   {
     minute: "15 min",
     icon: "▣",
-    title: "Real code",
-    subtitle: "Scaffold workbench",
-    body: "10-layer bundle materializes file-by-file. Preview tab runs ./run.sh --mock live in an xterm simulator. 11-gate verdict banner at the bottom.",
+    title: "Real code, right in front of me",
+    subtitle: "Every file, generated live",
+    body: "Files appear one at a time, like watching someone code. Flip to the Preview tab and see the agent actually run in safe test mode — printing exactly what it'll print in production. Eleven quality checks run at the bottom. All green, or the download button stays locked.",
     accent: "#8b5cf6",
   },
   {
     minute: "30 min",
     icon: "✓",
-    title: "It's mine",
-    subtitle: "Refine, then clone",
-    body: "Chat-refine with preview-then-apply diffs. Download ZIP unlocks only when every gate is green. The one-and-only clone moment.",
+    title: "This is exactly what I wanted",
+    subtitle: "Chat to fix, then download — once",
+    body: "Type what needs changing: \"use Postgres not MySQL,\" \"add a Slack tool,\" whatever. We show you the exact edits before applying them. When every quality check is green and you tick \"yes, this matches,\" you download the folder. That's the one and only time.",
     accent: "#f59e0b",
   },
   {
     minute: "60 min",
     icon: "◉",
-    title: "In prod",
-    subtitle: "Real traffic served",
-    body: "Drop into your repo. Edit .env. Replace _live_*.py stubs. Flip CONNECTOR_MODE=live. Deploy. Watch NextSteps page tick ✅ via webhook pings.",
+    title: "Real users are talking to it",
+    subtitle: "Live in your production",
+    body: "Unzip the folder into your codebase. Add your API keys. Replace the placeholder tool calls with your real services. Flip the switch from test to live. Deploy however you normally deploy. A checklist on our site ticks green as each step passes.",
     accent: "#22d3ee",
   },
 ];
@@ -1456,7 +1465,7 @@ function JourneyTimeline() {
           marginBottom: 10,
         }}
       >
-        The journey · 5 checkpoints · clone exactly once
+        Five steps · you download once, at step 4
       </div>
       <div
         style={{
@@ -1544,15 +1553,16 @@ function JourneyTimeline() {
       <p
         style={{
           margin: "12px 0 0",
-          fontSize: 11,
-          color: "rgba(255,255,255,0.45)",
+          fontSize: 12,
+          color: "rgba(255,255,255,0.6)",
           lineHeight: 1.55,
           maxWidth: 780,
         }}
       >
-        Nothing ships a clone before the 30-min checkpoint. Download ZIP is
-        gated behind a green 11-gate verdict + your explicit &ldquo;this
-        matches what I want&rdquo; confirmation. By design.
+        The download button stays locked until step 4 (thirty minutes in).
+        That's on purpose. We'd rather you download once &mdash; slowly,
+        with every quality check green and you confident it matches
+        &mdash; than copy-fix-copy-fix forever.
       </p>
     </section>
   );

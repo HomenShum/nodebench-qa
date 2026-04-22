@@ -1,0 +1,3253 @@
+{
+  "harness_version": "attrition.v1",
+  "schema": "daas/benchmarks/attrition_eval_template_v1.csv",
+  "dry": false,
+  "elapsed_s": 2180.31,
+  "rows_total": 60,
+  "pass": 50,
+  "fail": 10,
+  "skip": 0,
+  "total_cost_usd": 0.226,
+  "per_row": [
+    {
+      "case_id": "AE01",
+      "overall_pass": true,
+      "overall_rationale": "all 9 deterministic gates pass; 2 stubbed: mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 23.07,
+      "run_cost_usd": 0.0053,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "4 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 7 required layers present for lane=simple_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=simple_chain ships no mcp_server.py by design"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0053 <= $0.0150 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "23.07s <= 30.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required files for the simple_chain lane and excludes restricted files like state_store.py or mcp_server.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE02",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 22.7,
+      "run_cost_usd": 0.0058,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0058 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "22.70s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components for the tool_first_chain lane, including server.py, tools.py, mcp_server.py, observability.py, and the eval directory, while correctly omitting state_store."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE03",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 20.08,
+      "run_cost_usd": 0.0061,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 3 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0061 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.08s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle contains all required components including server.py, tools.py, mcp_server.py, and observability.py, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE04",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 26.19,
+      "run_cost_usd": 0.0063,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "13 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0063 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "26.19s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, and evaluation components, aligning with the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE05",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 20.88,
+      "run_cost_usd": 0.0059,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "13 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0059 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.88s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation suite, correctly aligning with the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE06",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 22.67,
+      "run_cost_usd": 0.0059,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0059 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "22.67s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components for a tool-first chain, excludes state_store.py, and provides the necessary infrastructure for the specified runtime behavior."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE07",
+      "overall_pass": false,
+      "overall_rationale": "generate_scaffold raised: 'utf-8' codec can't decode byte 0xa7 in position 0: invalid start byte",
+      "run_elapsed_s": 84.06,
+      "run_cost_usd": 0.0,
+      "dispatch_error": "'utf-8' codec can't decode byte 0xa7 in position 0: invalid start byte",
+      "gates": {
+        "scaffold_compiles": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "scaffold_runs_mock": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "nine_layers_present": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "correct_lane_picked": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "connector_resolver_working": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "mcp_server_importable": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "baseline_parity": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "cost_under_budget": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "latency_under_budget": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        },
+        "runtime_used_correctly": {
+          "passed": false,
+          "rationale": "dispatch raised before gate: UnicodeDecodeError"
+        }
+      }
+    },
+    {
+      "case_id": "AE08",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 63.19,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "11 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=openai_agents_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 8 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "63.19s <= 180.0s budget (x2.0 for openai_agents_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openai_agents_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required openai-agents dependency, implements the server.py runner, and provides the necessary agent and tool structures to support the primary-to-handoff agent workflow."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE09",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 48.16,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=claude_agent_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0800 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "48.16s <= 216.0s budget (x1.8 for claude_agent_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=claude_agent_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required claude-agent-sdk dependency, server.py runner, and mcp_server.py implementation, aligning with the specified lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE10",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 47.44,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=claude_agent_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0800 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "47.44s <= 216.0s budget (x1.8 for claude_agent_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=claude_agent_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle includes the required claude-agent-sdk dependency, the server.py runner, and the mcp_server.py implementation, fully satisfying the lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE11",
+      "overall_pass": false,
+      "overall_rationale": "failed: nine_layers_present (1/10 eval'd failed)",
+      "run_elapsed_s": 72.09,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "6 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": false,
+          "rationale": "missing: state_store.py (lane=langgraph_python)"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "72.09s <= 180.0s budget (x1.5 for langgraph)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=langgraph matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required langgraph dependencies, a server.py runner, and the necessary infrastructure to support a StateGraph-based workflow with checkpointer integration."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE12",
+      "overall_pass": false,
+      "overall_rationale": "failed: nine_layers_present (1/10 eval'd failed)",
+      "run_elapsed_s": 71.66,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "6 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": false,
+          "rationale": "missing: state_store.py (lane=langgraph_python)"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "71.66s <= 180.0s budget (x1.5 for langgraph)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=langgraph matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required langgraph dependencies, a server.py runner, and the necessary evaluation and observability layers to support the declared StateGraph and checkpointer architecture."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE13",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 73.16,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "11 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "73.16s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openrouter matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation suite, satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE14",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 13.79,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=gemini_deep_research"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.5000 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "13.79s <= 3000.0s budget (x5.0 for gemini_deep_research)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_deep_research matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle includes the required server.py runner and a comprehensive structure supporting the Gemini Interactions API, tool dispatching, and evaluation layers."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE15",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 12.32,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=gemini_deep_research"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.5000 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "12.32s <= 3000.0s budget (x5.0 for gemini_deep_research)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_deep_research matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle includes the required server.py runner and the necessary infrastructure for Gemini Interactions API integration, state persistence, and evaluation as specified in the lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE16",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 18.32,
+      "run_cost_usd": 0.0046,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "8 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=claude_agent_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 3 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0046 <= $0.0300 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "18.32s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required claude-agent-sdk dependency, implements server.py as the runner, and provides mcp_server.py to satisfy the create_sdk_mcp_server contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE17",
+      "overall_pass": false,
+      "overall_rationale": "failed: nine_layers_present (1/10 eval'd failed)",
+      "run_elapsed_s": 113.3,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": false,
+          "rationale": "missing: state_store.py (lane=langgraph_python)"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "113.30s <= 240.0s budget (x2.0 for openai_agents_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openai_agents_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required server.py, references the langgraph package in requirements, and implements the expected StateGraph-based architecture."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE18",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 48.2,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=openai_agents_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "48.20s <= 162.0s budget (x1.8 for claude_agent_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=claude_agent_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required openai-agents dependency and provides server.py as the runner, aligning with the openai_agents_sdk lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE19",
+      "overall_pass": true,
+      "overall_rationale": "all 7 deterministic gates pass; 4 stubbed: scaffold_runs_mock, connector_resolver_working, mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 17.3,
+      "run_cost_usd": 0.005,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "5 .ts/.tsx/.mjs/.js files (ts-lane; syntax check deferred to tsc)"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 4 required layers present for lane=convex_functions"
+        },
+        "scaffold_runs_mock": {
+          "passed": null,
+          "rationale": "lane=convex_functions runs via Next.js / Convex (no server.py)"
+        },
+        "connector_resolver_working": {
+          "passed": null,
+          "rationale": "lane=convex_functions expects process.env.CONNECTOR_MODE in TS; not wired yet"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=convex_functions exposes tools via TS (no Python mcp_server.py)"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0050 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "17.30s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required schema.ts, crons.ts, and modularized function files within the convex directory, adhering to the expected Convex project structure."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE20",
+      "overall_pass": true,
+      "overall_rationale": "all 8 deterministic gates pass; 3 stubbed: scaffold_runs_mock, mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 22.84,
+      "run_cost_usd": 0.0064,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "2 .ts/.tsx/.mjs/.js files (ts-lane; syntax check deferred to tsc)"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 4 required layers present for lane=vercel_ai_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": null,
+          "rationale": "lane=vercel_ai_sdk runs via Next.js / Convex (no server.py)"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=vercel_ai_sdk exposes tools via TS (no Python mcp_server.py)"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0064 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "22.84s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle correctly implements the Vercel AI SDK streaming pattern using streamText in the route handler and useChat in the client component, supported by the required environment variable co"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE21",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 26.85,
+      "run_cost_usd": 0.0057,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=manus"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): lib/tools.ts"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0057 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "26.85s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required Next.js frontend components, the server.py runtime, and the necessary infrastructure for sandboxed file-based memory and SSE streaming."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE22",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 27.14,
+      "run_cost_usd": 0.0054,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "15 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=deerflow"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0054 <= $0.0800 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "27.14s <= 120.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required LangGraph-based multi-agent architecture, a server.py entry point, and the necessary evaluation and state management layers to satisfy the deerflow lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE23",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 23.44,
+      "run_cost_usd": 0.0056,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "13 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=hermes"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0056 <= $0.0800 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "23.44s <= 120.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required server.py runner, scenario dataclasses, rubric judge, and BFCL/adversarial datasets, fully satisfying the Hermes lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE24",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 26.18,
+      "run_cost_usd": 0.006,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0060 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "26.18s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components for the tool_first_chain lane, including server.py, tools.py, mcp_server.py, and evaluation/observability modules, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE25",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 25.07,
+      "run_cost_usd": 0.0057,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "14 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 7 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0057 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "25.07s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation suite, satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE26",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 28.44,
+      "run_cost_usd": 0.006,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "11 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0060 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "28.44s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required files including server.py, state_store.py, mcp_server.py, the eval/ directory, and observability.py, satisfying the 10-layer orchestrator_worker contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE27",
+      "overall_pass": true,
+      "overall_rationale": "all 9 deterministic gates pass; 2 stubbed: mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 26.89,
+      "run_cost_usd": 0.0053,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "4 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 7 required layers present for lane=simple_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=simple_chain ships no mcp_server.py by design"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0053 <= $0.0150 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "26.89s <= 30.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required files for the simple_chain lane and excludes prohibited files like state_store.py or mcp_server.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE28",
+      "overall_pass": true,
+      "overall_rationale": "all 9 deterministic gates pass; 2 stubbed: mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 21.98,
+      "run_cost_usd": 0.0053,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "4 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 7 required layers present for lane=simple_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=simple_chain ships no mcp_server.py by design"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0053 <= $0.0150 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "21.98s <= 30.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required files for the simple_chain lane and correctly excludes stateful or tool-related components."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE29",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 24.55,
+      "run_cost_usd": 0.0057,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "12 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0057 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "24.55s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers including the orchestrator, state store, MCP server, and evaluation suite, satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE30",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 24.95,
+      "run_cost_usd": 0.0061,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "12 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0061 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "24.95s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including server.py, state_store.py, mcp_server.py, the eval directory, and observability modules, satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE31",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 22.4,
+      "run_cost_usd": 0.0067,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "10 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0067 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "22.40s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation suite, fully satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE32",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 20.58,
+      "run_cost_usd": 0.0055,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 7 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0055 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.58s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components including server.py, tools.py, mcp_server.py, and the eval directory, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE33",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 25.19,
+      "run_cost_usd": 0.0062,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 7 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0062 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "25.19s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components for the tool_first_chain lane, including server.py, tools.py, mcp_server.py, and evaluation modules, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE34",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 67.26,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "10 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "67.26s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openrouter matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation components, and correctly implements the requested fallback routing logic."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE35",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 9.3,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "8 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "9.30s <= 900.0s budget (x5.0 for gemini_deep_research)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_deep_research matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including server.py, state_store.py, mcp_server.py, the eval directory, and observability.py, correctly aligning with the orchestrator_worker lane c"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE36",
+      "overall_pass": true,
+      "overall_rationale": "all 7 deterministic gates pass; 4 stubbed: scaffold_runs_mock, connector_resolver_working, mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 17.34,
+      "run_cost_usd": 0.0042,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "5 .ts/.tsx/.mjs/.js files (ts-lane; syntax check deferred to tsc)"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 4 required layers present for lane=convex_functions"
+        },
+        "scaffold_runs_mock": {
+          "passed": null,
+          "rationale": "lane=convex_functions runs via Next.js / Convex (no server.py)"
+        },
+        "connector_resolver_working": {
+          "passed": null,
+          "rationale": "lane=convex_functions expects process.env.CONNECTOR_MODE in TS; not wired yet"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=convex_functions exposes tools via TS (no Python mcp_server.py)"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0042 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "17.34s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle correctly implements the Convex structure with a schema.ts file, cron definitions, and modularized function files within the convex directory."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE37",
+      "overall_pass": true,
+      "overall_rationale": "all 8 deterministic gates pass; 3 stubbed: scaffold_runs_mock, mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 22.14,
+      "run_cost_usd": 0.0064,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "5 .ts/.tsx/.mjs/.js files (ts-lane; syntax check deferred to tsc)"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 4 required layers present for lane=vercel_ai_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": null,
+          "rationale": "lane=vercel_ai_sdk runs via Next.js / Convex (no server.py)"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=vercel_ai_sdk exposes tools via TS (no Python mcp_server.py)"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0064 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "22.14s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle correctly implements the Vercel AI SDK streaming pattern using streamText in the API route, useChat in the client component, and Zod-defined tools in the lib directory."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE38",
+      "overall_pass": false,
+      "overall_rationale": "failed: nine_layers_present (1/10 eval'd failed)",
+      "run_elapsed_s": 72.61,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "6 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": false,
+          "rationale": "missing: state_store.py (lane=langgraph_python)"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "72.61s <= 180.0s budget (x1.5 for langgraph)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=langgraph matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required LangGraph dependencies, a server.py runner, and the necessary evaluation and observability layers to support the langgraph_python lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE39",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 27.29,
+      "run_cost_usd": 0.0061,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + has module content (mcp/stdio not yet wired \u2014 soft pass)"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0061 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "27.29s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components for the tool_first_chain lane, including server.py, tools.py, mcp_server.py, and evaluation files, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE40",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 20.4,
+      "run_cost_usd": 0.0054,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "12 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0054 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.40s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including the orchestrator, state store, MCP server, evaluation suite, and observability layer, satisfying the 10-layer contract for the orchestrato"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE41",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 23.39,
+      "run_cost_usd": 0.0057,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0057 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "23.39s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components for the tool_first_chain lane, including server.py, tools.py, mcp_server.py, and the eval directory, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE42",
+      "overall_pass": false,
+      "overall_rationale": "failed: nine_layers_present (1/10 eval'd failed)",
+      "run_elapsed_s": 18.93,
+      "run_cost_usd": 0.0055,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "8 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": false,
+          "rationale": "missing: state_store.py (lane=langgraph_python)"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0055 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "18.93s <= 120.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required LangGraph dependencies, StateGraph structure, and server.py runner, fulfilling the langgraph_python lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE43",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 24.3,
+      "run_cost_usd": 0.0057,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "9 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=openai_agents_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0057 <= $0.0600 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "24.30s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required openai-agents dependency, implements the Runner in server.py, and utilizes the Agent and tool patterns as specified in the contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE44",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 20.75,
+      "run_cost_usd": 0.0047,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "8 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=claude_agent_sdk"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0047 <= $0.0800 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.75s <= 120.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle includes the required claude-agent-sdk dependency, server.py runner, and mcp_server.py implementation, aligning with the specified lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE45",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 28.0,
+      "run_cost_usd": 0.0056,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "15 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=deerflow"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0056 <= $0.0800 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "28.00s <= 120.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle implements the required multi-agent graph structure with a supervisor/researcher/coder pattern, includes the mandatory server.py runner, and aligns with the DeerFlow architecture."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE46",
+      "overall_pass": true,
+      "overall_rationale": "all 9 deterministic gates pass; 2 stubbed: mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 20.15,
+      "run_cost_usd": 0.0043,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "4 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 7 required layers present for lane=simple_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=simple_chain ships no mcp_server.py by design"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0043 <= $0.0150 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.15s <= 30.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required files for the simple_chain lane and excludes prohibited files like state_store.py or mcp_server.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE47",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 27.62,
+      "run_cost_usd": 0.0057,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "12 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0057 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "27.62s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation components, satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE48",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 21.61,
+      "run_cost_usd": 0.0054,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "14 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 7 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0054 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "21.61s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including the orchestrator, state store, MCP server, observability, and evaluation layers, aligning perfectly with the orchestrator_worker lane cont"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE49",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 24.75,
+      "run_cost_usd": 0.0064,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "15 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0064 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "24.75s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including the orchestrator, state store, mcp server, observability, and evaluation layers, correctly aligning with the orchestrator_worker lane cont"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE50",
+      "overall_pass": true,
+      "overall_rationale": "all 7 deterministic gates pass; 4 stubbed: scaffold_runs_mock, connector_resolver_working, mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 16.15,
+      "run_cost_usd": 0.0044,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "4 .ts/.tsx/.mjs/.js files (ts-lane; syntax check deferred to tsc)"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 4 required layers present for lane=convex_functions"
+        },
+        "scaffold_runs_mock": {
+          "passed": null,
+          "rationale": "lane=convex_functions runs via Next.js / Convex (no server.py)"
+        },
+        "connector_resolver_working": {
+          "passed": null,
+          "rationale": "lane=convex_functions expects process.env.CONNECTOR_MODE in TS; not wired yet"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=convex_functions exposes tools via TS (no Python mcp_server.py)"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0044 <= $0.0500 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "16.15s <= 90.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle contains the required schema.ts file and organizes Convex functions within the convex/ directory, adhering to the specified lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE51",
+      "overall_pass": false,
+      "overall_rationale": "failed: latency_under_budget (1/10 eval'd failed)",
+      "run_elapsed_s": 91.86,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "10 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": false,
+          "rationale": "91.86s > 90.0s budget (x2.0 for openai_agents_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openai_agents_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components including server.py, tools.py, mcp_server.py, and eval/ directory while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE52",
+      "overall_pass": false,
+      "overall_rationale": "failed: scaffold_compiles (1/10 eval'd failed)",
+      "run_elapsed_s": 72.63,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": false,
+          "rationale": "1 .py failed ast.parse: prompts.py: unterminated string literal (detected at line 4) (line 4)"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 8 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "72.63s <= 90.0s budget (x2.0 for openai_agents_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openai_agents_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components including server.py, tools.py, mcp_server.py, and observability.py while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE53",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 51.94,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "10 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 7 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "51.94s <= 90.0s budget (x2.0 for openai_agents_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=openai_agents_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle contains all required components including server.py, tools.py, mcp_server.py, and evaluation files, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE54",
+      "overall_pass": false,
+      "overall_rationale": "failed: correct_lane_picked (1/10 eval'd failed)",
+      "run_elapsed_s": 48.31,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "48.31s <= 324.0s budget (x1.8 for claude_agent_sdk)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=claude_agent_sdk matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": false,
+          "rationale": "Flash Lite judge: The emitted bundle manifest only lists 9 files, failing to include the 'envelope' component required by the 10-layer contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE55",
+      "overall_pass": false,
+      "overall_rationale": "failed: correct_lane_picked (1/10 eval'd failed)",
+      "run_elapsed_s": 63.68,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=gemini_deep_research"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): README.md"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.5000 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "63.68s <= 3000.0s budget (x5.0 for gemini_deep_research)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_deep_research matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": false,
+          "rationale": "Flash Lite judge: The bundle includes mcp_server.py and additional layers not specified in the Gemini Interactions API contract, and the requirements.txt includes FastAPI which exceeds the scope of the requested server"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE56",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 23.78,
+      "run_cost_usd": 0.0,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=gemini_deep_research"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0000 <= $0.5000 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "23.78s <= 3000.0s budget (x5.0 for gemini_deep_research)"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_deep_research matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes the required server.py runner and the necessary infrastructure for Gemini interactions, including evaluation and tool-dispatching layers consistent with the deep research lane cont"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE57",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 26.93,
+      "run_cost_usd": 0.0062,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "13 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 2 file(s): run.sh"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0062 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "26.93s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, and evaluation components, satisfying the orchestrator-worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE58",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 22.49,
+      "run_cost_usd": 0.0058,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "12 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 7 file(s): tools.py"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0058 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "22.49s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including the orchestrator, state store, MCP server, and evaluation layers, aligning with the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE59",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 25.95,
+      "run_cost_usd": 0.006,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "14 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 4 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0060 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "25.95s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including the orchestrator, state store, mcp server, evaluation suite, and observability hooks, satisfying the 10-layer contract for the orchestrato"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE60",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 20.45,
+      "run_cost_usd": 0.0062,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "10 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 6 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0062 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "20.45s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all 10 required layers, including the orchestrator, state store, MCP server, and evaluation suite, satisfying the orchestrator_worker lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    }
+  ]
+}

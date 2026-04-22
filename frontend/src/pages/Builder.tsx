@@ -419,9 +419,9 @@ export function Builder() {
             minHeight: "calc(100vh - 80px)",
           }}
         >
-          {/* Checkpoint eyebrow — covers both 15-min (inspect scaffold)
-              and 30-min (refine + Download ZIP) stages. Consistent with
-              Architect's 1/5-min eyebrow and NextSteps' 60-min eyebrow. */}
+          {/* Step label — covers both step 3 (see the code) and step 4
+              (refine + download). Consistent with Architect's step 1/2
+              eyebrow and NextSteps' step 5 eyebrow. */}
           <div
             style={{
               fontSize: 10,
@@ -434,7 +434,7 @@ export function Builder() {
               background: "rgba(0,0,0,0.15)",
             }}
           >
-            15 / 30-min checkpoint · scaffold workbench · refine · clone once
+            Steps 3 & 4 of 5 · see the code, fix anything, then download
           </div>
           <div
             style={{
