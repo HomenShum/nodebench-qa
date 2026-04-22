@@ -465,7 +465,12 @@ export function Builder() {
             <BetaBanner />
             <EvaluationGateBanner />
             {tab === "scaffold" && <ScaffoldTab runtimeLane={session.runtimeLane ?? ""} />}
-            {tab === "preview" && <PreviewTab runtimeLane={session.runtimeLane ?? ""} />}
+            {tab === "preview" && (
+              <PreviewTab
+                runtimeLane={session.runtimeLane ?? ""}
+                sessionSlug={slug ?? null}
+              />
+            )}
             {tab === "eval" && <EvalTab runtimeLane={session.runtimeLane ?? ""} />}
             {tab === "world_model" && (
               <WorldModelTab worldModelLane={session.worldModelLane ?? "lite"} />

@@ -15,6 +15,7 @@ import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { Architect } from "./pages/Architect";
 import { Builder } from "./pages/Builder";
 import { NextSteps } from "./pages/NextSteps";
+import { Run } from "./pages/Run";
 import { Radar } from "./pages/Radar";
 import { Fidelity } from "./pages/Fidelity";
 import { Telemetry } from "./pages/Telemetry";
@@ -54,6 +55,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             element={
               <ErrorBoundary label="builder">
                 <Builder />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/runs/:runId"
+            element={
+              <ErrorBoundary label="run-trace">
+                <Run />
               </ErrorBoundary>
             }
           />

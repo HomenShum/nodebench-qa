@@ -566,6 +566,99 @@ export const daasFidelityVerdicts = defineTable({
  * Auditable (HONEST_STATUS): the `raw` field records the full payload
  * for forensic review.
  */
+/**
+ * agentRuns — one row per live-run invocation.
+ *
+ * See docs/LIVE_RUN_AND_TRACE_ADR.md for the full architecture. One
+ * run = one end-to-end agent invocation. Spans are emitted into
+ * `agentTraceSpans` as the run progresses; totals on this row
+ * (spans, tokens, cost) are patched as each span lands.
+ *
+ * Bounded (BOUND): input capped at 4KB, finalOutput at 8KB before
+ * insert/patch. Pruning cron optional; MVP retains indefinitely.
+ */
+export const agentRuns = defineTable({
+  /** Unguessable UUID — public shareable URL segment */
+  runId: v.string(),
+  /** Optional back-link to architectSessions.sessionSlug */
+  sessionSlug: v.optional(v.string()),
+  /** One of 12 emit lanes (simple_chain, orchestrator_worker, …) */
+  runtimeLane: v.string(),
+  /** One of 6 driver runtimes (gemini_agent, claude_agent_sdk, …) */
+  driverRuntime: v.string(),
+  /** "mock" (no real tools fired) | "live" (real connectors) */
+  mode: v.string(),
+  /** "running" | "complete" | "failed" */
+  status: v.string(),
+  startedAt: v.number(),
+  finishedAt: v.optional(v.number()),
+  /** User's prompt (bounded 4KB) */
+  input: v.string(),
+  /** Top-level result text (bounded 8KB); absent while running */
+  finalOutput: v.optional(v.string()),
+  /** Cumulative cost across all spans */
+  totalCostUsd: v.number(),
+  totalInputTokens: v.number(),
+  totalOutputTokens: v.number(),
+  /** Denormalized count — kept in sync by recordSpan */
+  totalSpans: v.number(),
+  /** Present when status="failed" */
+  errorMessage: v.optional(v.string()),
+})
+  .index("by_runId", ["runId"])
+  .index("by_sessionSlug_startedAt", ["sessionSlug", "startedAt"])
+  .index("by_status_startedAt", ["status", "startedAt"]);
+
+/**
+ * agentTraceSpans — one row per step of an agent run.
+ *
+ * kind enum (string — using string instead of v.union for forward-compat):
+ *   llm       — LLM call (model, prompt, output, tokens, cost)
+ *   tool      — tool dispatch (name, args, result, elapsed)
+ *   compact   — context compaction (before/after token counts)
+ *   handoff   — orchestrator→worker handoff (from, to, payload)
+ *   wait      — explicit waits (retry backoff, rate-limit hold)
+ *   meta      — scaffold-level events (run_start, run_end, error)
+ *
+ * Hierarchical: parentSpanId enables nested timeline rendering
+ * (orchestrator → worker_A → tool). Root spans have no parent.
+ *
+ * Bounded: inputJson + outputJson capped 8KB. Oversize payloads
+ * truncated with a "...(truncated)" marker; full blobs are NOT
+ * stored on this row — keep in object storage if needed.
+ */
+export const agentTraceSpans = defineTable({
+  runId: v.string(),
+  /** ULID — sortable by time, unique per run */
+  spanId: v.string(),
+  /** Parent span; root spans omit */
+  parentSpanId: v.optional(v.string()),
+  /** Span kind (see docstring) */
+  kind: v.string(),
+  /** Short human label ("sku_lookup", "model.call", "compact") */
+  name: v.string(),
+  startedAt: v.number(),
+  finishedAt: v.optional(v.number()),
+  /** Input payload as JSON (bounded 8KB) */
+  inputJson: v.string(),
+  /** Output payload as JSON (bounded 8KB); absent while running */
+  outputJson: v.string(),
+  /** LLM spans only — token counts */
+  inputTokens: v.optional(v.number()),
+  outputTokens: v.optional(v.number()),
+  /** Computed cost for this span (LLM spans) */
+  costUsd: v.optional(v.number()),
+  /** Model alias for LLM spans */
+  modelLabel: v.optional(v.string()),
+  /** SHA-256 head of prompt for cache-hit insight */
+  promptHash: v.optional(v.string()),
+  /** Present when span failed */
+  errorMessage: v.optional(v.string()),
+})
+  .index("by_runId_startedAt", ["runId", "startedAt"])
+  .index("by_runId_kind", ["runId", "kind"])
+  .index("by_parentSpanId", ["parentSpanId"]);
+
 export const scaffoldPings = defineTable({
   /** Maps back to architectSessions.sessionSlug */
   sessionSlug: v.string(),

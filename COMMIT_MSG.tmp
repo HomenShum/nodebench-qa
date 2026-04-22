@@ -1,0 +1,189 @@
+feat(live-run): Tier-1 agent trace viewer at /runs/:runId
+
+Ships the foundation for "scaffold runs live on our own site with
+full agent trace telemetry" -- the LangSmith / Arize AX / Convex Chef
+pattern the user called out. Tier 1 is the playback / replay
+experience: every scripted step renders as a real Convex row and
+the /runs/:runId page subscribes in real time. Tier 2 (actual
+sandboxed LLM exec) and Tier 3 (BYOK + real evaluators) are
+designed-for and documented in the ADR, not shipped yet.
+
+## Architecture
+
+See docs/LIVE_RUN_AND_TRACE_ADR.md for the full plan. Summary:
+
+  scaffold's observability.py    attrition web app
+            |                             |
+            |  POST /http/attritionTrace  |
+            |  {event, run_id, ...}       |
+            |---------------------------->|
+            |                             |
+            |                             |  mutation: agentTrace.recordSpan
+            |                             |  -> agentTraceSpans insert
+            |                             |  -> agentRuns patch totals
+            |                             |
+            |                             |  useQuery(listSpansForRun)
+            |                             |  -> /runs/:runId re-renders
+
+## Data model (convex/domains/daas/schema.ts)
+
+  agentRuns (
+    runId, sessionSlug?, runtimeLane, driverRuntime, mode,
+    status, startedAt, finishedAt?, input, finalOutput?,
+    totalCostUsd, totalInputTokens, totalOutputTokens,
+    totalSpans, errorMessage?
+  )
+
+  agentTraceSpans (
+    runId, spanId, parentSpanId?, kind, name,
+    startedAt, finishedAt?, inputJson, outputJson,
+    inputTokens?, outputTokens?, costUsd?,
+    modelLabel?, promptHash?, errorMessage?
+  )
+
+6 new indexes: by_runId, by_sessionSlug_startedAt,
+by_status_startedAt, by_runId_startedAt, by_runId_kind,
+by_parentSpanId. Both tables use string enums (not v.union) for
+forward-compat on span kind + run status.
+
+## Domain (convex/domains/daas/agentTrace.ts)
+
+Five functions, all with BOUND / HONEST_STATUS / DETERMINISTIC
+invariants per .claude/rules/agentic_reliability.md:
+
+  startRun           mutation. Idempotent by runId so a flaky
+                     network can retry without duplicating runs.
+  recordSpan         mutation. Idempotent by (runId, spanId).
+                     Patches agentRuns denormalized totals only
+                     on first insert; re-records patch in place.
+                     Truncates inputJson/outputJson to 8KB.
+  finishRun          mutation. Bounded status enum (complete|
+                     failed). Refuses status="running".
+  listSpansForRun    query. Capped at MAX_SPANS_PER_RUN=500,
+                     ordered by startedAt ascending.
+  getRun             query. Header metadata for the run page.
+
+Bounded: input 4KB, output 8KB, 500 spans per run max.
+
+## HTTP webhook (convex/http.ts)
+
+POST /http/attritionTrace accepts three event types:
+  run_start   -> agentTrace.startRun
+  span        -> agentTrace.recordSpan
+  run_end     -> agentTrace.finishRun
+
+CORS-permissive so scaffolds running on localhost can POST without
+a preflight dance. BOUND_READ caps payloads at 32KB.
+
+## Frontend (frontend/src/pages/Run.tsx)
+
+Step-card timeline at /runs/:runId, real-time Convex subscription.
+Design borrowed from LangSmith (hierarchical span list, expandable
+detail) and Arize AX (filter chips + metadata pills). Every card:
+
+  Left:  kind pill (META/LLM/TOOL/COMPACT/HANDOFF/WAIT), accent
+         color per kind (purple/green/cyan/amber/terracotta/grey)
+  Middle: time offset from first span, name
+  Right:  one-line summary (model + tokens + cost + duration)
+  Expand: input JSON, output JSON, metadata pills (model, tokens,
+          cost, parent span), error message if failed
+
+Filter chips: all | llm | tool | errors -- counts per filter shown
+inline. Shareable-link footer shows current URL for copy-paste.
+
+Error + loading + not-found states all have dedicated cards.
+
+## PreviewTab recorder (frontend/src/components/PreviewTab.tsx)
+
+Added "record live trace" button that walks the script, POSTs real
+Convex mutations for each line, then navigates to /runs/:runId.
+Each script line becomes a typed span with:
+  - $ cmd               -> META run_start
+  - [runner]            -> META runner.init
+  - [orchestrator] plan -> LLM (claude-sonnet-4.6, realistic
+                           tokens + cost)
+  - [worker_X]          -> HANDOFF
+  - [mock] tool         -> TOOL
+  - [orchestrator] compact -> COMPACT
+  - [turn N]            -> LLM
+  - [graph] / [Runner]  -> TOOL / LLM per lane
+  - checkmark line      -> META run_end
+
+Popup-safe: tries window.open, falls back to same-tab navigation
+if Chrome's popup blocker is active.
+
+## Offset display fix (Run.tsx)
+
+First ship showed +116580ms offsets on all spans -- clock-skew
+artifact between browser Date.now() and Convex server Date.now().
+Fixed by using the FIRST span's startedAt as the relative baseline
+rather than run.startedAt. Offsets now read +0ms -> +400ms ->
++1.05s -> +4.25s as expected.
+
+## Route registered
+
+/runs/:runId -> ErrorBoundary-wrapped Run page. Unknown runId
+shows a NotFoundCard with link back to /. Route in main.tsx
+sits next to /next-steps/:slug so 5-checkpoint vocabulary is
+consistent.
+
+## Verified end-to-end on prod
+
+  1. Visit /build/demo-retail-ops
+  2. Click "Preview" tab
+  3. Click "record live trace ->" button
+  4. Browser navigates to /runs/<random-id>
+  5. See 12 spans rendered: META run_start, META runner.init x2,
+     LLM orchestrator.plan (claude-sonnet-4.6, 420 in / 180 out,
+     $0.0026, 600ms), 3 HANDOFF, 3 TOOL, 1 COMPACT, META run_end
+  6. Filter chips update counts (ALL=12, LLM=1, TOOL=3, ERRORS=0)
+  7. Expand LLM span -> see input JSON, output JSON, metadata
+     pills (model, in tokens, out tokens, cost)
+  8. Shareable link displayed in footer
+
+Zero console errors during the full flow.
+
+## What this earns
+
+- Demo to an investor without leaving our site: they click one
+  button, they see spans populating in real time, they can filter
+  by kind, they can expand to see per-step detail. That's the
+  Convex Chef / LangSmith / Arize AX bar we said we needed to hit.
+- The UX is already correct for Tier 2 (real sandbox exec) and
+  Tier 3 (BYOK real LLM). Only the data source changes -- same
+  schema, same UI, same shareable URL.
+- The schema supports nested spans (parentSpanId), so when Tier 2
+  ships, orchestrator-worker runs render as nested cards.
+- scaffoldPings (NextSteps webhook) + agentTraceSpans (trace
+  webhook) sit side by side, both emittable from the same
+  observability.py in the scaffold.
+
+## Explicit non-goals for this cycle
+
+- Actual sandboxed LLM execution (Tier 2 next cycle)
+- BYOK UI (Tier 3 cycle after)
+- User-editable evaluators (Arize-AX-style -- future)
+- Streaming token rendering mid-LLM-call (needs SSE)
+- Auth-gated private runs (unguessable UUID for now)
+
+## References
+
+- docs/LIVE_RUN_AND_TRACE_ADR.md                    (the full plan)
+- LangSmith run viewer                               (span timeline)
+- Arize AX evaluators                                (evaluator pattern, deferred)
+- Convex Chef (get-convex/chef)                      (live preview pattern)
+- Anthropic observability_agent cookbook             (structured trace events)
+
+## Files shipped
+
+  docs/LIVE_RUN_AND_TRACE_ADR.md                     (NEW, full architecture)
+  convex/schema.ts                                    (+ 2 table refs)
+  convex/domains/daas/schema.ts                       (+ agentRuns + agentTraceSpans)
+  convex/domains/daas/agentTrace.ts                   (NEW, 5 functions)
+  convex/http.ts                                      (+ /http/attritionTrace)
+  frontend/src/pages/Run.tsx                          (NEW, step-card timeline)
+  frontend/src/main.tsx                               (+ /runs/:runId route)
+  frontend/src/components/PreviewTab.tsx              (+ recorder button + spanFromLine)
+  frontend/src/pages/Builder.tsx                      (pass sessionSlug to PreviewTab)
+
+Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>

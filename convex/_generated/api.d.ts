@@ -11,6 +11,7 @@
 import type * as crons from "../crons.js";
 import type * as domains_daas_actions from "../domains/daas/actions.js";
 import type * as domains_daas_admin from "../domains/daas/admin.js";
+import type * as domains_daas_agentTrace from "../domains/daas/agentTrace.js";
 import type * as domains_daas_architect from "../domains/daas/architect.js";
 import type * as domains_daas_architectClassifier from "../domains/daas/architectClassifier.js";
 import type * as domains_daas_architectRate from "../domains/daas/architectRate.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "domains/daas/actions": typeof domains_daas_actions;
   "domains/daas/admin": typeof domains_daas_admin;
+  "domains/daas/agentTrace": typeof domains_daas_agentTrace;
   "domains/daas/architect": typeof domains_daas_architect;
   "domains/daas/architectClassifier": typeof domains_daas_architectClassifier;
   "domains/daas/architectRate": typeof domains_daas_architectRate;

@@ -17,6 +17,8 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../_convex/api";
 
 type Line = {
   delayMs: number;
@@ -101,11 +103,139 @@ function lineColor(kind: Line["kind"]): string {
   }
 }
 
-export function PreviewTab({ runtimeLane }: { runtimeLane: string }) {
+// Per-script-line metadata for converting terminal output into real trace
+// spans. When a user clicks "Record this run", we walk the script and
+// emit one agentTraceSpans row per line (with lane-matching costs +
+// token estimates so the /runs/:runId viewer shows realistic data).
+// This is the Tier-1 MVP — the numbers are scripted, not observed from
+// a real LLM run. Tier 2 swaps the scripted source for real exec.
+type ScriptSpan = {
+  kind: "meta" | "llm" | "tool" | "compact" | "handoff" | "wait";
+  name: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  costUsd?: number;
+  modelLabel?: string;
+  inputJson?: string;
+  outputJson?: string;
+};
+
+function spanFromLine(line: Line, lane: string): ScriptSpan | null {
+  const text = line.text;
+  if (line.kind === "cmd") {
+    return {
+      kind: "meta",
+      name: "run_start",
+      inputJson: JSON.stringify({ command: text.replace(/^\$\s*/, "") }),
+    };
+  }
+  if (/^\[runner\]/.test(text)) {
+    return { kind: "meta", name: "runner.init", outputJson: JSON.stringify({ info: text }) };
+  }
+  if (/^\[orchestrator\]\s+plan/.test(text)) {
+    return {
+      kind: "llm",
+      name: "orchestrator.plan",
+      modelLabel: lane === "orchestrator_worker" ? "claude-sonnet-4.6" : "gemini-3.1-flash-lite-preview",
+      inputTokens: 420,
+      outputTokens: 180,
+      costUsd: 0.0026,
+      inputJson: JSON.stringify({ task: "plan worker dispatch" }),
+      outputJson: JSON.stringify({ plan: text.split("->")[1]?.trim() ?? text }),
+    };
+  }
+  if (/^\[worker_/.test(text)) {
+    const workerMatch = text.match(/\[worker_([A-Z])\]/);
+    const toolMatch = text.match(/dispatch\s+(\w+)/);
+    return {
+      kind: "handoff",
+      name: `handoff→${workerMatch ? "worker_" + workerMatch[1] : "worker"}${toolMatch ? " ("+toolMatch[1]+")" : ""}`,
+      inputJson: JSON.stringify({ invocation: text }),
+    };
+  }
+  if (/^\[mock\]/.test(text)) {
+    const toolMatch = text.match(/\[mock\]\s+(\w+)/);
+    return {
+      kind: "tool",
+      name: toolMatch ? toolMatch[1] : "mock_tool",
+      inputJson: JSON.stringify({ connector: "mock" }),
+      outputJson: JSON.stringify({ result: text }),
+    };
+  }
+  if (/^\[orchestrator\]\s+compact/.test(text)) {
+    return {
+      kind: "compact",
+      name: "scratchpad.compact",
+      inputJson: JSON.stringify({ before_tokens: 2840, phase: "post-worker" }),
+      outputJson: JSON.stringify({ after_tokens: 620, info: text }),
+    };
+  }
+  if (/^\[turn\s+\d+\]/.test(text)) {
+    return {
+      kind: "llm",
+      name: text.match(/^\[turn\s+(\d+)\]/)![0],
+      modelLabel: "gpt-5.4-nano",
+      inputTokens: 350,
+      outputTokens: 110,
+      costUsd: 0.0012,
+      inputJson: JSON.stringify({ history_turns: 1 }),
+      outputJson: JSON.stringify({ note: text }),
+    };
+  }
+  if (/^\[graph\]/.test(text)) {
+    return {
+      kind: "tool",
+      name: "graph.node",
+      inputJson: JSON.stringify({ step: text }),
+    };
+  }
+  if (/^\[Runner\.run_sync\]/.test(text)) {
+    return {
+      kind: "llm",
+      name: "Runner.run_sync",
+      modelLabel: "gpt-5.4-nano",
+      inputTokens: 380,
+      outputTokens: 120,
+      costUsd: 0.0014,
+      outputJson: JSON.stringify({ info: text }),
+    };
+  }
+  if (/^✓/.test(text)) {
+    return {
+      kind: "meta",
+      name: "run_end",
+      outputJson: JSON.stringify({ summary: text }),
+    };
+  }
+  // Info / stderr lines become lightweight wait spans
+  if (line.kind === "info") {
+    return { kind: "wait", name: "runner.info", outputJson: JSON.stringify({ info: text }) };
+  }
+  return null;
+}
+
+function randomRunId(): string {
+  const rand = Math.random().toString(36).slice(2, 10);
+  const ts = Date.now().toString(36);
+  return `${ts}-${rand}`;
+}
+
+export function PreviewTab({
+  runtimeLane,
+  sessionSlug,
+}: {
+  runtimeLane: string;
+  sessionSlug?: string | null;
+}) {
   const script = useMemo(() => scriptFor(runtimeLane), [runtimeLane]);
   const [visible, setVisible] = useState<Line[]>([]);
   const [running, setRunning] = useState(false);
   const [runCount, setRunCount] = useState(0);
+  const [recordingRun, setRecordingRun] = useState(false);
+  const [recordedRunId, setRecordedRunId] = useState<string | null>(null);
+  const startRun = useMutation(api.domains.daas.agentTrace.startRun);
+  const recordSpan = useMutation(api.domains.daas.agentTrace.recordSpan);
+  const finishRun = useMutation(api.domains.daas.agentTrace.finishRun);
   const timersRef = useRef<number[]>([]);
   const termRef = useRef<HTMLDivElement | null>(null);
 
@@ -139,6 +269,71 @@ export function PreviewTab({ runtimeLane }: { runtimeLane: string }) {
     return () => clearTimers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runtimeLane, runCount]);
+
+  // Record the same scripted run as real Convex trace spans, then open
+  // /runs/:runId in a new tab. Tier-1 MVP: the trace data reflects the
+  // shape + timing of the simulation, not a real LLM exec. Tier 2
+  // replaces the script with observed events from a sandbox runner.
+  async function recordAsTrace(): Promise<void> {
+    if (recordingRun) return;
+    setRecordingRun(true);
+    const runId = randomRunId();
+    try {
+      await startRun({
+        runId,
+        sessionSlug: sessionSlug ?? undefined,
+        runtimeLane,
+        driverRuntime: "gemini_agent",
+        mode: "mock",
+        input: `Mock preview replay for lane=${runtimeLane}. This is a scripted demonstration of the scaffold's expected shape, recorded as a real trace run for inspection.`,
+      });
+      // Emit spans in sequence with realistic gaps so the timeline
+      // shows progression. Each line's scripted delay maps to its
+      // finishedAt offset.
+      let cumulativeMs = 0;
+      const runStartedAt = Date.now();
+      for (let i = 0; i < script.length; i++) {
+        const line = script[i];
+        cumulativeMs += line.delayMs;
+        const s = spanFromLine(line, runtimeLane);
+        if (!s) continue;
+        const spanStart = runStartedAt + cumulativeMs;
+        const spanEnd = spanStart + Math.max(80, line.delayMs);
+        await recordSpan({
+          runId,
+          spanId: `span-${i.toString().padStart(4, "0")}`,
+          kind: s.kind,
+          name: s.name,
+          startedAt: spanStart,
+          finishedAt: spanEnd,
+          inputJson: s.inputJson ?? JSON.stringify({}),
+          outputJson: s.outputJson ?? JSON.stringify({}),
+          inputTokens: s.inputTokens,
+          outputTokens: s.outputTokens,
+          costUsd: s.costUsd,
+          modelLabel: s.modelLabel,
+        });
+      }
+      await finishRun({
+        runId,
+        status: "complete",
+        finalOutput: "Mock-mode replay complete — see spans above for per-step detail.",
+      });
+      setRecordedRunId(runId);
+      // Try popup first (preferred: leaves the Builder context intact).
+      // If the browser blocks it, the "open last trace ↗" button in the
+      // recorder UI will navigate in the same tab instead.
+      const popup = window.open(`/runs/${runId}`, "_blank", "noopener");
+      if (!popup) {
+        // Popup blocked — fall back to in-tab navigation
+        window.location.href = `/runs/${runId}`;
+      }
+    } catch (err) {
+      console.error("recordAsTrace failed", err);
+    } finally {
+      setRecordingRun(false);
+    }
+  }
 
   return (
     <div
@@ -203,23 +398,55 @@ export function PreviewTab({ runtimeLane }: { runtimeLane: string }) {
             bash · {runtimeLane || "default"} · mock
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setRunCount((c) => c + 1)}
-          disabled={running}
-          style={{
-            padding: "4px 10px",
-            background: running ? "rgba(255,255,255,0.05)" : "rgba(217,119,87,0.18)",
-            border: "1px solid rgba(217,119,87,0.35)",
-            borderRadius: 5,
-            color: running ? "rgba(255,255,255,0.4)" : "#fff",
-            fontSize: 11,
-            cursor: running ? "not-allowed" : "pointer",
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-        >
-          {running ? "running…" : "replay"}
-        </button>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button
+            type="button"
+            onClick={() => {
+              if (recordingRun) return;
+              if (recordedRunId) {
+                // Already recorded — open in same tab (popup-blocker safe)
+                window.location.href = `/runs/${recordedRunId}`;
+                return;
+              }
+              void recordAsTrace();
+            }}
+            disabled={recordingRun || running}
+            title={
+              recordedRunId
+                ? `Open /runs/${recordedRunId}`
+                : "Record this run as a live trace in /runs/:runId"
+            }
+            style={{
+              padding: "4px 10px",
+              background: recordingRun ? "rgba(255,255,255,0.05)" : "rgba(34,197,94,0.18)",
+              border: "1px solid rgba(34,197,94,0.4)",
+              borderRadius: 5,
+              color: recordingRun ? "rgba(255,255,255,0.4)" : "#fff",
+              fontSize: 11,
+              cursor: recordingRun || running ? "not-allowed" : "pointer",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {recordingRun ? "recording…" : recordedRunId ? "open last trace ↗" : "record live trace ↗"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRunCount((c) => c + 1)}
+            disabled={running}
+            style={{
+              padding: "4px 10px",
+              background: running ? "rgba(255,255,255,0.05)" : "rgba(217,119,87,0.18)",
+              border: "1px solid rgba(217,119,87,0.35)",
+              borderRadius: 5,
+              color: running ? "rgba(255,255,255,0.4)" : "#fff",
+              fontSize: 11,
+              cursor: running ? "not-allowed" : "pointer",
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {running ? "running…" : "replay"}
+          </button>
+        </div>
       </div>
 
       <div

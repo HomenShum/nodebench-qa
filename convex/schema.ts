@@ -20,6 +20,8 @@ import {
   radarItems,
   daasGeneratedArtifacts,
   scaffoldPings,
+  agentRuns,
+  agentTraceSpans,
 } from "./domains/daas/schema";
 
 export default defineSchema({
@@ -38,4 +40,6 @@ export default defineSchema({
   radarItems,
   daasGeneratedArtifacts,
   scaffoldPings,
+  agentRuns,
+  agentTraceSpans,
 });

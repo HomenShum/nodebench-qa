@@ -125,4 +125,124 @@ http.route({
   handler: attritionPingHandler,
 });
 
+// --- Live-run trace webhook ---------------------------------------------
+// Emitted scaffolds POST trace events here as they run. Accepts three
+// event types distinguished by `event`:
+//   run_start  → dispatches to agentTrace.startRun mutation
+//   span       → dispatches to agentTrace.recordSpan mutation
+//   run_end    → dispatches to agentTrace.finishRun mutation
+// See docs/LIVE_RUN_AND_TRACE_ADR.md for the full shape.
+
+const attritionTraceHandler = httpAction(async (ctx, request) => {
+  if (request.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+  if (request.method !== "POST") {
+    return new Response("method not allowed", {
+      status: 405,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  let body: unknown;
+  try {
+    const text = await request.text();
+    // BOUND_READ: cap payload at 32KB (span payloads can be bigger than ping)
+    if (text.length > 32 * 1024) {
+      return new Response("payload too large", {
+        status: 413,
+        headers: CORS_HEADERS,
+      });
+    }
+    body = JSON.parse(text);
+  } catch {
+    return new Response("invalid JSON", {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
+  }
+
+  if (typeof body !== "object" || body === null) {
+    return new Response("body must be JSON object", {
+      status: 400,
+      headers: CORS_HEADERS,
+    });
+  }
+  const b = body as Record<string, unknown>;
+  const event = typeof b.event === "string" ? b.event : null;
+
+  try {
+    if (event === "run_start") {
+      const result = await ctx.runMutation(api.domains.daas.agentTrace.startRun, {
+        runId: String(b.run_id ?? ""),
+        sessionSlug: typeof b.session_slug === "string" ? b.session_slug : undefined,
+        runtimeLane: String(b.runtime_lane ?? ""),
+        driverRuntime: String(b.driver_runtime ?? ""),
+        mode: String(b.mode ?? "mock"),
+        input: String(b.input ?? ""),
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    if (event === "span") {
+      const result = await ctx.runMutation(api.domains.daas.agentTrace.recordSpan, {
+        runId: String(b.run_id ?? ""),
+        spanId: String(b.span_id ?? ""),
+        parentSpanId: typeof b.parent_span_id === "string" ? b.parent_span_id : undefined,
+        kind: String(b.kind ?? "meta"),
+        name: String(b.name ?? ""),
+        startedAt: typeof b.started_at === "number" ? b.started_at : Date.now(),
+        finishedAt: typeof b.finished_at === "number" ? b.finished_at : undefined,
+        inputJson: typeof b.input_json === "string" ? b.input_json : JSON.stringify(b.input ?? null),
+        outputJson: typeof b.output_json === "string" ? b.output_json : JSON.stringify(b.output ?? null),
+        inputTokens: typeof b.input_tokens === "number" ? b.input_tokens : undefined,
+        outputTokens: typeof b.output_tokens === "number" ? b.output_tokens : undefined,
+        costUsd: typeof b.cost_usd === "number" ? b.cost_usd : undefined,
+        modelLabel: typeof b.model_label === "string" ? b.model_label : undefined,
+        promptHash: typeof b.prompt_hash === "string" ? b.prompt_hash : undefined,
+        errorMessage: typeof b.error_message === "string" ? b.error_message : undefined,
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    if (event === "run_end") {
+      const result = await ctx.runMutation(api.domains.daas.agentTrace.finishRun, {
+        runId: String(b.run_id ?? ""),
+        status: String(b.status ?? "complete"),
+        finalOutput: typeof b.final_output === "string" ? b.final_output : undefined,
+        errorMessage: typeof b.error_message === "string" ? b.error_message : undefined,
+      });
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+      });
+    }
+    return new Response(
+      JSON.stringify({ ok: false, error: `unknown event: ${event}` }),
+      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return new Response(
+      JSON.stringify({ ok: false, error: msg }),
+      { status: 400, headers: { ...CORS_HEADERS, "Content-Type": "application/json" } },
+    );
+  }
+});
+
+http.route({
+  path: "/http/attritionTrace",
+  method: "POST",
+  handler: attritionTraceHandler,
+});
+http.route({
+  path: "/http/attritionTrace",
+  method: "OPTIONS",
+  handler: attritionTraceHandler,
+});
+
 export default http;
