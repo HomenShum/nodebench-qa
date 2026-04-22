@@ -1,0 +1,175 @@
+{
+  "harness_version": "attrition.v1",
+  "schema": "daas/benchmarks/attrition_eval_template_v1.csv",
+  "dry": false,
+  "elapsed_s": 105.98,
+  "rows_total": 3,
+  "pass": 1,
+  "fail": 2,
+  "skip": 0,
+  "total_cost_usd": 0.0134,
+  "per_row": [
+    {
+      "case_id": "AE01",
+      "overall_pass": false,
+      "overall_rationale": "failed: latency_under_budget, correct_lane_picked (2/9 eval'd failed)",
+      "run_elapsed_s": 66.44,
+      "run_cost_usd": 0.0053,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "7 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 7 required layers present for lane=simple_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 1 file(s): server.py"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=simple_chain ships no mcp_server.py by design"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 3 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0053 <= $0.0150 budget"
+        },
+        "latency_under_budget": {
+          "passed": false,
+          "rationale": "66.44s > 30.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": false,
+          "rationale": "Flash Lite judge: The bundle includes an 'eval/' directory and a 'server.py' file, both of which are explicitly prohibited by the simple_chain lane contract."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE02",
+      "overall_pass": false,
+      "overall_rationale": "failed: mcp_server_importable (1/10 eval'd failed)",
+      "run_elapsed_s": 8.04,
+      "run_cost_usd": 0.0018,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "12 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 9 required layers present for lane=tool_first_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": false,
+          "rationale": "mcp_server.py parses but doesn't reference mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 2 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0018 <= $0.0250 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "8.04s <= 45.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle includes all required components including server.py, tools.py, mcp_server.py, eval/, and observability.py, while correctly omitting state_store.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    },
+    {
+      "case_id": "AE04",
+      "overall_pass": true,
+      "overall_rationale": "all 10 deterministic gates pass; 1 stubbed: baseline_parity",
+      "run_elapsed_s": 26.43,
+      "run_cost_usd": 0.0063,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "16 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 10 required layers present for lane=orchestrator_worker"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 5 file(s): .env.example"
+        },
+        "mcp_server_importable": {
+          "passed": true,
+          "rationale": "mcp_server.py ast-parses + references mcp/stdio"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 4 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0063 <= $0.1200 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "26.43s <= 180.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The emitted bundle contains all required components including server.py, state_store.py, mcp_server.py, the eval directory, observability.py, and the envelope structure, satisfying the orchestrator_wo"
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    }
+  ]
+}

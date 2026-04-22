@@ -1,0 +1,67 @@
+{
+  "harness_version": "attrition.v1",
+  "schema": "daas/benchmarks/attrition_eval_template_v1.csv",
+  "dry": false,
+  "elapsed_s": 24.36,
+  "rows_total": 1,
+  "pass": 1,
+  "fail": 0,
+  "skip": 0,
+  "total_cost_usd": 0.0052,
+  "per_row": [
+    {
+      "case_id": "AE01",
+      "overall_pass": true,
+      "overall_rationale": "all 9 deterministic gates pass; 2 stubbed: mcp_server_importable, baseline_parity",
+      "run_elapsed_s": 23.12,
+      "run_cost_usd": 0.0052,
+      "dispatch_error": null,
+      "gates": {
+        "scaffold_compiles": {
+          "passed": true,
+          "rationale": "5 .py files ast-parse valid"
+        },
+        "nine_layers_present": {
+          "passed": true,
+          "rationale": "all 7 required layers present for lane=simple_chain"
+        },
+        "scaffold_runs_mock": {
+          "passed": true,
+          "rationale": "server.py parses + references mock/CONNECTOR_MODE"
+        },
+        "connector_resolver_working": {
+          "passed": true,
+          "rationale": "CONNECTOR_MODE referenced in 1 file(s): server.py"
+        },
+        "mcp_server_importable": {
+          "passed": null,
+          "rationale": "lane=simple_chain ships no mcp_server.py by design"
+        },
+        "workflow_spec_roundtrip": {
+          "passed": true,
+          "rationale": "valid JSON, 3 top-level keys, roundtrip stable"
+        },
+        "cost_under_budget": {
+          "passed": true,
+          "rationale": "$0.0052 <= $0.0150 budget"
+        },
+        "latency_under_budget": {
+          "passed": true,
+          "rationale": "23.12s <= 30.0s budget"
+        },
+        "runtime_used_correctly": {
+          "passed": true,
+          "rationale": "runtime_label=gemini_agent matches emit_lane driver"
+        },
+        "correct_lane_picked": {
+          "passed": true,
+          "rationale": "Flash Lite judge: The bundle contains all required files for the simple_chain lane and excludes prohibited files like state_store.py or mcp_server.py."
+        },
+        "baseline_parity": {
+          "passed": null,
+          "rationale": "not-yet-wired: requires BFCL/broadened benchmark replay for the emitted scaffold"
+        }
+      }
+    }
+  ]
+}
