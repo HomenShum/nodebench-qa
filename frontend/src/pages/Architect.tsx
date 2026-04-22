@@ -17,6 +17,7 @@ import { Nav } from "../components/Nav";
 import { HeroDemoLoop } from "../components/HeroDemoLoop";
 import { ProofSection } from "../components/ProofSection";
 import { TraceDropzone } from "../components/TraceDropzone";
+import { RuntimeSelector } from "../components/RuntimeSelector";
 import type { TraceSummary } from "../lib/normalize_trace";
 
 type TranscriptTurn = { ts: number; role: "user" | "assistant"; content: string };
@@ -529,6 +530,12 @@ export function Architect() {
 
         {!slug ? (
           <section>
+            {/* Driver runtime selector — picks which agent SDK runs
+                attrition's own generation agent (Gemini / OpenAI /
+                Claude Agent SDK / LangGraph / OpenRouter). The choice
+                persists to localStorage and is surfaced on Builder. */}
+            <RuntimeSelector />
+
             {/* Trace upload — parse a real agent run in-browser and
                 prefill the prompt with a structured brief. */}
             <TraceDropzone

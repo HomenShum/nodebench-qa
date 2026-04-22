@@ -16,6 +16,10 @@ import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "../_convex/api";
 import { Nav } from "../components/Nav";
 import { downloadBundleAsZip } from "../lib/downloadZip";
+import {
+  loadRuntimeSelection,
+  runtimeById,
+} from "../lib/runtime_selector";
 
 type Tab = "scaffold" | "eval" | "world_model" | "sources";
 
@@ -484,6 +488,8 @@ function BetaBanner() {
 function EvaluationGateBanner() {
   const v = EVAL_VERDICT;
   const isPass = v.status === "transfers";
+  const activeRuntime = loadRuntimeSelection();
+  const runtimeOpt = runtimeById(activeRuntime.runtime);
   const color = isPass
     ? { bg: "rgba(34,197,94,0.05)", border: "rgba(34,197,94,0.4)", text: "#22c55e" }
     : v.status === "lossy"
@@ -524,6 +530,23 @@ function EvaluationGateBanner() {
         <span style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
           {v.benchmark} · ran {v.ran_at}
         </span>
+        {runtimeOpt ? (
+          <span
+            style={{
+              fontSize: 10,
+              padding: "2px 8px",
+              background: "rgba(217,119,87,0.12)",
+              border: "1px solid rgba(217,119,87,0.35)",
+              borderRadius: 999,
+              color: "#d97757",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+            }}
+            title={`${runtimeOpt.label} · ${activeRuntime.model}`}
+          >
+            Driven by: {runtimeOpt.label.split(" (")[0]} · {activeRuntime.model}
+          </span>
+        ) : null}
       </div>
       <p
         style={{
