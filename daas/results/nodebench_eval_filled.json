@@ -1,0 +1,57 @@
+{
+  "input_csv": "C:\\Users\\hshum\\Downloads\\nodebench_fast_slow_eval_template_v2.csv",
+  "output_csv": "daas\\results\\nodebench_eval_filled.csv",
+  "rows_total": 60,
+  "rows_evaluated": 30,
+  "pass_count": 19,
+  "fail_count": 11,
+  "total_cost_usd": 0.003422,
+  "avg_latency_ms": 2345,
+  "gate_pass_rates": {
+    "entity_correct": {
+      "pass": 20,
+      "total": 30,
+      "rate_pct": 66.7
+    },
+    "grounded_to_sources": {
+      "pass": 20,
+      "total": 30,
+      "rate_pct": 66.7
+    },
+    "factually_accurate": {
+      "pass": 20,
+      "total": 30,
+      "rate_pct": 66.7
+    },
+    "no_hallucinations": {
+      "pass": 20,
+      "total": 30,
+      "rate_pct": 66.7
+    },
+    "actionable": {
+      "pass": 19,
+      "total": 30,
+      "rate_pct": 63.3
+    },
+    "latency_within_budget": {
+      "pass": 26,
+      "total": 30,
+      "rate_pct": 86.7
+    },
+    "artifact_decision_correct": {
+      "pass": 30,
+      "total": 30,
+      "rate_pct": 100.0
+    },
+    "memory_first": {
+      "pass": 30,
+      "total": 30,
+      "rate_pct": 100.0
+    },
+    "tool_ordering_correct": {
+      "pass": 30,
+      "total": 30,
+      "rate_pct": 100.0
+    }
+  }
+}
